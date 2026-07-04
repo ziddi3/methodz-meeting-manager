@@ -1,0 +1,290 @@
+:root {
+  --bg: #f4f4f4;
+  --card: #ffffff;
+  --text: #222222;
+  --muted: #666666;
+  --border: #dddddd;
+  --header: #111111;
+  --button: #111111;
+  --button-hover: #333333;
+  --accent: #d5a642;
+  --danger: #8b1e1e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.app-header {
+  background: var(--header);
+  color: white;
+  padding: 24px;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 3rem);
+}
+
+.app-header p {
+  margin: 8px 0 0;
+  color: #dddddd;
+}
+
+.logo-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.company-logo,
+.logo-fallback {
+  width: 160px;
+  height: 82px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #222222;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.app-shell {
+  max-width: 1050px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+.card {
+  background: var(--card);
+  padding: 20px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.hero-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-pill {
+  background: #eeeeee;
+  color: #222222;
+  border: 1px solid #cccccc;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+h2 {
+  margin-top: 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+h3 {
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+.helper-text {
+  color: var(--muted);
+  margin-top: -4px;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  box-sizing: border-box;
+  border: 1px solid #bbbbbb;
+  border-radius: 6px;
+  font-size: 15px;
+  background: white;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid rgba(213, 166, 66, 0.35);
+  border-color: var(--accent);
+}
+
+textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+button {
+  margin-top: 12px;
+  margin-right: 8px;
+  padding: 10px 14px;
+  border: none;
+  background: var(--button);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:hover {
+  background: var(--button-hover);
+}
+
+.attendee,
+.task {
+  border: 1px solid var(--border);
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.small-danger {
+  background: var(--danger);
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.checkbox-grid label,
+.agenda-list label {
+  font-weight: normal;
+}
+
+.checkbox-grid input,
+.agenda-list input {
+  width: auto;
+  margin-right: 8px;
+}
+
+.controls button {
+  background: #333333;
+}
+
+.saved-record {
+  border: 1px solid #cccccc;
+  padding: 12px;
+  margin-top: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.saved-record strong {
+  font-size: 1.05rem;
+}
+
+.saved-record pre {
+  white-space: pre-wrap;
+  background: #f0f0f0;
+  padding: 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+@media (max-width: 720px) {
+  .app-header {
+    padding: 18px 12px;
+  }
+
+  .company-logo,
+  .logo-fallback {
+    width: 135px;
+    height: 70px;
+  }
+
+  .hero-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  button {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+@media print {
+  button,
+  .small-danger {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+
+  .app-header {
+    background: white;
+    color: black;
+    border-bottom: 2px solid #000;
+  }
+
+  .app-header p {
+    color: black;
+  }
+
+  .card {
+    page-break-inside: avoid;
+    box-shadow: none;
+  }
+}
