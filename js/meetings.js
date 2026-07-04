@@ -41,8 +41,8 @@ function removeMeeting(id) {
 function getAllMeetings() {
   return loadMeetings().sort((a, b) => {
     const da = new Date(a.date + 'T' + (a.time || '00:00'));
-    const db2 = new Date(b.date + 'T' + (b.time || '00:00'));
-    return db2 - da;
+    const db = new Date(b.date + 'T' + (b.time || '00:00'));
+    return db - da;
   });
 }
 
