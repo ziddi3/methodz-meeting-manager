@@ -122,11 +122,11 @@
 
         <div class="button-row">
           <button type="button" onclick="exportAllRecords()">Export All JSON</button>
-          <button type="button" onclick="document.getElementById('importRecordsFile').click()">Import JSON</button>
+          <button type="button" onclick="document.getElementById('importRecordsFile').click()">Choose Import JSON</button>
           <button type="button" onclick="clearDraft()">Clear Draft</button>
         </div>
 
-        <input id="importRecordsFile" class="hidden-file" type="file" accept="application/json,.json" onchange="importRecords(event)" />
+        <input id="importRecordsFile" class="import-control" type="file" accept="application/json,.json" onchange="importRecords(event)" />
         <p class="helper-text" id="storageStats">No saved records yet.</p>
       </div>
       <div id="savedRecords"></div>
