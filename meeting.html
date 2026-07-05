@@ -3,19 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Offline-first meeting record manager for Canadian Soft Water Corporation, Method HVAC Inc., and Methodz partner workflows." />
   <title>Methodz Meeting Manager</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="app-header">
-    <div class="logo-row" aria-label="Organization and brand logos">
-      <img id="cswLogo" class="company-logo" src="assets/logos/csw-logo.png" alt="Canadian Soft Water logo placeholder" onerror="this.replaceWith(createLogoFallback('Canadian Soft Water'))" />
-      <img id="methodHvacLogo" class="company-logo" src="assets/logos/method-hvac-logo.png" alt="Method HVAC logo placeholder" onerror="this.replaceWith(createLogoFallback('Method HVAC'))" />
-      <img id="methodzBrandLogo" class="company-logo" src="assets/logos/methodz-brand.png" alt="Methodz brand mark placeholder" onerror="this.replaceWith(createLogoFallback('Methodz Brand Mark'))" />
-    </div>
+    <div class="logo-row" id="logoRow" aria-label="Organization and brand logos"></div>
 
-    <h1>Methodz Meeting Manager</h1>
-    <p>Canadian Soft Water Corporation × Method HVAC Inc. Partnership Records</p>
+    <h1 id="appTitle">Methodz Meeting Manager</h1>
+    <p id="appSubtitle">Canadian Soft Water Corporation × Method HVAC Inc. Partnership Records</p>
   </header>
 
   <main class="app-shell">
@@ -23,26 +20,40 @@
       <div>
         <p class="eyebrow">Offline Meeting Record</p>
         <h2 id="meetingNumberLabel">Meeting #001</h2>
-        <p class="helper-text">Create, save, print, and archive meeting records locally before cloud sync is added.</p>
+        <p class="helper-text">Create, save, print, archive, export, and re-open meeting records locally before cloud sync is added.</p>
       </div>
-      <div class="status-pill" id="statusPill">Scheduled</div>
+      <div class="hero-meta">
+        <div class="status-pill" id="statusPill">Scheduled</div>
+        <div class="draft-pill" id="draftStatus">Draft ready</div>
+      </div>
+    </section>
+
+    <section class="card quick-actions" aria-label="Quick actions">
+      <button type="button" onclick="saveMeeting()">Save Record</button>
+      <button type="button" onclick="downloadMeetingText()">Download TXT</button>
+      <button type="button" onclick="downloadMeetingJson()">Download JSON</button>
+      <button type="button" onclick="printMeeting()">Print / Save PDF</button>
     </section>
 
     <section class="card">
       <h2>Meeting Information</h2>
 
+      <input id="editingRecordId" type="hidden" />
+
       <label for="meetingTitle">Meeting Title</label>
-      <input id="meetingTitle" type="text" placeholder="Partnership Operations Meeting" />
+      <input id="meetingTitle" type="text" placeholder="Partnership Operations Meeting" autocomplete="off" />
 
-      <label for="meetingStatus">Meeting Status</label>
-      <select id="meetingStatus">
-        <option>Scheduled</option>
-        <option>In Progress</option>
-        <option>Completed</option>
-      </select>
+      <div class="form-grid">
+        <div>
+          <label for="meetingStatus">Meeting Status</label>
+          <select id="meetingStatus"></select>
+        </div>
 
-      <label for="meetingDate">Date</label>
-      <input id="meetingDate" type="date" />
+        <div>
+          <label for="meetingDate">Date</label>
+          <input id="meetingDate" type="date" />
+        </div>
+      </div>
 
       <label for="meetingLocation">Location / Video Link</label>
       <input id="meetingLocation" type="text" placeholder="Office, Remote, Google Meet, Zoom..." />
@@ -55,12 +66,7 @@
       <h2>Organizations / Representatives Present</h2>
       <p class="helper-text">Select the organizations or representative groups present. Methodz is treated as a brand identity, not a company.</p>
 
-      <div class="checkbox-grid">
-        <label><input type="checkbox" class="company-present" value="Canadian Soft Water Corporation" /> Canadian Soft Water Corporation</label>
-        <label><input type="checkbox" class="company-present" value="Method HVAC Inc." /> Method HVAC Inc.</label>
-        <label><input type="checkbox" class="company-present" value="Sole Proprietor / Partner" /> Sole Proprietor / Partner</label>
-        <label><input type="checkbox" class="company-present" value="Guest / Other" /> Guest / Other</label>
-      </div>
+      <div class="checkbox-grid" id="organizationList"></div>
     </section>
 
     <section class="card">
@@ -72,31 +78,7 @@
 
     <section class="card">
       <h2>Agenda Checklist</h2>
-      <div id="agendaList" class="agenda-list">
-        <h3>Operations</h3>
-        <label><input type="checkbox" /> Scheduling and advance notice</label>
-        <label><input type="checkbox" /> Childcare support for last-minute jobs</label>
-        <label><input type="checkbox" /> Compensation and workload review</label>
-        <label><input type="checkbox" /> Travel, meals, and weekend policy</label>
-        <label><input type="checkbox" /> Employee retention and workload sustainability</label>
-
-        <h3>Marketing & Branding</h3>
-        <label><input type="checkbox" /> Current marketing channels</label>
-        <label><input type="checkbox" /> Method HVAC marketing inclusion</label>
-        <label><input type="checkbox" /> Canadian Soft Water logo decision</label>
-        <label><input type="checkbox" /> Old franchise logo removal</label>
-        <label><input type="checkbox" /> New merchandise and branded materials</label>
-        <label><input type="checkbox" /> Vehicle decals, uniforms, hats, business cards, and print materials</label>
-        <label><input type="checkbox" /> Brand relationship between CSW, Method HVAC, and the Methodz brand identity</label>
-        <label><input type="checkbox" /> Visual separation versus shared brand alignment</label>
-
-        <h3>Technology & Workflow</h3>
-        <label><input type="checkbox" /> CRM and workflow improvements</label>
-        <label><input type="checkbox" /> Meeting records app proposal</label>
-        <label><input type="checkbox" /> Customer communication process</label>
-        <label><input type="checkbox" /> Installer scheduling workflow</label>
-        <label><input type="checkbox" /> Records, signatures, and meeting archive process</label>
-      </div>
+      <div id="agendaList" class="agenda-list"></div>
     </section>
 
     <section class="card">
@@ -122,18 +104,36 @@
 
     <section class="card controls">
       <h2>End of Meeting</h2>
-      <button type="button" onclick="saveMeeting()">Save Record</button>
-      <button type="button" onclick="printMeeting()">Print / Save PDF</button>
-      <button type="button" onclick="downloadMeeting()">Download TXT Record</button>
-      <button type="button" onclick="clearMeeting()">Clear Form</button>
+      <div class="button-row">
+        <button type="button" onclick="saveMeeting()">Save Record</button>
+        <button type="button" onclick="startNewMeeting()">Start New Meeting</button>
+        <button type="button" onclick="printMeeting()">Print / Save PDF</button>
+        <button type="button" onclick="downloadMeetingText()">Download TXT Record</button>
+        <button type="button" onclick="downloadMeetingJson()">Download JSON Record</button>
+        <button type="button" onclick="clearMeeting()">Clear Form</button>
+      </div>
     </section>
 
     <section class="card">
       <h2>Saved Meeting Records</h2>
+      <div class="records-toolbar">
+        <label for="recordSearch">Search Saved Records</label>
+        <input id="recordSearch" type="search" placeholder="Search title, date, notes, decisions, tasks..." />
+
+        <div class="button-row">
+          <button type="button" onclick="exportAllRecords()">Export All JSON</button>
+          <button type="button" onclick="document.getElementById('importRecordsFile').click()">Import JSON</button>
+          <button type="button" onclick="clearDraft()">Clear Draft</button>
+        </div>
+
+        <input id="importRecordsFile" class="hidden-file" type="file" accept="application/json,.json" onchange="importRecords(event)" />
+        <p class="helper-text" id="storageStats">No saved records yet.</p>
+      </div>
       <div id="savedRecords"></div>
     </section>
   </main>
 
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
