@@ -8,6 +8,7 @@
   --button: #111111;
   --button-hover: #333333;
   --accent: #d5a642;
+  --accent-soft: #fff6dd;
   --danger: #8b1e1e;
 }
 
@@ -24,7 +25,7 @@ body {
 }
 
 .app-header {
-  background: var(--header);
+  background: linear-gradient(135deg, #0f0f0f, #262017);
   color: white;
   padding: 24px;
   text-align: center;
@@ -80,7 +81,7 @@ body {
   background: var(--card);
   padding: 20px;
   margin-bottom: 18px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
@@ -90,18 +91,28 @@ body {
   justify-content: space-between;
   gap: 18px;
   align-items: center;
+  border-left: 5px solid var(--accent);
+}
+
+.hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
 }
 
 .eyebrow {
   margin: 0 0 6px;
-  color: var(--accent);
+  color: #8a6415;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.78rem;
   font-weight: 700;
 }
 
-.status-pill {
+.status-pill,
+.draft-pill,
+.record-badge {
   background: #eeeeee;
   color: #222222;
   border: 1px solid #cccccc;
@@ -109,6 +120,18 @@ body {
   border-radius: 999px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.draft-pill {
+  background: var(--accent-soft);
+  border-color: #efd37f;
+  color: #553b00;
+  font-size: 0.85rem;
+}
+
+.record-badge {
+  background: #f1f1f1;
+  font-size: 0.8rem;
 }
 
 h2 {
@@ -174,6 +197,29 @@ button:hover {
   background: var(--button-hover);
 }
 
+.form-grid,
+.records-toolbar {
+  display: grid;
+  gap: 12px;
+}
+
+.form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.quick-actions,
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.quick-actions button,
+.button-row button {
+  margin-right: 0;
+}
+
 .attendee,
 .task {
   border: 1px solid var(--border);
@@ -183,11 +229,17 @@ button:hover {
   background: #fafafa;
 }
 
-.item-header {
+.item-header,
+.saved-record-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+}
+
+.item-header h3,
+.saved-record-header p {
+  margin-top: 0;
 }
 
 .small-danger {
@@ -213,20 +265,37 @@ button:hover {
   margin-right: 8px;
 }
 
+.agenda-list h3 {
+  padding-top: 8px;
+  color: #333333;
+}
+
 .controls button {
   background: #333333;
 }
 
 .saved-record {
   border: 1px solid #cccccc;
-  padding: 12px;
-  margin-top: 10px;
+  padding: 14px;
+  margin-top: 12px;
   background: #fafafa;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .saved-record strong {
   font-size: 1.05rem;
+}
+
+.saved-record p {
+  color: var(--muted);
+  margin: 6px 0;
+}
+
+.record-summary {
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  padding: 8px;
+  border-radius: 6px;
 }
 
 .saved-record pre {
@@ -235,6 +304,10 @@ button:hover {
   padding: 10px;
   border-radius: 6px;
   overflow-x: auto;
+}
+
+.import-control {
+  max-width: 420px;
 }
 
 @media (max-width: 720px) {
@@ -248,16 +321,23 @@ button:hover {
     height: 70px;
   }
 
-  .hero-card {
+  .hero-card,
+  .saved-record-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .hero-meta {
+    align-items: flex-start;
   }
 
   .card {
     padding: 16px;
   }
 
-  button {
+  button,
+  .quick-actions button,
+  .button-row button {
     width: 100%;
     margin-right: 0;
   }
@@ -265,7 +345,10 @@ button:hover {
 
 @media print {
   button,
-  .small-danger {
+  .small-danger,
+  .quick-actions,
+  .records-toolbar,
+  .saved-record .button-row {
     display: none !important;
   }
 
