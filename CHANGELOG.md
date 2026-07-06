@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+
+- `features-v03.js` as a modular enhancement layer on top of the stable offline core.
+- Structured Decision Log with decision text, confirmed-by, date, status, and notes.
+- Record Readiness Review panel for required items, warnings, signatures, task assignments, critical tasks, and summary completeness.
+- Task filters by search text, progress, and priority.
+- Meeting Minutes Preview generated from the current form.
+- Polished HTML export for the current meeting.
+- Polished HTML export for saved meeting records.
+- Structured decisions and readiness checks are included in exported TXT output.
+- Print styles for meeting minutes output.
+
+### Changed
+
+- Bumped configuration schema to `0.3.0`.
+- Updated README with new workflow features and roadmap.
+- Kept the app static, offline-first, and dependency-free.
+- Kept responsibility labels as **Assigned To**.
+
+### Notes
+
+- The v0.3 layer deliberately avoids frameworks and build tools.
+- The next planned area is editable templates and safer import preview.
+
 ## 0.2.0
 
 ### Added
