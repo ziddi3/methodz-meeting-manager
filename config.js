@@ -4,7 +4,7 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.2.0",
+  schemaVersion: "0.3.0",
   storageKeys: {
     records: "methodzMeetingRecords",
     draft: "methodzMeetingDraft"
