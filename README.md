@@ -21,6 +21,7 @@ methodz-meeting-manager/
 ├── app.js                       Offline app logic
 ├── config.js                    Organizations, agenda items, labels, and storage keys
 ├── features-v03.js              Validation, minutes, task filters, and structured decisions
+├── features-v03-startup.js      Startup helpers for v0.3 saved cards and decision drafts
 ├── PROJECT.md                   Product specification and build rules
 ├── README.md                    Setup and usage guide
 └── .github/
@@ -127,6 +128,8 @@ Version 0.3 adds a modular enhancement layer in `features-v03.js`. This keeps th
 - task filtering
 - meeting minutes preview
 - polished HTML export
+
+`features-v03-startup.js` handles small startup compatibility tasks so saved record cards and structured-decision drafts load cleanly after the v0.3 layer is active.
 
 This is the preferred pattern until the app is ready for larger architecture changes.
 
