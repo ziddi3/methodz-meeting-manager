@@ -4,10 +4,11 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.3.0",
+  schemaVersion: "0.4.0",
   storageKeys: {
     records: "methodzMeetingRecords",
-    draft: "methodzMeetingDraft"
+    draft: "methodzMeetingDraft",
+    templates: "methodzMeetingTemplates"
   },
   brand: {
     appName: "Methodz Meeting Manager",
@@ -44,6 +45,76 @@ window.METHODZ_MEETING_CONFIG = {
   priorities: ["Normal", "Low", "High", "Critical"],
   taskStatuses: ["Pending", "In Progress", "Completed"],
   meetingStatuses: ["Scheduled", "In Progress", "Completed", "Archived"],
+  meetingTemplates: [
+    {
+      id: "operations-review",
+      label: "Operations Review",
+      title: "Operations Review Meeting",
+      status: "Scheduled",
+      organizations: ["Canadian Soft Water Corporation", "Method HVAC Inc."],
+      notesPrompt: "Operations focus: scheduling, workload, travel, compensation, installer support, and follow-up accountability.",
+      summaryPrompt: "Summarize operational decisions, unresolved constraints, and the next scheduling actions.",
+      starterTasks: [
+        {
+          task: "Confirm next scheduling changes and responsible person",
+          assignedTo: "",
+          priority: "High",
+          due: "",
+          status: "Pending"
+        },
+        {
+          task: "Review open workload or travel concerns before next meeting",
+          assignedTo: "",
+          priority: "Normal",
+          due: "",
+          status: "Pending"
+        }
+      ]
+    },
+    {
+      id: "marketing-branding",
+      label: "Marketing & Branding Review",
+      title: "Marketing and Branding Review",
+      status: "Scheduled",
+      organizations: ["Canadian Soft Water Corporation", "Method HVAC Inc."],
+      notesPrompt: "Marketing focus: logo status, franchise separation, Method HVAC inclusion, vehicle decals, uniforms, print materials, and shared Methodz brand alignment.",
+      summaryPrompt: "Summarize brand decisions, required assets, and next marketing deliverables.",
+      starterTasks: [
+        {
+          task: "List marketing assets that need approval or replacement",
+          assignedTo: "",
+          priority: "High",
+          due: "",
+          status: "Pending"
+        }
+      ]
+    },
+    {
+      id: "crm-workflow",
+      label: "CRM & Workflow Build",
+      title: "CRM and Workflow Build Meeting",
+      status: "Scheduled",
+      organizations: ["Canadian Soft Water Corporation", "Method HVAC Inc."],
+      notesPrompt: "Workflow focus: customer capture, CRM stages, installer scheduling, meeting archive process, lead source tracking, and follow-up automations.",
+      summaryPrompt: "Summarize workflow changes, CRM tasks, blockers, and launch-readiness status.",
+      starterTasks: [
+        {
+          task: "Confirm which customer fields must be captured before install scheduling",
+          assignedTo: "",
+          priority: "Critical",
+          due: "",
+          status: "Pending"
+        },
+        {
+          task: "Check that saved meeting records can be exported before workflow changes go live",
+          assignedTo: "",
+          priority: "Normal",
+          due: "",
+          status: "Pending"
+        }
+      ]
+    }
+  ],
   agendaGroups: [
     {
       name: "Operations",
