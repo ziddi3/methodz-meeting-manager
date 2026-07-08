@@ -4,11 +4,12 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.4.0",
+  schemaVersion: "0.5.0",
   storageKeys: {
     records: "methodzMeetingRecords",
     draft: "methodzMeetingDraft",
-    templates: "methodzMeetingTemplates"
+    templates: "methodzMeetingTemplates",
+    directory: "methodzMeetingDirectory"
   },
   brand: {
     appName: "Methodz Meeting Manager",
@@ -45,6 +46,17 @@ window.METHODZ_MEETING_CONFIG = {
   priorities: ["Normal", "Low", "High", "Critical"],
   taskStatuses: ["Pending", "In Progress", "Completed"],
   meetingStatuses: ["Scheduled", "In Progress", "Completed", "Archived"],
+  attachmentTypes: [
+    "Photo",
+    "Quote",
+    "Invoice",
+    "Drawing",
+    "Logo / Brand Asset",
+    "Install Note",
+    "Customer Communication",
+    "CRM Reference",
+    "Other"
+  ],
   meetingTemplates: [
     {
       id: "operations-review",
