@@ -1,0 +1,85 @@
+/* Methodz Meeting Manager v0.5 styles. */
+
+.v05-card {
+  border-left: 4px solid var(--accent);
+}
+
+.attachment-reference-list,
+.directory-card,
+.attachment-dashboard {
+  margin-top: 12px;
+}
+
+.attachment-reference-item {
+  border: 1px solid var(--border);
+  background: #fafafa;
+  padding: 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.attachment-reference-item textarea {
+  min-height: 88px;
+}
+
+.signature-control-panel {
+  border: 1px solid var(--border);
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.compact-subheader {
+  align-items: flex-start;
+}
+
+.signature-summary {
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #eeeeee;
+  font-weight: 700;
+}
+
+.signature-summary.is-clean {
+  background: #e8f5ec;
+  border: 1px solid #a9d8b8;
+}
+
+.signature-summary.has-warnings {
+  background: #fff5d8;
+  border: 1px solid #e7c86d;
+}
+
+.directory-actions,
+.template-actions {
+  align-self: end;
+}
+
+.attachment-dashboard .needs-location td {
+  background: #fff8e6;
+}
+
+@media (max-width: 720px) {
+  .directory-actions,
+  .template-actions {
+    align-self: stretch;
+  }
+
+  .signature-control-panel .button-row,
+  .directory-card .button-row,
+  .attachment-card .button-row,
+  .attachment-dashboard .button-row {
+    width: 100%;
+  }
+}
+
+@media print {
+  #attendeeDirectoryPanel,
+  #attachmentDashboard,
+  .signature-control-panel button,
+  #attachmentRegisterPanel button {
+    display: none !important;
+  }
+}
