@@ -1,6 +1,6 @@
 # Architecture
 
-Methodz Meeting Manager is currently a static, offline-first application. The design goal is to keep the base workflow simple, inspectable, and deployable before adding cloud services.
+Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the base workflow simple, inspectable, and deployable before adding cloud services.
 
 ## Runtime Model
 
@@ -15,6 +15,10 @@ browser localStorage
   ↓ extended by
 features-v03.js
   ↓ adds validation, minutes, task filters, and structured decisions
+features-v04-templates.js + features-v04-records.js
+  ↓ add templates, import preview, archive filters, details, and task dashboards
+features-v05-attachments.js + features-v05-directory.js
+  ↓ add attachment references, attendee directory, signature controls, and audit metadata
 ```
 
 No server is required for the current version.
@@ -37,6 +41,8 @@ Owns the application shell and major sections:
 - summary
 - saved records
 
+Feature modules inject additional panels around that shell instead of requiring a build system.
+
 ### `config.js`
 
 Owns editable business defaults:
@@ -46,8 +52,11 @@ Owns editable business defaults:
 - organizations
 - agenda groups
 - meeting statuses
+- meeting templates
+- attendance types
 - task priorities
 - task statuses
+- attachment types
 - storage keys
 
 This keeps business wording out of the core app logic.
@@ -78,21 +87,58 @@ Owns the v0.3 workflow layer:
 - saved-record HTML export button injection
 - TXT export extension for structured decisions and validation checks
 
-This file patches a small number of global app functions after the core loads. That keeps v0.2 behavior inspectable while allowing v0.3 features to evolve without rewriting the stable core.
+### `features-v04-templates.js`
 
-### `style.css`
+Owns template workflow:
 
-Owns visual layout:
+- default meeting templates from `config.js`
+- browser-local custom templates
+- template export/import
+- custom agenda items
 
-- responsive cards
-- header and logo layout
-- form controls
-- saved record cards
-- decision log cards
-- validation states
-- task filter controls
-- meeting minutes preview
-- print mode
+### `features-v04-records.js`
+
+Owns archive workflow:
+
+- safer record import preview
+- saved-record filters
+- open-task dashboard
+- open-task CSV export
+- readable saved-record details panel
+
+### `features-v05-attachments.js`
+
+Owns attachment reference workflow:
+
+- Attachment References panel on the current meeting
+- attachment metadata collection into meeting records
+- attachment section in TXT and HTML exports
+- Attachment Index dashboard across saved records
+- current attachment CSV export
+- saved attachment index CSV export
+
+Attachment References intentionally store pointers and notes, not binary files.
+
+### `features-v05-directory.js`
+
+Owns attendee preset and signature workflow:
+
+- browser-local Attendee Directory
+- directory JSON / CSV export
+- directory JSON import
+- add saved attendee preset to meeting
+- fill unsigned signature fields from attendee names
+- remove empty attendee rows
+- signature audit metadata on meeting records
+- signature audit section in TXT and HTML exports
+
+Directory entries intentionally do not store signatures.
+
+### Stylesheets
+
+- `style.css` owns the base layout, forms, cards, buttons, saved records, and print mode.
+- `features-v04.css` owns v0.4 panels.
+- `features-v05.css` owns v0.5 attachment, directory, and signature panels.
 
 ## Data Storage
 
@@ -108,6 +154,18 @@ Drafts are stored separately:
 methodzMeetingDraft
 ```
 
+Custom templates are stored under:
+
+```js
+methodzMeetingTemplates
+```
+
+Attendee Directory presets are stored under:
+
+```js
+methodzMeetingDirectory
+```
+
 The app also migrates the original prototype key:
 
 ```js
@@ -121,15 +179,25 @@ If old records exist and new records do not, old records are moved into the new 
 ```json
 {
   "id": "meeting-1234567890",
-  "schemaVersion": "0.3.0",
+  "schemaVersion": "0.5.0",
   "meetingNumber": "001",
   "title": "Partnership Operations Meeting",
   "status": "Scheduled",
-  "date": "2026-07-06",
+  "date": "2026-07-08",
   "location": "Office",
   "facilitator": "Name",
   "organizations": ["Canadian Soft Water Corporation"],
-  "attendees": [],
+  "attendees": [
+    {
+      "name": "Name",
+      "organizationRole": "Canadian Soft Water Corporation",
+      "attendanceType": "In Person",
+      "signature": "Name",
+      "signedAt": "ISO timestamp",
+      "signatureStatus": "Signed",
+      "signatureMethod": "Typed name"
+    }
+  ],
   "agenda": [],
   "notes": "",
   "decisions": "",
@@ -137,12 +205,38 @@ If old records exist and new records do not, old records are moved into the new 
     {
       "decision": "Use new meeting records workflow",
       "approvedBy": "Meeting group",
-      "date": "2026-07-06",
+      "date": "2026-07-08",
       "status": "Approved",
       "notes": "Applies to partner meetings first."
     }
   ],
   "tasks": [],
+  "attachments": [
+    {
+      "id": "attachment-123",
+      "label": "Install photo set",
+      "type": "Photo",
+      "location": "Drive / CSW / Installs / 2026-07-08",
+      "date": "2026-07-08",
+      "addedBy": "Name",
+      "notes": "Shows finished setup."
+    }
+  ],
+  "attachmentSummary": {
+    "total": 1,
+    "byType": {
+      "Photo": 1
+    }
+  },
+  "signatureAudit": {
+    "totalAttendees": 1,
+    "namedAttendees": 1,
+    "signedAttendees": 1,
+    "unsignedNamedAttendees": 0,
+    "completed": true,
+    "generatedAt": "ISO timestamp"
+  },
+  "directorySnapshot": [],
   "summary": "",
   "validation": [],
   "createdAt": "ISO timestamp",
@@ -161,6 +255,8 @@ If old records exist and new records do not, old records are moved into the new 
 - Beginner-editable code.
 - Mobile-first usability.
 - Modular growth before large rewrites.
+- Store references before storing large files.
+- Preserve signatures as meeting-specific facts, not reusable presets.
 
 ## Future Cloud Path
 
@@ -178,7 +274,18 @@ recordsRepository = {
 }
 ```
 
-The first adapter is localStorage. Later adapters can use Firebase, Supabase, a Methodz API, or CRM webhooks.
+Future attachment boundary:
+
+```js
+attachmentRepository = {
+  listForRecord(recordId),
+  saveReference(recordId, reference),
+  uploadFile(recordId, file),
+  resolveLocation(referenceId)
+}
+```
+
+The first adapter is localStorage. Later adapters can use Firebase, Supabase, a Methodz API, CRM webhooks, or Drive-style storage.
 
 ## Deployment
 
