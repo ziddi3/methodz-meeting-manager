@@ -28,6 +28,7 @@ methodz-meeting-manager/
 ├── features-v04-records.js         Import preview, archive filters, task dashboard, and saved details
 ├── features-v05-attachments.js     Attachment references and attachment index dashboard
 ├── features-v05-directory.js       Attendee directory, signature helpers, and signature audit data
+├── features-v05-startup.js         Startup helper for v0.5 draft restoration and dashboard refresh
 ├── PROJECT.md                      Product specification and build rules
 ├── README.md                       Setup and usage guide
 └── .github/
@@ -60,6 +61,7 @@ methodz-meeting-manager/
 - Meeting summary
 - Record Readiness Review panel
 - Auto-saved draft
+- v0.5 draft restoration for attachment references
 - Saved meeting archive using browser `localStorage`
 - Search saved meeting records
 - Filter saved records by status and organization / representative
@@ -200,6 +202,7 @@ Version 0.5 continues the modular enhancement pattern:
 
 - `features-v05-attachments.js` owns attachment references and the saved-record attachment index.
 - `features-v05-directory.js` owns the attendee directory, signature helpers, and signature audit data.
+- `features-v05-startup.js` restores v0.5 draft attachment data after the core has loaded.
 - `features-v05.css` owns v0.5 visual styling.
 
 The core remains static, offline-first, and dependency-free.
