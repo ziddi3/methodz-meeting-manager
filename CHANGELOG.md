@@ -6,6 +6,7 @@
 
 - `features-v05-attachments.js` for attachment references and a saved-record attachment index.
 - `features-v05-directory.js` for attendee directory presets, signature helpers, and signature audit metadata.
+- `features-v05-startup.js` for v0.5 draft restoration and dashboard refresh after startup.
 - `features-v05.css` for attachment, directory, and signature panel styling.
 - Browser-local Attendee Directory with JSON and CSV export.
 - Attendee Directory JSON import.
