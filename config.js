@@ -4,12 +4,16 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.5.0",
+  schemaVersion: "0.6.0",
   storageKeys: {
     records: "methodzMeetingRecords",
     draft: "methodzMeetingDraft",
     templates: "methodzMeetingTemplates",
-    directory: "methodzMeetingDirectory"
+    directory: "methodzMeetingDirectory",
+    numbering: "methodzMeetingNumbering",
+    organizationPresets: "methodzOrganizationPresets",
+    syncQueue: "methodzSyncQueue",
+    syncLastExport: "methodzSyncLastExport"
   },
   brand: {
     appName: "Methodz Meeting Manager",
@@ -42,10 +46,38 @@ window.METHODZ_MEETING_CONFIG = {
     "Sole Proprietor / Partner",
     "Guest / Other"
   ],
+  organizationPresets: [
+    {
+      id: "csw-method-hvac",
+      label: "CSW + Method HVAC",
+      organizations: ["Canadian Soft Water Corporation", "Method HVAC Inc."]
+    },
+    {
+      id: "csw-only",
+      label: "Canadian Soft Water Only",
+      organizations: ["Canadian Soft Water Corporation"]
+    },
+    {
+      id: "method-hvac-only",
+      label: "Method HVAC Only",
+      organizations: ["Method HVAC Inc."]
+    },
+    {
+      id: "partner-guest-review",
+      label: "Partner / Guest Review",
+      organizations: ["Sole Proprietor / Partner", "Guest / Other"]
+    }
+  ],
   attendanceTypes: ["In Person", "Remote", "Phone"],
   priorities: ["Normal", "Low", "High", "Critical"],
   taskStatuses: ["Pending", "In Progress", "Completed"],
   meetingStatuses: ["Scheduled", "In Progress", "Completed", "Archived"],
+  meetingNumbering: {
+    prefix: "",
+    padding: 3,
+    nextNumber: null,
+    includeYear: false
+  },
   attachmentTypes: [
     "Photo",
     "Quote",
