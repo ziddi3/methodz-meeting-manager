@@ -1,0 +1,81 @@
+/* Methodz Meeting Manager v0.6 styles. */
+
+.v06-card {
+  border-left: 5px solid #3d6f8f;
+}
+
+.numbering-card,
+.duplicate-review-card,
+.sync-readiness-card {
+  background: #fbfdff;
+}
+
+.numbering-preview {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #b8d2e6;
+  background: #edf7ff;
+  color: #173b52;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.inline-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+
+.inline-check input {
+  width: auto;
+  margin-top: 0;
+}
+
+.organization-preset-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fbfbfb;
+}
+
+.duplicate-group {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #c9d8e6;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.duplicate-group h3 {
+  margin-top: 0;
+}
+
+.sync-readiness-card .helper-text,
+.duplicate-review-card .helper-text {
+  max-width: 760px;
+}
+
+@media (max-width: 720px) {
+  .numbering-preview {
+    width: 100%;
+    text-align: center;
+  }
+
+  .organization-preset-panel .button-row,
+  .numbering-card .button-row,
+  .duplicate-review-card .button-row,
+  .sync-readiness-card .button-row {
+    width: 100%;
+  }
+}
+
+@media print {
+  #numberingSettingsPanel,
+  #organizationPresetPanel,
+  #duplicateReviewPanelV06,
+  #syncReadinessPanelV06 {
+    display: none !important;
+  }
+}
