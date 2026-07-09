@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- `features-v06-settings.js` for meeting numbering settings and organization presets.
+- `features-v06-governance.js` for duplicate record review, local sync queueing, and sync package export.
+- `features-v06.css` for v0.6 panel styling.
+- Browser-local meeting numbering settings with optional prefix, year, padding, and next sequence number.
+- Default organization presets from `config.js`.
+- Browser-local custom organization presets with JSON export/import.
+- Duplicate Record Review across saved records.
+- Duplicate report JSON export.
+- Local Sync Readiness panel.
+- Local sync queue stub for future cloud adapters.
+- Sync package JSON export containing records, duplicate review output, queue metadata, numbering settings, organization presets, attendee directory, and custom templates.
+
+### Changed
+
+- Bumped configuration schema to `0.6.0`.
+- Added `methodzMeetingNumbering`, `methodzOrganizationPresets`, `methodzSyncQueue`, and `methodzSyncLastExport` storage keys.
+- Added default organization presets and meeting numbering defaults to `config.js`.
+- Updated `meeting.html` to load the v0.6 CSS and JavaScript modules.
+- Updated README and added v0.6 notes/tests.
+
+### Notes
+
+- Sync readiness is export-only. It does not send data to a cloud service.
+- Duplicate Review is advisory. It opens records for review but does not merge or delete records automatically.
+- The app remains static, offline-first, dependency-free, and deployable without a build step.
+
 ## 0.5.0
 
 ### Added
