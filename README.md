@@ -1,182 +1,153 @@
 # Methodz Meeting Manager
 
-One place for Methodz-aligned meetings, group discussions, decisions, attendance sign-off, evidence references, and follow-up tasks.
-
-This repository contains an offline-first meeting manager for Canadian Soft Water Corporation, Method HVAC Inc., and future partner workflows connected through the Methodz brand ecosystem.
+Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC Inc., and future partner workflows connected through the Methodz brand ecosystem.
 
 > Methodz is treated in this app as a shared brand identity and operating ecosystem, not as a separate company.
 
 ## Current Version
 
-**Version:** 0.5.0 attachment and directory build
+**Version:** 0.6.0 numbering, duplicate review, and sync-readiness build
 
-The application is intentionally simple: static HTML, CSS, and vanilla JavaScript. It can run by opening `meeting.html` directly in a browser.
+The app is intentionally static: HTML, CSS, vanilla JavaScript, and browser `localStorage`. It can run by opening `meeting.html` directly in a browser.
 
-## Files
+## Main Files
 
 ```text
-methodz-meeting-manager/
-├── meeting.html                    Main application page
-├── style.css                       Responsive interface and print styles
-├── features-v04.css                Styles for v0.4 template, archive, and dashboard panels
-├── features-v05.css                Styles for v0.5 attachments, attendee directory, and signature controls
-├── app.js                          Offline app logic
-├── config.js                       Organizations, agenda items, templates, labels, attachment types, and storage keys
-├── features-v03.js                 Validation, minutes, task filters, and structured decisions
-├── features-v03-startup.js         Startup helpers for v0.3 saved cards and decision drafts
-├── features-v04-templates.js       Meeting templates and custom agenda items
-├── features-v04-records.js         Import preview, archive filters, task dashboard, and saved details
-├── features-v05-attachments.js     Attachment references and attachment index dashboard
-├── features-v05-directory.js       Attendee directory, signature helpers, and signature audit data
-├── features-v05-startup.js         Startup helper for v0.5 draft restoration and dashboard refresh
-├── PROJECT.md                      Product specification and build rules
-├── README.md                       Setup and usage guide
-└── .github/
-    └── copilot-instructions.md     AI build rules for GitHub Copilot
+meeting.html
+style.css
+features-v04.css
+features-v05.css
+features-v06.css
+config.js
+app.js
+features-v03.js
+features-v03-startup.js
+features-v04-templates.js
+features-v04-records.js
+features-v05-attachments.js
+features-v05-directory.js
+features-v05-startup.js
+features-v06-settings.js
+features-v06-governance.js
+PROJECT.md
+CHANGELOG.md
+docs/
 ```
 
-## Features
+## What It Does
 
-- Offline-first meeting records
-- Configurable organizations and agenda groups
-- Configurable meeting templates
-- Browser-local custom meeting templates
-- Custom one-off agenda items
-- Meeting status tracking
-- Organizations / Representatives Present checklist
-- Attendance sign-on with typed digital signatures
-- Attendee Directory for repeat attendee presets
-- Signature Controls for filling agreed typed signatures and removing blank attendee rows
-- Signature Audit stored with meeting records
-- Agenda checklist grouped by category
-- Discussion notes
-- Free-form decisions field
-- Structured Decision Log with confirmed-by, date, status, and notes
-- Follow-up tasks using **Assigned To** instead of **Owner**
-- Task priority, target date, and progress fields
-- Task filtering by text, progress, and priority
-- Open Task Dashboard across saved meetings
-- Attachment References for photos, quotes, invoices, drawings, CRM references, and evidence locations
-- Attachment Index across saved meetings
-- Meeting summary
-- Record Readiness Review panel
-- Auto-saved draft
-- v0.5 draft restoration for attachment references
-- Saved meeting archive using browser `localStorage`
-- Search saved meeting records
-- Filter saved records by status and organization / representative
-- Open / edit saved records
-- Readable saved-record detail view
-- Delete saved records with confirmation
+- Creates offline meeting records
+- Tracks meeting title, date, status, location, and facilitator
+- Uses **Organizations / Representatives Present** wording
+- Keeps Methodz as a brand identity, not a company label
+- Supports attendance sign-on with typed signatures
+- Uses **Assigned To** for follow-up tasks
+- Stores records locally in the browser
+- Saves drafts automatically
+- Opens and edits saved records
+- Exports TXT, JSON, HTML, CSV, and all-record JSON backups
+- Prints / saves PDF through the browser print dialog
+
+## Current Feature Layers
+
+### v0.3 workflow layer
+
+- Structured Decision Log
+- Record Readiness Review
+- Task filters
 - Meeting Minutes Preview
-- Download current meeting as TXT
-- Download current meeting as JSON
-- Export current or saved meeting as polished HTML minutes
-- Export open tasks as CSV
-- Export current attachment references as CSV
-- Export saved attachment index as CSV
-- Export attendee directory as JSON or CSV
-- Export all saved records as JSON
-- Safer import preview before merging JSON records
-- Import saved records from JSON after preview
-- Import attendee directory presets from JSON
-- Print / save PDF through the browser print dialog
-- Mobile-friendly layout
+- HTML meeting minutes export
+
+### v0.4 template and archive layer
+
+- Meeting templates
+- Browser-local custom templates
+- Custom agenda items
+- Safer import preview
+- Saved-record filters
+- Open Task Dashboard
+- Saved-record detail panel
+
+### v0.5 attachment and directory layer
+
+- Attachment References
+- Attachment Index
+- Attendee Directory
+- Signature Controls
+- Signature Audit
+
+Attachment References store locations and notes only. They do not store private binary files in local storage.
+
+### v0.6 governance layer
+
+- Meeting Numbering Settings
+- Organization Presets
+- Browser-local custom organization presets
+- Duplicate Record Review
+- Duplicate report export
+- Local Sync Readiness
+- Local sync queue metadata
+- Sync package JSON export
+
+The v0.6 sync package is export-only. It does not send data anywhere yet.
 
 ## How to Use
 
-### Option 1: Open directly
-
 1. Download or clone the repository.
-2. Open `meeting.html` in Chrome, Edge, Firefox, or Safari.
-3. Apply a template if helpful.
-4. Fill out the meeting information.
-5. Add attendees manually or from the Attendee Directory.
-6. Add attachment references for supporting files, evidence, or CRM links.
-7. Use **Record Readiness Review** to check the record.
-8. Click **Save Record**.
-
-### Option 2: Use GitHub Pages later
-
-This app is static, so it can be deployed to GitHub Pages, Vercel, Netlify, Render static sites, or any basic web host.
-
-No build command is required.
+2. Open `meeting.html` in a browser.
+3. Apply a meeting template if helpful.
+4. Adjust meeting numbering only if the next number needs to change.
+5. Apply an organization preset if helpful.
+6. Add attendees, decisions, tasks, summary, and attachment references.
+7. Use Record Readiness Review before saving.
+8. Save the record.
+9. Export all records as JSON after important meetings.
+10. Use Duplicate Record Review before importing or syncing record sets.
 
 ## Local Storage Warning
 
-Saved records live in the browser's local storage. That means:
+Saved records live in the browser and device where they were created. Clearing browser data can delete them.
 
-- Records are stored on the specific device and browser used.
-- Clearing browser data can delete records.
-- Exporting all records as JSON is the backup strategy until cloud sync exists.
-- Attachment References store locations and notes only. They do not store the actual files.
-- Attendee Directory presets are local to the browser until exported.
+Recommended habit: after important meetings, use **Export All JSON** and save the backup somewhere safe.
 
-Recommended habit: after important meetings, click **Export All JSON** and save the file somewhere safe.
+## Meeting Numbering
 
-## Templates
+Default numbering remains simple:
 
-Default templates include:
+```text
+001
+002
+003
+```
 
-- Operations Review
-- Marketing & Branding Review
-- CRM & Workflow Build
+Optional settings can add a prefix, year, padding, and manual next sequence number. Numbering changes affect new records only.
 
-Templates can prefill meeting title, status, organizations, notes prompts, summary prompts, and starter tasks. The app can also save the current form as a local template and export/import those templates as JSON.
+## Organization Presets
 
-## Attendee Directory
+Default presets live in `config.js`. Custom presets are saved locally in the browser and can be exported/imported as JSON.
 
-Version 0.5 adds a browser-local Attendee Directory. It is meant for repeat participants and saves:
+## Duplicate Review
 
-- name
-- organization / role
-- attendance type
-- notes
+Duplicate Review scans saved records for likely duplicates using:
 
-Typed signatures are **not** saved into directory presets. Signatures stay meeting-specific.
+- same normalized title and date
+- same date and attendee list
 
-## Attachment References
+It is advisory only. It does not merge or delete records automatically.
 
-Version 0.5 adds Attachment References. These are structured pointers to external files or evidence, such as:
+## Local Sync Readiness
 
-- install photos
-- quotes
-- invoices
-- drawings
-- logo files
-- customer communication
-- CRM references
+The sync package export includes:
 
-The app stores a reference name, type, location, date, added-by, and notes. It does not store binary files in local storage.
+- records
+- duplicate review output
+- sync queue
+- numbering settings
+- organization presets
+- attendee directory
+- custom templates
 
-## Data Export
-
-Single meeting records can be downloaded as:
-
-- `.txt` for readable meeting notes
-- `.json` for structured backups or future sync
-- `.html` for polished meeting minutes that can be opened, printed, or shared
-
-Open tasks can be exported as `.csv` from the Open Task Dashboard.
-
-Attachment references can be exported as `.csv` from the current meeting or from the saved-record Attachment Index.
-
-The Attendee Directory can be exported as `.json` or `.csv`.
-
-All records can be exported as one JSON file using **Export All JSON**.
-
-## Data Import
-
-Use **Choose Import JSON** to preview either:
-
-- an array of meeting records, or
-- an exported object containing a `records` array
-
-The preview shows how many records are valid, new, updates, or skipped. Nothing is merged until **Merge Import** is clicked.
-
-Existing records with the same `id` are updated. New records are added.
-
-The Attendee Directory can also import a JSON file containing either an array or a `directory` array.
+This creates a clean adapter boundary for future Firebase, Supabase, CRM, Drive, or Methodz API sync.
 
 ## Configuration
 
@@ -184,28 +155,16 @@ Edit `config.js` to change:
 
 - app title and subtitle
 - logo paths
-- default organizations
+- organizations
+- organization presets
+- meeting numbering defaults
 - meeting statuses
 - meeting templates
 - attendance types
-- task priorities
-- task statuses
+- task priorities and statuses
 - attachment types
-- agenda categories and checklist items
+- agenda categories
 - storage keys
-
-Keep `config.js` plain and dependency-free so the app remains portable.
-
-## Version 0.5 Notes
-
-Version 0.5 continues the modular enhancement pattern:
-
-- `features-v05-attachments.js` owns attachment references and the saved-record attachment index.
-- `features-v05-directory.js` owns the attendee directory, signature helpers, and signature audit data.
-- `features-v05-startup.js` restores v0.5 draft attachment data after the core has loaded.
-- `features-v05.css` owns v0.5 visual styling.
-
-The core remains static, offline-first, and dependency-free.
 
 ## Development Rules
 
@@ -216,29 +175,26 @@ The core remains static, offline-first, and dependency-free.
 - Use **Assigned To**.
 - Use **Organizations / Representatives Present**.
 - Do not imply Methodz is a registered company.
-- Keep records exportable before adding any cloud sync.
-- Store attachment references, not large private files, until a proper storage adapter exists.
+- Keep records exportable before adding live cloud sync.
 
 ## Roadmap
 
-### Version 0.6
+### v0.7
 
-- Meeting numbering settings
-- Saved-record duplicate detection
 - Dedicated archive detail route / page
-- Cloud-sync adapter stub
-- Organization presets
 - Stronger print layout for attachment and signature audit sections
+- Cloud adapter interface implementation
+- More detailed organization / representative management
 
-### Version 1.0
+### v1.0
 
 - Full meeting archive view
-- Role-aware meeting records
+- Role-aware records
 - Improved signature controls
 - Cloud-sync-ready data adapter
 - Attachment storage adapter boundary
 
-### Version 2.0
+### v2.0
 
 - Firebase or Supabase sync
 - User accounts
@@ -247,7 +203,3 @@ The core remains static, offline-first, and dependency-free.
 - Calendar integration
 - CRM integration
 - Audio or video recording workflow
-
-## Status
-
-The app is now a working static prototype with real local saving, search, export, import preview, editing, structured decisions, task filtering, validation review, HTML meeting minutes export, reusable templates, custom agenda items, archive filters, an open-task dashboard, attendee directory, signature audit, attachment references, and attachment index exports.
