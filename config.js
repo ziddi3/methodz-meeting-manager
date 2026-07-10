@@ -4,7 +4,7 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.6.0",
+  schemaVersion: "0.7.0",
   storageKeys: {
     records: "methodzMeetingRecords",
     draft: "methodzMeetingDraft",
@@ -12,6 +12,7 @@ window.METHODZ_MEETING_CONFIG = {
     directory: "methodzMeetingDirectory",
     numbering: "methodzMeetingNumbering",
     organizationPresets: "methodzOrganizationPresets",
+    organizationDirectory: "methodzOrganizationDirectory",
     syncQueue: "methodzSyncQueue",
     syncLastExport: "methodzSyncLastExport"
   },
@@ -44,6 +45,15 @@ window.METHODZ_MEETING_CONFIG = {
     "Canadian Soft Water Corporation",
     "Method HVAC Inc.",
     "Sole Proprietor / Partner",
+    "Guest / Other"
+  ],
+  organizationTypes: [
+    "Corporation",
+    "Sole Proprietor",
+    "Partner Organization",
+    "Contractor",
+    "Supplier",
+    "Customer Representative",
     "Guest / Other"
   ],
   organizationPresets: [
