@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Printable archive detail view for Methodz Meeting Manager records." />
+  <title>Meeting Archive | Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="features-v07.css" />
+</head>
+<body class="archive-body">
+  <header class="app-header archive-header">
+    <p class="eyebrow">Methodz Meeting Manager</p>
+    <h1 id="archivePageTitle">Meeting Archive</h1>
+    <p id="archivePageSubtitle">Offline record detail and print view</p>
+  </header>
+
+  <main class="archive-shell">
+    <nav class="card archive-toolbar" aria-label="Archive actions">
+      <a class="button-like archive-link-button" href="meeting.html">Back to Meeting Manager</a>
+      <button id="archiveEditButton" type="button" onclick="editArchiveRecordV07()">Edit Record</button>
+      <button type="button" onclick="window.print()">Print / Save PDF</button>
+      <button type="button" onclick="downloadArchiveRecordV07()">Download JSON</button>
+    </nav>
+
+    <section id="archiveLoading" class="card">
+      <h2>Loading Meeting Record</h2>
+      <p>Reading the record from the active data adapter.</p>
+    </section>
+
+    <section id="archiveError" class="card archive-error" hidden>
+      <h2>Record Not Available</h2>
+      <p id="archiveErrorMessage">The requested record could not be found.</p>
+      <p class="helper-text">Open the record from the Saved Meeting Records section to stage a same-session fallback copy.</p>
+    </section>
+
+    <article id="archiveRecord" hidden>
+      <section class="card archive-title-card">
+        <div>
+          <p class="eyebrow">Archived Meeting Record</p>
+          <h2 id="archiveMeetingTitle">Untitled Meeting</h2>
+          <p id="archiveMeetingMeta"></p>
+        </div>
+        <div class="status-pill" id="archiveStatus">Unknown</div>
+      </section>
+
+      <section class="card">
+        <h2>Meeting Information</h2>
+        <dl class="archive-definition-grid" id="archiveMeetingInformation"></dl>
+      </section>
+
+      <section class="card">
+        <h2>Organizations / Representatives Present</h2>
+        <div id="archiveOrganizations"></div>
+      </section>
+
+      <section class="card">
+        <h2>Attendance and Signature Audit</h2>
+        <div id="archiveAttendance"></div>
+        <div id="archiveSignatureAudit" class="archive-audit-block"></div>
+      </section>
+
+      <section class="card">
+        <h2>Agenda</h2>
+        <div id="archiveAgenda"></div>
+      </section>
+
+      <section class="card">
+        <h2>Discussion Notes</h2>
+        <div id="archiveNotes" class="archive-prose"></div>
+      </section>
+
+      <section class="card">
+        <h2>Decisions</h2>
+        <div id="archiveDecisions"></div>
+      </section>
+
+      <section class="card">
+        <h2>Follow-Up Tasks</h2>
+        <div id="archiveTasks"></div>
+      </section>
+
+      <section class="card">
+        <h2>Attachment References</h2>
+        <div id="archiveAttachments"></div>
+      </section>
+
+      <section class="card">
+        <h2>Meeting Summary</h2>
+        <div id="archiveSummary" class="archive-prose"></div>
+      </section>
+
+      <section class="card archive-record-audit">
+        <h2>Record Audit</h2>
+        <dl class="archive-definition-grid" id="archiveRecordAudit"></dl>
+      </section>
+    </article>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="data-adapter.js"></script>
+  <script src="archive.js"></script>
+</body>
+</html>
