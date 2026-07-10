@@ -1,249 +1,281 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the base workflow simple, inspectable, and deployable before adding cloud services.
+Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the workflow inspectable and deployable while creating clean boundaries for future cloud providers.
+
+## Entry Points
+
+```text
+meeting.html   Meeting creation, editing, dashboards, settings, and exports
+archive.html   Dedicated record detail, archive review, and print surface
+```
+
+No server or build command is required.
 
 ## Runtime Model
 
 ```text
 meeting.html
-  ↓ loads
-config.js
-  ↓ supplies settings to
-app.js
-  ↓ renders the offline core and stores records in
-browser localStorage
-  ↓ extended by
-features-v03.js
-  ↓ adds validation, minutes, task filters, and structured decisions
-features-v04-templates.js + features-v04-records.js
-  ↓ add templates, import preview, archive filters, details, and task dashboards
-features-v05-attachments.js + features-v05-directory.js
-  ↓ add attachment references, attendee directory, signature controls, and audit metadata
+  ├─ config.js
+  ├─ data-adapter.js
+  ├─ app.js
+  ├─ features-v03.js
+  ├─ features-v03-startup.js
+  ├─ features-v04-templates.js
+  ├─ features-v04-records.js
+  ├─ features-v05-attachments.js
+  ├─ features-v05-directory.js
+  ├─ features-v05-startup.js
+  ├─ features-v06-settings.js
+  ├─ features-v06-governance.js
+  ├─ features-v07-organizations.js
+  └─ features-v07-navigation.js
+
+archive.html
+  ├─ config.js
+  ├─ data-adapter.js
+  └─ archive.js
 ```
 
-No server is required for the current version.
+Feature modules extend the stable core through browser globals and DOM injection. This keeps the project dependency-free while allowing incremental releases.
 
-## Core Files
-
-### `meeting.html`
-
-Owns the application shell and major sections:
-
-- header
-- quick actions
-- meeting information
-- organizations / representatives present
-- attendance
-- agenda
-- notes
-- decisions
-- tasks
-- summary
-- saved records
-
-Feature modules inject additional panels around that shell instead of requiring a build system.
+## Core Responsibilities
 
 ### `config.js`
 
-Owns editable business defaults:
+Owns editable defaults:
 
 - brand labels
 - logo paths
-- organizations
+- organizations and organization types
+- organization presets
 - agenda groups
-- meeting statuses
 - meeting templates
+- meeting statuses
 - attendance types
-- task priorities
-- task statuses
+- task priorities and statuses
 - attachment types
+- numbering defaults
 - storage keys
 
-This keeps business wording out of the core app logic.
+### `data-adapter.js`
+
+Owns the record-storage interface.
+
+Public manager:
+
+```js
+window.MethodzMeetingData
+```
+
+Default provider:
+
+```js
+LocalStorageMeetingAdapter
+```
+
+Required provider operations:
+
+```js
+listRecords()
+getRecord(recordId)
+replaceRecords(records)
+upsertRecord(record)
+deleteRecord(recordId)
+healthCheck()
+```
+
+Optional provider operation:
+
+```js
+createExportEnvelope(extra)
+```
+
+The v0.7 main app redirects global `getRecords()` and `setRecords()` through this adapter.
 
 ### `app.js`
 
-Owns the stable offline core:
+Owns the stable meeting core:
 
 - startup rendering
-- local storage migration
+- legacy storage migration
 - meeting collection
 - base validation
-- save / edit flow
-- draft autosave
-- saved record search
-- record import / export
-- print / download actions
+- save and edit flow
+- draft auto-save
+- saved-record search
+- import and export
+- print and download actions
 
-### `features-v03.js`
+### `archive.js`
 
-Owns the v0.3 workflow layer:
+Owns the dedicated read-only archive page:
 
-- structured decision log
-- record readiness review
-- task filtering
-- meeting minutes preview
-- polished HTML export
-- saved-record HTML export button injection
-- TXT export extension for structured decisions and validation checks
+- record resolution through the active adapter
+- same-session fallback handling
+- current unsaved preview
+- complete record rendering
+- print and JSON download
+- edit handoff back to `meeting.html`
 
-### `features-v04-templates.js`
+## Feature Layers
 
-Owns template workflow:
+### v0.3
 
-- default meeting templates from `config.js`
-- browser-local custom templates
-- template export/import
-- custom agenda items
+- structured decisions
+- readiness review
+- task filters
+- minutes preview
+- HTML export
 
-### `features-v04-records.js`
+### v0.4
 
-Owns archive workflow:
-
-- safer record import preview
-- saved-record filters
+- default and custom templates
+- import preview
+- archive filters
 - open-task dashboard
-- open-task CSV export
-- readable saved-record details panel
+- record details
 
-### `features-v05-attachments.js`
+### v0.5
 
-Owns attachment reference workflow:
+- attachment references
+- attachment index
+- attendee directory
+- signature helpers
+- signature audit
 
-- Attachment References panel on the current meeting
-- attachment metadata collection into meeting records
-- attachment section in TXT and HTML exports
-- Attachment Index dashboard across saved records
-- current attachment CSV export
-- saved attachment index CSV export
+### v0.6
 
-Attachment References intentionally store pointers and notes, not binary files.
+- numbering settings
+- organization presets
+- duplicate review
+- sync queue
+- sync package export
 
-### `features-v05-directory.js`
+### v0.7
 
-Owns attendee preset and signature workflow:
+- dedicated archive page
+- data adapter contract
+- organization / representative directory
+- meeting-time organization snapshots
+- stronger print layout
 
-- browser-local Attendee Directory
-- directory JSON / CSV export
-- directory JSON import
-- add saved attendee preset to meeting
-- fill unsigned signature fields from attendee names
-- remove empty attendee rows
-- signature audit metadata on meeting records
-- signature audit section in TXT and HTML exports
+## Storage Keys
 
-Directory entries intentionally do not store signatures.
-
-### Stylesheets
-
-- `style.css` owns the base layout, forms, cards, buttons, saved records, and print mode.
-- `features-v04.css` owns v0.4 panels.
-- `features-v05.css` owns v0.5 attachment, directory, and signature panels.
-
-## Data Storage
-
-Records are stored in browser `localStorage` under the key from `config.js`:
-
-```js
+```text
 methodzMeetingRecords
-```
-
-Drafts are stored separately:
-
-```js
 methodzMeetingDraft
-```
-
-Custom templates are stored under:
-
-```js
 methodzMeetingTemplates
-```
-
-Attendee Directory presets are stored under:
-
-```js
 methodzMeetingDirectory
+methodzMeetingNumbering
+methodzOrganizationPresets
+methodzOrganizationDirectory
+methodzSyncQueue
+methodzSyncLastExport
 ```
 
-The app also migrates the original prototype key:
-
-```js
-meetingRecords
-```
-
-If old records exist and new records do not, old records are moved into the new key.
+The original prototype key `meetingRecords` is migrated when needed.
 
 ## Record Shape
+
+The schema is additive. Optional feature layers preserve old records and add fields only when available.
 
 ```json
 {
   "id": "meeting-1234567890",
-  "schemaVersion": "0.5.0",
+  "schemaVersion": "0.7.0",
   "meetingNumber": "001",
   "title": "Partnership Operations Meeting",
   "status": "Scheduled",
-  "date": "2026-07-08",
+  "date": "2026-07-10",
   "location": "Office",
   "facilitator": "Name",
   "organizations": ["Canadian Soft Water Corporation"],
-  "attendees": [
+  "organizationDetails": [
     {
-      "name": "Name",
-      "organizationRole": "Canadian Soft Water Corporation",
-      "attendanceType": "In Person",
-      "signature": "Name",
-      "signedAt": "ISO timestamp",
-      "signatureStatus": "Signed",
-      "signatureMethod": "Typed name"
+      "id": "organization-123",
+      "name": "Canadian Soft Water Corporation",
+      "type": "Corporation",
+      "primaryRepresentative": "Name",
+      "contact": "Contact detail",
+      "notes": "Meeting-time snapshot"
     }
   ],
+  "attendees": [],
   "agenda": [],
   "notes": "",
   "decisions": "",
-  "decisionsList": [
-    {
-      "decision": "Use new meeting records workflow",
-      "approvedBy": "Meeting group",
-      "date": "2026-07-08",
-      "status": "Approved",
-      "notes": "Applies to partner meetings first."
-    }
-  ],
+  "decisionsList": [],
   "tasks": [],
-  "attachments": [
-    {
-      "id": "attachment-123",
-      "label": "Install photo set",
-      "type": "Photo",
-      "location": "Drive / CSW / Installs / 2026-07-08",
-      "date": "2026-07-08",
-      "addedBy": "Name",
-      "notes": "Shows finished setup."
-    }
-  ],
-  "attachmentSummary": {
-    "total": 1,
-    "byType": {
-      "Photo": 1
-    }
-  },
-  "signatureAudit": {
-    "totalAttendees": 1,
-    "namedAttendees": 1,
-    "signedAttendees": 1,
-    "unsignedNamedAttendees": 0,
-    "completed": true,
-    "generatedAt": "ISO timestamp"
-  },
+  "attachments": [],
+  "signatureAudit": {},
   "directorySnapshot": [],
   "summary": "",
   "validation": [],
+  "numbering": {},
+  "syncMeta": null,
   "createdAt": "ISO timestamp",
   "updatedAt": "ISO timestamp",
   "savedAt": "ISO timestamp"
 }
 ```
+
+## Organization Snapshot Rule
+
+The Organization / Representative Directory is mutable local reference data.
+
+When an entry is selected for a meeting, relevant details are copied into `organizationDetails`. Old meeting records therefore retain the original meeting context even if the directory changes later.
+
+## Archive Navigation
+
+Saved record:
+
+```text
+record card
+  → archive.html?id=<record-id>
+  → active adapter
+  → complete archive render
+```
+
+Unsaved preview:
+
+```text
+current form
+  → collectMeetingData()
+  → sessionStorage preview
+  → archive.html?preview=current
+```
+
+Edit handoff:
+
+```text
+archive.html
+  → sessionStorage record ID
+  → meeting.html
+  → loadRecordForEditing(recordId)
+```
+
+## Print Strategy
+
+The archive page is the primary complete-record print surface.
+
+Print mode:
+
+- hides interactive controls
+- keeps attendance and signature audit visible
+- keeps task and attachment tables visible
+- avoids page breaks inside logical cards where possible
+- includes record audit metadata
+
+## Future Cloud Path
+
+A future provider can register through:
+
+```js
+window.MethodzMeetingData.registerAdapter(provider);
+window.MethodzMeetingData.useAdapter(provider.id);
+```
+
+The current contract is synchronous because the existing offline core is synchronous. A future v1.0 cloud provider layer should add asynchronous compatibility without forcing the form and archive renderer to know provider details.
 
 ## Design Principles
 
@@ -252,49 +284,23 @@ If old records exist and new records do not, old records are moved into the new 
 - Configuration before hardcoding.
 - Simple files before frameworks.
 - Human-readable records.
-- Beginner-editable code.
 - Mobile-first usability.
-- Modular growth before large rewrites.
-- Store references before storing large files.
-- Preserve signatures as meeting-specific facts, not reusable presets.
-
-## Future Cloud Path
-
-When the local workflow is proven, add a storage adapter instead of rewriting the UI.
-
-Proposed adapter boundary:
-
-```js
-recordsRepository = {
-  list(),
-  save(record),
-  delete(recordId),
-  exportAll(),
-  importMany(records)
-}
-```
-
-Future attachment boundary:
-
-```js
-attachmentRepository = {
-  listForRecord(recordId),
-  saveReference(recordId, reference),
-  uploadFile(recordId, file),
-  resolveLocation(referenceId)
-}
-```
-
-The first adapter is localStorage. Later adapters can use Firebase, Supabase, a Methodz API, CRM webhooks, or Drive-style storage.
+- Additive schema changes.
+- Meeting-specific signatures.
+- Attachment references before binary storage.
+- Historical snapshots for mutable directory data.
+- Confirm destructive actions.
 
 ## Deployment
 
-The current app can deploy as static files to:
+Static deployment targets include:
 
 - GitHub Pages
-- Vercel
+- Cloudflare Pages
 - Netlify
-- Render static site
-- any regular web host
+- Vercel
+- Render static sites
+- ordinary web servers
+- local static servers
 
-No build command is required.
+Keep both HTML entry points and all referenced JavaScript, CSS, and asset paths together.
