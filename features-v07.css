@@ -1,0 +1,296 @@
+/* Methodz Meeting Manager v0.7 archive, adapter, and organization directory styles. */
+
+.v07-card,
+.organization-directory-panel {
+  border-top: 4px solid var(--accent);
+}
+
+.organization-directory-panel {
+  margin-top: 24px;
+  padding-top: 18px;
+}
+
+.directory-count,
+.adapter-badge {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #f5f5f5;
+}
+
+.adapter-badge.is-ready {
+  border-color: #3d7c4a;
+  background: #edf7ef;
+  color: #24592f;
+}
+
+.adapter-badge.has-error {
+  border-color: #9b2c2c;
+  background: #fff1f1;
+  color: #7d1e1e;
+}
+
+.compact-textarea {
+  min-height: 88px;
+}
+
+.organization-directory-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.organization-directory-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.organization-directory-entry p {
+  margin: 5px 0 0;
+}
+
+.archive-link-button {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.archive-body {
+  background: #ececec;
+}
+
+.archive-header {
+  text-align: left;
+}
+
+.archive-header .eyebrow {
+  margin-bottom: 4px;
+}
+
+.archive-shell {
+  max-width: 1180px;
+  margin: 20px auto;
+  padding: 10px;
+}
+
+.archive-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.archive-toolbar button,
+.archive-toolbar .button-like {
+  margin: 0;
+}
+
+.archive-title-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.archive-title-card h2 {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 6px;
+}
+
+.archive-definition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.archive-definition-grid > div {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.archive-definition-grid dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.archive-definition-grid dd {
+  margin: 5px 0 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.compact-definition-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.archive-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.archive-mini-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 14px;
+}
+
+.archive-mini-card p {
+  margin: 6px 0 0;
+}
+
+.archive-table-wrap {
+  overflow-x: auto;
+}
+
+.archive-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.archive-table th,
+.archive-table td {
+  vertical-align: top;
+}
+
+.archive-break-word {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 280px;
+}
+
+.archive-audit-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.archive-check-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.archive-check-list li {
+  display: flex;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.archive-check-list .is-complete {
+  color: #24592f;
+}
+
+.archive-check-list .is-open {
+  color: #5d4b16;
+}
+
+.archive-prose p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.archive-error {
+  border-left: 5px solid var(--danger);
+}
+
+@media (max-width: 720px) {
+  .organization-directory-entry,
+  .archive-title-card {
+    flex-direction: column;
+  }
+
+  .organization-directory-entry .button-row,
+  .archive-toolbar {
+    width: 100%;
+  }
+
+  .archive-toolbar button,
+  .archive-toolbar .button-like {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media print {
+  .archive-body {
+    background: white;
+  }
+
+  .archive-toolbar,
+  .organization-directory-panel,
+  .adapter-card,
+  #numberingSettingsPanel,
+  #organizationPresetPanel,
+  #duplicateReviewPanelV06,
+  #syncReadinessPanelV06,
+  #openTaskDashboard,
+  #attachmentIndexPanelV05,
+  .records-toolbar,
+  #savedRecords {
+    display: none !important;
+  }
+
+  .archive-shell {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .archive-header {
+    padding: 0 0 12px;
+    margin-bottom: 14px;
+  }
+
+  .archive-header .eyebrow {
+    color: black;
+  }
+
+  .archive-title-card,
+  .archive-mini-card,
+  .archive-definition-grid > div,
+  .attendee,
+  .decision-item,
+  .task,
+  .attachment-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .archive-table {
+    font-size: 10pt;
+  }
+
+  .archive-table th,
+  .archive-table td {
+    border: 1px solid #888888;
+    padding: 6px;
+  }
+
+  .archive-record-audit {
+    font-size: 9pt;
+  }
+
+  a {
+    color: black;
+    text-decoration: none;
+  }
+}
