@@ -1,151 +1,128 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+
+- `data-adapter.js` with a stable meeting-record adapter contract.
+- `archive.html` and `archive.js` for a dedicated saved-record detail and print page.
+- `features-v07-organizations.js` for a reusable Organization / Representative Directory.
+- `features-v07-navigation.js` for archive navigation, edit handoff, and adapter integration.
+- `features-v07.css` for archive, adapter, organization-directory, mobile, and print styling.
+- Saved-record **Archive Page** action.
+- Current unsaved meeting archive preview.
+- Edit handoff from the archive page back to the main meeting workspace.
+- Local adapter health checks and adapter snapshot export.
+- Organization directory JSON export/import.
+- Meeting-time `organizationDetails` snapshots.
+- Stronger print output for attendance, signatures, tasks, attachments, decisions, and record audit metadata.
+
+### Changed
+
+- Bumped configuration schema to `0.7.0`.
+- Added the `methodzOrganizationDirectory` storage key.
+- Added configurable organization types.
+- Routed the main record read/write functions through the active data adapter.
+- Updated `meeting.html` to load the v0.7 adapter, styles, and feature modules.
+- Updated README and architecture/testing documentation.
+
+### Notes
+
+- The default adapter still uses browser `localStorage`.
+- No meeting data is transmitted to a cloud service.
+- The archive page is the preferred complete-record print surface.
+- The app remains static, offline-first, dependency-free, and deployable without a build step.
+
 ## 0.6.0
 
 ### Added
 
-- `features-v06-settings.js` for meeting numbering settings and organization presets.
-- `features-v06-governance.js` for duplicate record review, local sync queueing, and sync package export.
-- `features-v06.css` for v0.6 panel styling.
-- Browser-local meeting numbering settings with optional prefix, year, padding, and next sequence number.
-- Default organization presets from `config.js`.
-- Browser-local custom organization presets with JSON export/import.
-- Duplicate Record Review across saved records.
-- Duplicate report JSON export.
+- Meeting Numbering Settings.
+- Organization Presets and browser-local custom presets.
+- Duplicate Record Review and report export.
 - Local Sync Readiness panel.
-- Local sync queue stub for future cloud adapters.
-- Sync package JSON export containing records, duplicate review output, queue metadata, numbering settings, organization presets, attendee directory, and custom templates.
+- Local sync queue metadata.
+- Sync package JSON export.
 
 ### Changed
 
 - Bumped configuration schema to `0.6.0`.
-- Added `methodzMeetingNumbering`, `methodzOrganizationPresets`, `methodzSyncQueue`, and `methodzSyncLastExport` storage keys.
-- Added default organization presets and meeting numbering defaults to `config.js`.
-- Updated `meeting.html` to load the v0.6 CSS and JavaScript modules.
-- Updated README and added v0.6 notes/tests.
+- Added numbering, organization-preset, sync-queue, and last-export storage keys.
 
 ### Notes
 
-- Sync readiness is export-only. It does not send data to a cloud service.
-- Duplicate Review is advisory. It opens records for review but does not merge or delete records automatically.
-- The app remains static, offline-first, dependency-free, and deployable without a build step.
+- Sync readiness is export-only.
+- Duplicate Review is advisory and does not merge or delete records automatically.
 
 ## 0.5.0
 
 ### Added
 
-- `features-v05-attachments.js` for attachment references and a saved-record attachment index.
-- `features-v05-directory.js` for attendee directory presets, signature helpers, and signature audit metadata.
-- `features-v05-startup.js` for v0.5 draft restoration and dashboard refresh after startup.
-- `features-v05.css` for attachment, directory, and signature panel styling.
-- Browser-local Attendee Directory with JSON and CSV export.
-- Attendee Directory JSON import.
-- Signature Controls for filling agreed typed signatures from attendee names.
-- Empty attendee-row cleanup helper.
-- Signature Audit stored on meeting records and included in TXT / HTML exports.
-- Attachment References for photos, quotes, invoices, drawings, brand assets, install notes, customer communication, CRM references, and other external evidence.
-- Attachment Index dashboard across saved records.
-- Current meeting attachment CSV export.
-- Saved-record attachment index CSV export.
+- Attachment References and cross-meeting Attachment Index.
+- Attendee Directory with JSON and CSV export/import.
+- Signature Controls and Signature Audit.
+- Attachment and signature sections in TXT and HTML exports.
 
 ### Changed
 
 - Bumped configuration schema to `0.5.0`.
-- Added `methodzMeetingDirectory` storage key.
-- Added configurable `attachmentTypes`.
-- Updated `meeting.html` to load the v0.5 CSS and JavaScript modules.
-- Updated README and documentation for v0.5 workflows.
+- Added the attendee-directory storage key and configurable attachment types.
 
 ### Notes
 
-- Attachment References intentionally store file locations and notes, not binary files.
-- Attendee Directory presets intentionally do not store signatures.
-- The app remains static, offline-first, dependency-free, and deployable without a build step.
+- Attachment References store pointers and notes, not binary files.
+- Attendee Directory presets do not store signatures.
 
 ## 0.4.0
 
 ### Added
 
-- `features-v04-templates.js` for meeting templates and custom agenda items.
-- `features-v04-records.js` for import preview, archive filters, open-task dashboard, and saved details.
-- `features-v04.css` for template, archive, and dashboard styling.
-- Meeting Templates panel.
-- Default templates for Operations Review, Marketing & Branding Review, and CRM & Workflow Build.
-- Browser-local custom templates.
-- Custom agenda item builder.
-- Safer saved-record import preview before merge.
-- Saved-record filters by status and organization / representative.
-- Open Task Dashboard across saved records.
-- Open-task CSV export.
-- Saved-record Details panel.
+- Default and custom meeting templates.
+- Custom agenda items.
+- Safer record import preview.
+- Saved-record filters.
+- Open Task Dashboard and CSV export.
+- Readable saved-record details panel.
 
 ### Changed
 
 - Bumped configuration schema to `0.4.0`.
-- Continued modular enhancement pattern without rewriting the offline core.
+- Continued modular enhancement without adding a build system.
 
 ## 0.3.0
 
 ### Added
 
-- `features-v03.js` as a modular enhancement layer on top of the stable offline core.
-- Structured Decision Log with decision text, confirmed-by, date, status, and notes.
-- Record Readiness Review panel for required items, warnings, signatures, task assignments, critical tasks, and summary completeness.
-- Task filters by search text, progress, and priority.
-- Meeting Minutes Preview generated from the current form.
-- Polished HTML export for the current meeting.
-- Polished HTML export for saved meeting records.
-- Structured decisions and readiness checks are included in exported TXT output.
-- Print styles for meeting minutes output.
+- Structured Decision Log.
+- Record Readiness Review.
+- Task filters.
+- Meeting Minutes Preview.
+- HTML meeting-minutes export.
+- Structured decisions and readiness checks in TXT output.
 
 ### Changed
 
 - Bumped configuration schema to `0.3.0`.
-- Updated README with new workflow features and roadmap.
 - Kept the app static, offline-first, and dependency-free.
-- Kept responsibility labels as **Assigned To**.
-
-### Notes
-
-- The v0.3 layer deliberately avoids frameworks and build tools.
-- The next planned area is editable templates and safer import preview.
 
 ## 0.2.0
 
 ### Added
 
-- `config.js` for editable brand, organization, agenda, and status defaults.
-- Auto-rendered logo placeholders from configuration.
-- Auto-rendered organization checklist.
-- Auto-rendered agenda checklist from grouped configuration.
-- Saved record search.
-- Open / edit saved meeting records.
-- Draft auto-save and draft restore.
-- Clear draft control.
-- Export all saved records as JSON.
-- Import saved records from JSON.
-- Download current meeting as TXT.
-- Download current meeting as JSON.
-- Download saved record as JSON.
+- `config.js` for editable business defaults.
+- Auto-rendered brand, organization, agenda, and status options.
+- Saved-record search and edit.
+- Draft auto-save and restore.
+- JSON import/export.
+- TXT and JSON record download.
 - Storage usage summary.
-- More structured record schema with `schemaVersion`, `createdAt`, and `updatedAt`.
-- Local storage migration from the original `meetingRecords` key.
+- Legacy storage-key migration.
 - Architecture documentation.
 
 ### Changed
 
-- Moved business defaults out of hardcoded HTML and into `config.js`.
-- Improved mobile button layout.
-- Improved saved record cards with task and agenda counts.
-- Improved README with setup, backup, import, export, and roadmap notes.
-- Kept task responsibility wording as **Assigned To**.
-
-### Still Offline-First
-
-- No framework added.
-- No build step added.
-- No server required.
-- No external dependency required.
+- Moved business defaults out of hardcoded HTML.
+- Improved mobile controls and saved-record cards.
 
 ## 0.1.0
 
@@ -155,8 +132,6 @@
 - Attendance sign-on.
 - Agenda checklist.
 - Notes, decisions, tasks, and summary fields.
-- Save records to browser local storage.
-- View saved records.
-- Delete saved records.
-- Print / save PDF through browser print.
-- Download current record as TXT.
+- Browser-local record save, view, and delete.
+- Print / save PDF.
+- TXT record download.
