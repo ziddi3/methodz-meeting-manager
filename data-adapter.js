@@ -1,12 +1,22 @@
 /*
   Methodz Meeting Manager data adapter contract.
-  The default adapter uses localStorage, but the public interface is intentionally
-  shaped so a Firebase, Supabase, CRM, Drive, or Methodz API adapter can replace it.
+  The default adapter uses localStorage, while the public interface remains replaceable
+  by future Firebase, Supabase, CRM, Drive, or Methodz API providers.
 */
 (function initializeMethodzDataAdapter(global) {
   "use strict";
 
+  const CONTRACT_VERSION = "0.8.0";
   const DEFAULT_RECORDS_KEY = "methodzMeetingRecords";
+  const REQUIRED_METHODS = [
+    "listRecords",
+    "getRecord",
+    "replaceRecords",
+    "upsertRecord",
+    "deleteRecord",
+    "healthCheck"
+  ];
+  const OPTIONAL_METHODS = ["createExportEnvelope"];
 
   function readConfig() {
     return global.METHODZ_MEETING_CONFIG || {};
@@ -16,11 +26,31 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function validateAdapter(adapter) {
+    const missing = [];
+    if (!adapter || typeof adapter !== "object") {
+      return { ok: false, missing: ["adapter object"], adapterId: null };
+    }
+    if (!adapter.id) missing.push("id");
+    REQUIRED_METHODS.forEach((method) => {
+      if (typeof adapter[method] !== "function") missing.push(`${method}()`);
+    });
+    return { ok: missing.length === 0, missing, adapterId: adapter.id || null };
+  }
+
   class LocalStorageMeetingAdapter {
     constructor(options = {}) {
       this.id = options.id || "local-storage";
       this.label = options.label || "Browser Local Storage";
       this.recordsKey = options.recordsKey || DEFAULT_RECORDS_KEY;
+      this.contractVersion = CONTRACT_VERSION;
+      this.capabilities = {
+        synchronous: true,
+        offline: true,
+        exportEnvelope: true,
+        transactions: false,
+        remoteSync: false
+      };
     }
 
     listRecords() {
@@ -38,9 +68,7 @@
     }
 
     replaceRecords(records) {
-      if (!Array.isArray(records)) {
-        throw new TypeError("replaceRecords expects an array.");
-      }
+      if (!Array.isArray(records)) throw new TypeError("replaceRecords expects an array.");
       global.localStorage.setItem(this.recordsKey, JSON.stringify(records));
       return records.length;
     }
@@ -69,8 +97,8 @@
       return {
         exportedAt: new Date().toISOString(),
         adapterId: this.id,
-        adapterVersion: "0.7.0",
-        schemaVersion: config.schemaVersion || "0.7.0",
+        adapterVersion: CONTRACT_VERSION,
+        schemaVersion: config.schemaVersion || CONTRACT_VERSION,
         appName: config.brand?.appName || "Methodz Meeting Manager",
         records: this.listRecords(),
         ...clone(extra)
@@ -86,14 +114,17 @@
           ok: true,
           adapterId: this.id,
           label: this.label,
+          contractVersion: CONTRACT_VERSION,
           records: this.listRecords().length,
-          storage: "localStorage"
+          storage: "localStorage",
+          capabilities: clone(this.capabilities)
         };
       } catch (error) {
         return {
           ok: false,
           adapterId: this.id,
           label: this.label,
+          contractVersion: CONTRACT_VERSION,
           records: 0,
           storage: "localStorage",
           error: error.message
@@ -106,15 +137,10 @@
   let activeAdapterId = "local-storage";
 
   function registerAdapter(adapter) {
-    if (!adapter || typeof adapter !== "object" || !adapter.id) {
-      throw new TypeError("An adapter must provide an id.");
+    const validation = validateAdapter(adapter);
+    if (!validation.ok) {
+      throw new TypeError(`Adapter "${adapter?.id || "unknown"}" is missing: ${validation.missing.join(", ")}.`);
     }
-    ["listRecords", "getRecord", "replaceRecords", "upsertRecord", "deleteRecord", "healthCheck"]
-      .forEach((method) => {
-        if (typeof adapter[method] !== "function") {
-          throw new TypeError(`Adapter "${adapter.id}" is missing ${method}().`);
-        }
-      });
     adapters.set(adapter.id, adapter);
     return adapter;
   }
@@ -131,8 +157,11 @@
   }));
 
   global.MethodzMeetingData = {
-    version: "0.7.0",
+    version: CONTRACT_VERSION,
+    requiredMethods: [...REQUIRED_METHODS],
+    optionalMethods: [...OPTIONAL_METHODS],
     LocalStorageMeetingAdapter,
+    validateAdapter,
     registerAdapter,
     useAdapter(adapterId) {
       if (!adapters.has(adapterId)) throw new Error(`Unknown meeting data adapter "${adapterId}".`);
@@ -144,12 +173,19 @@
     },
     getAdapterInfo() {
       const adapter = getActiveAdapter();
-      return { id: adapter.id, label: adapter.label || adapter.id };
+      return {
+        id: adapter.id,
+        label: adapter.label || adapter.id,
+        contractVersion: adapter.contractVersion || CONTRACT_VERSION,
+        capabilities: clone(adapter.capabilities || {})
+      };
     },
     listAdapters() {
       return Array.from(adapters.values()).map((adapter) => ({
         id: adapter.id,
-        label: adapter.label || adapter.id
+        label: adapter.label || adapter.id,
+        contractVersion: adapter.contractVersion || CONTRACT_VERSION,
+        capabilities: clone(adapter.capabilities || {})
       }));
     },
     listRecords() {
@@ -169,13 +205,12 @@
     },
     createExportEnvelope(extra = {}) {
       const adapter = getActiveAdapter();
-      if (typeof adapter.createExportEnvelope === "function") {
-        return adapter.createExportEnvelope(extra);
-      }
+      if (typeof adapter.createExportEnvelope === "function") return adapter.createExportEnvelope(extra);
       return {
         exportedAt: new Date().toISOString(),
         adapterId: adapter.id,
-        schemaVersion: readConfig().schemaVersion || "0.7.0",
+        adapterVersion: CONTRACT_VERSION,
+        schemaVersion: readConfig().schemaVersion || CONTRACT_VERSION,
         records: adapter.listRecords(),
         ...clone(extra)
       };
