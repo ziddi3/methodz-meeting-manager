@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.8.0
+
+### Added
+
+- `features-v08-history.js` for saved revision snapshots, revision preview, revision restore, and the non-destructive Archive Vault.
+- `features-v08-workspace.js` for complete workspace backup, checksum validation, restore preview, and pre-restore recovery.
+- `adapter-contract-tests.js` for isolated adapter CRUD, export-envelope, and health-check tests.
+- `features-v08-accessibility.js` for skip navigation, live status announcements, dynamic field labels, keyboard shortcuts, visible focus, and reduced-motion support.
+- `features-v08.css` for revision, archive, backup, test, keyboard-help, focus, mobile, reduced-motion, and print styling.
+- Saved-record **Revision History** action.
+- Non-destructive saved-record **Archive** action.
+- Archive Vault restore, download, and permanent-delete controls.
+- Complete Methodz workspace package export and restore.
+- Automatic local pre-restore recovery package.
+- Adapter capability metadata and adapter contract validation.
+- v0.8 release notes, architecture notes, and manual test checklist.
+
+### Changed
+
+- Bumped configuration schema and adapter contract to `0.8.0`.
+- Added a configurable 50-revision retention limit.
+- Added revision, archive, pre-restore, and accessibility storage keys.
+- Replaced the default saved-record destructive action with non-destructive archiving.
+- Updated `meeting.html` to load the v0.8 stylesheet and feature modules.
+- Updated README and architecture documentation for history, recovery, testing, and accessibility workflows.
+
+### Notes
+
+- Workspace data remains browser-local unless the user exports it.
+- Revision and workspace hashes use FNV-1a for identity/integrity checks, not cryptographic signing.
+- Adapter contract tests use temporary storage and do not mutate active records.
+- Permanent deletion remains available only inside the Archive Vault and requires confirmation.
+- The app remains static, offline-first, dependency-free, and deployable without a build step.
+
 ## 0.7.0
 
 ### Added
