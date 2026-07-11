@@ -1,0 +1,51 @@
+name: Static Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-static-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
+
+      - name: Verify required static entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f meeting.html
+          test -f archive.html
+          test -f style.css
+          test -f config.js
+          test -f data-adapter.js
+          test -f app.js
+
+      - name: Verify v0.8 assets are loaded
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'features-v08.css' meeting.html
+          grep -q 'features-v08-history.js' meeting.html
+          grep -q 'features-v08-workspace.js' meeting.html
+          grep -q 'adapter-contract-tests.js' meeting.html
+          grep -q 'features-v08-accessibility.js' meeting.html
