@@ -4,7 +4,8 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.7.0",
+  schemaVersion: "0.8.0",
+  revisionLimit: 50,
   storageKeys: {
     records: "methodzMeetingRecords",
     draft: "methodzMeetingDraft",
@@ -14,7 +15,11 @@ window.METHODZ_MEETING_CONFIG = {
     organizationPresets: "methodzOrganizationPresets",
     organizationDirectory: "methodzOrganizationDirectory",
     syncQueue: "methodzSyncQueue",
-    syncLastExport: "methodzSyncLastExport"
+    syncLastExport: "methodzSyncLastExport",
+    revisions: "methodzMeetingRevisions",
+    archivedRecords: "methodzArchivedMeetingRecords",
+    preRestoreBackup: "methodzPreRestoreBackup",
+    accessibilityPreferences: "methodzAccessibilityPreferences"
   },
   brand: {
     appName: "Methodz Meeting Manager",
