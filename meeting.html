@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="features-v05.css" />
   <link rel="stylesheet" href="features-v06.css" />
   <link rel="stylesheet" href="features-v07.css" />
+  <link rel="stylesheet" href="features-v08.css" />
 </head>
 <body>
   <header class="app-header">
@@ -19,12 +20,12 @@
     <p id="appSubtitle">Canadian Soft Water Corporation × Method HVAC Inc. Partnership Records</p>
   </header>
 
-  <main class="app-shell">
+  <main class="app-shell" id="mainContent" tabindex="-1">
     <section class="card hero-card">
       <div>
         <p class="eyebrow">Offline Meeting Record</p>
         <h2 id="meetingNumberLabel">Meeting #001</h2>
-        <p class="helper-text">Create, save, print, archive, export, and re-open meeting records locally before cloud sync is added.</p>
+        <p class="helper-text">Create, save, print, archive, revise, export, and re-open meeting records locally before cloud sync is added.</p>
       </div>
       <div class="hero-meta">
         <div class="status-pill" id="statusPill">Scheduled</div>
@@ -32,11 +33,12 @@
       </div>
     </section>
 
-    <section class="card quick-actions" aria-label="Quick actions">
+    <section class="card quick-actions" aria-label="Meeting quick actions">
       <button type="button" onclick="saveMeeting()">Save Record</button>
       <button type="button" onclick="downloadMeetingText()">Download TXT</button>
       <button type="button" onclick="downloadMeetingJson()">Download JSON</button>
       <button type="button" onclick="printMeeting()">Print / Save PDF</button>
+      <button type="button" onclick="toggleKeyboardHelpV08()">Keyboard Help</button>
     </section>
 
     <section class="card">
@@ -151,5 +153,9 @@
   <script src="features-v06-governance.js"></script>
   <script src="features-v07-organizations.js"></script>
   <script src="features-v07-navigation.js"></script>
+  <script src="features-v08-history.js"></script>
+  <script src="features-v08-workspace.js"></script>
+  <script src="adapter-contract-tests.js"></script>
+  <script src="features-v08-accessibility.js"></script>
 </body>
 </html>
