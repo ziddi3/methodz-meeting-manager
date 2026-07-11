@@ -1,15 +1,15 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the workflow inspectable and deployable while creating clean boundaries for future cloud providers.
+Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the workflow inspectable and directly deployable while creating clean boundaries for revision history, archive lifecycle, workspace recovery, and future cloud providers.
 
 ## Entry Points
 
 ```text
-meeting.html   Meeting creation, editing, dashboards, settings, and exports
+meeting.html   Meeting creation, editing, dashboards, settings, history, archive vault, backup, and exports
 archive.html   Dedicated record detail, archive review, and print surface
 ```
 
-No server or build command is required.
+No server, package manager, or build command is required.
 
 ## Runtime Model
 
@@ -28,7 +28,11 @@ meeting.html
   ├─ features-v06-settings.js
   ├─ features-v06-governance.js
   ├─ features-v07-organizations.js
-  └─ features-v07-navigation.js
+  ├─ features-v07-navigation.js
+  ├─ features-v08-history.js
+  ├─ features-v08-workspace.js
+  ├─ adapter-contract-tests.js
+  └─ features-v08-accessibility.js
 
 archive.html
   ├─ config.js
@@ -38,28 +42,26 @@ archive.html
 
 Feature modules extend the stable core through browser globals and DOM injection. This keeps the project dependency-free while allowing incremental releases.
 
+The v0.8 accessibility module loads last so it can improve the final wrapped versions of dynamic form builders and status actions.
+
 ## Core Responsibilities
 
 ### `config.js`
 
 Owns editable defaults:
 
-- brand labels
-- logo paths
+- brand labels and logo paths
 - organizations and organization types
 - organization presets
-- agenda groups
-- meeting templates
-- meeting statuses
-- attendance types
-- task priorities and statuses
-- attachment types
+- agenda groups and meeting templates
+- meeting, attendance, task, and attachment options
 - numbering defaults
+- revision retention limit
 - storage keys
 
 ### `data-adapter.js`
 
-Owns the record-storage interface.
+Owns the synchronous record-storage interface.
 
 Public manager:
 
@@ -75,7 +77,7 @@ LocalStorageMeetingAdapter
 
 Required provider operations:
 
-```js
+```text
 listRecords()
 getRecord(recordId)
 replaceRecords(records)
@@ -86,11 +88,19 @@ healthCheck()
 
 Optional provider operation:
 
-```js
+```text
 createExportEnvelope(extra)
 ```
 
-The v0.7 main app redirects global `getRecords()` and `setRecords()` through this adapter.
+Version 0.8 adds contract metadata and validation:
+
+```js
+window.MethodzMeetingData.requiredMethods
+window.MethodzMeetingData.optionalMethods
+window.MethodzMeetingData.validateAdapter(adapter)
+```
+
+The main app redirects global `getRecords()` and `setRecords()` through the active adapter.
 
 ### `app.js`
 
@@ -117,6 +127,43 @@ Owns the dedicated read-only archive page:
 - print and JSON download
 - edit handoff back to `meeting.html`
 
+### `features-v08-history.js`
+
+Owns:
+
+- saved revision snapshots
+- revision preview and restoration
+- automatic current-state preservation before restore
+- non-destructive archive lifecycle
+- Archive Vault restore, download, and permanent delete
+
+### `features-v08-workspace.js`
+
+Owns:
+
+- complete workspace package creation
+- discovered/configured storage key collection
+- package checksum
+- restore validation and preview
+- pre-restore recovery capture
+- workspace replacement and reload
+
+### `adapter-contract-tests.js`
+
+Owns the isolated in-browser adapter test harness. It uses a temporary local-storage key and does not modify active meeting records.
+
+### `features-v08-accessibility.js`
+
+Owns:
+
+- skip navigation
+- main landmark focus target
+- live status announcements
+- generated label associations for dynamic fields
+- keyboard shortcuts
+- visible focus behavior
+- reduced-motion-aware navigation
+
 ## Feature Layers
 
 ### v0.3
@@ -131,25 +178,22 @@ Owns the dedicated read-only archive page:
 
 - default and custom templates
 - import preview
-- archive filters
+- saved-record filters
 - open-task dashboard
 - record details
 
 ### v0.5
 
-- attachment references
-- attachment index
+- attachment references and index
 - attendee directory
-- signature helpers
-- signature audit
+- signature helpers and audit
 
 ### v0.6
 
 - numbering settings
 - organization presets
 - duplicate review
-- sync queue
-- sync package export
+- sync queue and package export
 
 ### v0.7
 
@@ -158,6 +202,14 @@ Owns the dedicated read-only archive page:
 - organization / representative directory
 - meeting-time organization snapshots
 - stronger print layout
+
+### v0.8
+
+- revision history
+- non-destructive Archive Vault
+- complete workspace backup and restore
+- adapter contract tests
+- accessibility and keyboard navigation
 
 ## Storage Keys
 
@@ -171,6 +223,10 @@ methodzOrganizationPresets
 methodzOrganizationDirectory
 methodzSyncQueue
 methodzSyncLastExport
+methodzMeetingRevisions
+methodzArchivedMeetingRecords
+methodzPreRestoreBackup
+methodzAccessibilityPreferences
 ```
 
 The original prototype key `meetingRecords` is migrated when needed.
@@ -182,7 +238,7 @@ The schema is additive. Optional feature layers preserve old records and add fie
 ```json
 {
   "id": "meeting-1234567890",
-  "schemaVersion": "0.7.0",
+  "schemaVersion": "0.8.0",
   "meetingNumber": "001",
   "title": "Partnership Operations Meeting",
   "status": "Scheduled",
@@ -190,16 +246,7 @@ The schema is additive. Optional feature layers preserve old records and add fie
   "location": "Office",
   "facilitator": "Name",
   "organizations": ["Canadian Soft Water Corporation"],
-  "organizationDetails": [
-    {
-      "id": "organization-123",
-      "name": "Canadian Soft Water Corporation",
-      "type": "Corporation",
-      "primaryRepresentative": "Name",
-      "contact": "Contact detail",
-      "notes": "Meeting-time snapshot"
-    }
-  ],
+  "organizationDetails": [],
   "attendees": [],
   "agenda": [],
   "notes": "",
@@ -219,15 +266,79 @@ The schema is additive. Optional feature layers preserve old records and add fie
 }
 ```
 
+## Revision Shape
+
+Revision history is stored separately from active records.
+
+```json
+{
+  "id": "revision-...",
+  "recordId": "meeting-...",
+  "revisionNumber": 1,
+  "capturedAt": "ISO timestamp",
+  "reason": "Record updated",
+  "contentHash": "fnv1a-...",
+  "snapshot": {}
+}
+```
+
+The revision limit is configurable. Restoration keeps the active record ID and records both the pre-restore state and restored state.
+
+## Archive Shape
+
+```json
+{
+  "archiveId": "archive-...",
+  "archivedAt": "ISO timestamp",
+  "originalRecordId": "meeting-...",
+  "record": {}
+}
+```
+
+Archive lifecycle is deliberately separate from the business-facing `status` field.
+
+## Workspace Package Shape
+
+```json
+{
+  "packageType": "methodz-meeting-manager-workspace",
+  "packageVersion": 1,
+  "appName": "Methodz Meeting Manager",
+  "schemaVersion": "0.8.0",
+  "exportedAt": "ISO timestamp",
+  "entries": {
+    "methodzMeetingRecords": "raw JSON string"
+  },
+  "summary": {},
+  "checksum": "fnv1a-..."
+}
+```
+
+Raw local-storage strings are preserved to avoid accidental module-specific schema rewrites during backup.
+
+Restore sequence:
+
+```text
+parse
+  → validate package type
+  → validate recognized entries
+  → validate checksum
+  → preview
+  → confirm
+  → create pre-restore recovery
+  → replace Methodz storage keys
+  → reload
+```
+
 ## Organization Snapshot Rule
 
 The Organization / Representative Directory is mutable local reference data.
 
-When an entry is selected for a meeting, relevant details are copied into `organizationDetails`. Old meeting records therefore retain the original meeting context even if the directory changes later.
+When an entry is selected for a meeting, relevant details are copied into `organizationDetails`. Old meeting records retain the original meeting context even if the directory changes later.
 
 ## Archive Navigation
 
-Saved record:
+Saved record detail page:
 
 ```text
 record card
@@ -254,6 +365,32 @@ archive.html
   → loadRecordForEditing(recordId)
 ```
 
+Archive Vault lifecycle:
+
+```text
+active records
+  → non-destructive archive
+  → archived record store
+  → restore or permanent delete
+```
+
+## Adapter Test Isolation
+
+The in-app test harness validates the active interface, then exercises a temporary `LocalStorageMeetingAdapter` instance.
+
+It tests:
+
+- empty list
+- create
+- read
+- update
+- replace
+- delete
+- export envelope
+- health check
+
+The temporary key is removed in a `finally` block.
+
 ## Print Strategy
 
 The archive page is the primary complete-record print surface.
@@ -265,6 +402,7 @@ Print mode:
 - keeps task and attachment tables visible
 - avoids page breaks inside logical cards where possible
 - includes record audit metadata
+- hides v0.8 workspace-management panels
 
 ## Future Cloud Path
 
@@ -275,7 +413,19 @@ window.MethodzMeetingData.registerAdapter(provider);
 window.MethodzMeetingData.useAdapter(provider.id);
 ```
 
-The current contract is synchronous because the existing offline core is synchronous. A future v1.0 cloud provider layer should add asynchronous compatibility without forcing the form and archive renderer to know provider details.
+The current contract is synchronous because the existing offline core is synchronous. A future v1.0 provider layer should add asynchronous compatibility without forcing the form and archive renderer to know provider details.
+
+Likely extraction targets:
+
+```text
+RevisionProvider
+ArchiveProvider
+WorkspacePackageService
+SchemaMigrationRegistry
+AsyncMeetingDataAdapter
+AttachmentStorageAdapter
+RolePolicyProvider
+```
 
 ## Design Principles
 
@@ -284,12 +434,14 @@ The current contract is synchronous because the existing offline core is synchro
 - Configuration before hardcoding.
 - Simple files before frameworks.
 - Human-readable records.
-- Mobile-first usability.
+- Mobile-first and keyboard-usable interfaces.
 - Additive schema changes.
 - Meeting-specific signatures.
 - Attachment references before binary storage.
 - Historical snapshots for mutable directory data.
-- Confirm destructive actions.
+- Non-destructive archive before permanent deletion.
+- Recovery snapshot before workspace replacement.
+- Isolated tests before active-adapter mutation.
 
 ## Deployment
 
