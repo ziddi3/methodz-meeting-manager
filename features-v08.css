@@ -1,0 +1,224 @@
+/* Methodz Meeting Manager v0.8 styles. */
+
+.v08-card {
+  border-top: 4px solid var(--accent, #d5a642);
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.archive-vault-summary-v08,
+.workspace-restore-preview-v08,
+.adapter-tests-v08 #adapterTestResultsV08 {
+  margin-top: 12px;
+}
+
+.archived-record-v08,
+.revision-entry-v08 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.archived-record-v08 p,
+.revision-entry-v08 p {
+  margin: 4px 0 0;
+}
+
+.revision-preview-v08 {
+  grid-column: 1 / -1;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  background: #f0f0f0;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.workspace-badge-v08 {
+  padding: 7px 10px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 999px;
+  background: #f6f6f6;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.workspace-restore-preview-v08 {
+  padding: 14px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.workspace-restore-preview-v08.has-error {
+  border-color: #8b1e1e;
+  background: #fff4f4;
+}
+
+.adapter-test-list-v08 {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding-left: 22px;
+}
+
+.adapter-test-list-v08 li {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f6f6f6;
+}
+
+.adapter-test-list-v08 li strong {
+  display: inline-block;
+  min-width: 48px;
+}
+
+.adapter-test-list-v08 small {
+  display: block;
+  margin-top: 4px;
+}
+
+.test-pass-v08 strong {
+  color: #176d38;
+}
+
+.test-fail-v08 strong {
+  color: #8b1e1e;
+}
+
+.skip-link-v08 {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  transform: translateY(-160%);
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111111;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.skip-link-v08:focus {
+  transform: translateY(0);
+}
+
+.visually-hidden-v08 {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.keyboard-help-v08 {
+  max-width: 1050px;
+  margin: 12px auto 0;
+  padding: 16px;
+  border: 2px solid var(--accent, #d5a642);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #222222;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+.keyboard-help-v08 > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.keyboard-help-v08 h2 {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.keyboard-help-v08 dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 0;
+}
+
+.keyboard-help-v08 dl div {
+  padding: 8px;
+  border-radius: 6px;
+  background: #f5f5f5;
+}
+
+.keyboard-help-v08 dt {
+  font-weight: 700;
+}
+
+.keyboard-help-v08 dd {
+  margin: 2px 0 0;
+  color: var(--muted, #666666);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--accent, #d5a642);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  .archived-record-v08,
+  .revision-entry-v08 {
+    grid-template-columns: 1fr;
+  }
+
+  .archived-record-v08 .button-row,
+  .revision-entry-v08 .button-row {
+    width: 100%;
+  }
+
+  .keyboard-help-v08 {
+    margin: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  #archiveVaultV08,
+  #revisionHistoryPanelV08,
+  #workspaceBackupPanelV08,
+  #adapterTestPanelV08,
+  #keyboardHelpV08,
+  .skip-link-v08 {
+    display: none !important;
+  }
+}
