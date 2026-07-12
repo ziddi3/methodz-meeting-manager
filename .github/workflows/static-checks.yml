@@ -1,4 +1,4 @@
-name: Static Checks
+name: Static and Browser Checks
 
 on:
   push:
@@ -38,15 +38,71 @@ jobs:
           test -f archive.html
           test -f style.css
           test -f config.js
+          test -f migrations.js
           test -f data-adapter.js
           test -f app.js
+          test -f manifest.webmanifest
+          test -f service-worker.js
 
-      - name: Verify v0.8 assets are loaded
+      - name: Verify v0.9 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'features-v08.css' meeting.html
-          grep -q 'features-v08-history.js' meeting.html
-          grep -q 'features-v08-workspace.js' meeting.html
-          grep -q 'adapter-contract-tests.js' meeting.html
-          grep -q 'features-v08-accessibility.js' meeting.html
+          grep -q 'features-v09.css' meeting.html
+          grep -q 'migrations.js' meeting.html
+          grep -q 'features-v09-archive.js' meeting.html
+          grep -q 'features-v09-revisions.js' meeting.html
+          grep -q 'features-v09-workspace-merge.js' meeting.html
+          grep -q 'features-v09-pwa.js' meeting.html
+          grep -q 'manifest.webmanifest' meeting.html
+          grep -q 'migrations.js' archive.html
+          grep -q 'methodz-meeting-manager-v0.9.0' service-worker.js
+
+      - name: Validate JSON manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
+
+  browser-smoke-tests:
+    runs-on: ubuntu-latest
+    needs: validate-static-app
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install browser test runner
+        run: npm install --no-save @playwright/test@1.53.2
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          echo $! > /tmp/methodz-http.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/meeting.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+
+      - name: Run browser smoke tests
+        run: npx playwright test
+
+      - name: Upload browser traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: methodz-browser-test-results
+          path: test-results/
+          if-no-files-found: ignore
