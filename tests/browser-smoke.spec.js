@@ -23,9 +23,9 @@ test("creates and saves a schema 0.9 meeting record", async ({ page }) => {
   expect(records[0].title).toBe("Automated Browser Smoke Meeting");
 });
 
-test("migrates an older record before the workspace initializes", async ({ page }) => {
+test("imports and migrates the original legacy storage key before workspace initialization", async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem("methodzMeetingRecords", JSON.stringify([
+    localStorage.setItem("meetingRecords", JSON.stringify([
       {
         id: "legacy-browser-test",
         schemaVersion: "0.2.0",
@@ -45,7 +45,11 @@ test("migrates an older record before the workspace initializes", async ({ page 
   const result = await page.evaluate(() => {
     const records = JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]");
     const state = JSON.parse(localStorage.getItem("methodzMigrationState") || "null");
-    return { record: records[0], state };
+    return {
+      record: records[0],
+      state,
+      legacyRemoved: localStorage.getItem("meetingRecords") === null
+    };
   });
 
   expect(result.record.schemaVersion).toBe("0.9.0");
@@ -53,6 +57,8 @@ test("migrates an older record before the workspace initializes", async ({ page 
   expect(result.record.attachments).toEqual([]);
   expect(result.record.organizationDetails).toEqual([]);
   expect(result.state.currentVersion).toBe("0.9.0");
+  expect(result.state.legacyRecordsImported).toBe(true);
+  expect(result.legacyRemoved).toBe(true);
 });
 
 test("archives a record non-destructively and exposes archive filters", async ({ page }) => {
@@ -63,7 +69,7 @@ test("archives a record non-destructively and exposes archive filters", async ({
   await page.getByRole("button", { name: "Save Record" }).first().click();
 
   const card = page.locator(".saved-record").filter({ hasText: "Archive Smoke Meeting" });
-  await card.getByRole("button", { name: /^Archive$/ }).click();
+  await card.locator(".archive-record-button-v08").click();
 
   await expect(page.locator("#archiveVaultListV08")).toContainText("Archive Smoke Meeting");
   await expect(page.locator("#archiveSearchV09")).toBeVisible();
@@ -75,6 +81,25 @@ test("archives a record non-destructively and exposes archive filters", async ({
   }));
   expect(counts.active).toBe(0);
   expect(counts.archived).toBe(1);
+});
+
+test("compares a saved revision with the current record", async ({ page }) => {
+  page.on("dialog", (dialog) => dialog.accept());
+  await page.goto("/meeting.html");
+  await page.locator("#meetingTitle").fill("Revision Smoke Meeting");
+  await page.locator("#meetingDate").fill("2026-07-12");
+  await page.getByRole("button", { name: "Save Record" }).first().click();
+
+  await page.locator("#summary").fill("Updated summary for comparison.");
+  await page.getByRole("button", { name: "Save Record" }).first().click();
+
+  const card = page.locator(".saved-record").filter({ hasText: "Revision Smoke Meeting" });
+  await card.locator(".revision-history-button-v08").click();
+  await expect(page.locator("#revisionComparisonV09")).toBeVisible();
+  await page.locator("#revisionLeftV09").selectOption({ index: 0 });
+  await page.locator("#revisionRightV09").selectOption("__current__");
+  await page.getByRole("button", { name: "Compare Versions" }).click();
+  await expect(page.locator("#revisionComparisonResultV09")).toContainText("total differences");
 });
 
 test("exposes deterministic workspace merge helpers", async ({ page }) => {
