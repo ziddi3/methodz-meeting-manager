@@ -1,0 +1,205 @@
+/* Methodz Meeting Manager v0.9 feature styling. */
+
+.v09-card {
+  border-left: 4px solid var(--accent, #d5a642);
+}
+
+.workspace-badge-v09 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 999px;
+  background: #f8f3e6;
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.archive-toolbar-v09 {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.archive-filter-grid-v09,
+.revision-compare-controls-v09,
+.workspace-merge-controls-v09 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.archive-select-v09 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 14px 0 0;
+  padding: 6px 9px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.85rem;
+}
+
+.archive-select-v09 input {
+  width: auto;
+  margin: 0;
+}
+
+.revision-comparison-v09 {
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.revision-comparison-result-v09 {
+  margin-top: 14px;
+}
+
+.revision-table-wrap-v09 {
+  overflow-x: auto;
+  margin-top: 14px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.revision-diff-table-v09 {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+}
+
+.revision-diff-table-v09 th,
+.revision-diff-table-v09 td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border, #dddddd);
+  border-right: 1px solid var(--border, #dddddd);
+  text-align: left;
+  vertical-align: top;
+}
+
+.revision-diff-table-v09 th:last-child,
+.revision-diff-table-v09 td:last-child {
+  border-right: none;
+}
+
+.revision-diff-table-v09 pre {
+  margin: 0;
+  max-width: 330px;
+  max-height: 180px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.78rem;
+}
+
+.change-type-v09 {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.change-added {
+  background: #e5f4e8;
+  color: #174f27;
+}
+
+.change-removed {
+  background: #f9e4e4;
+  color: #7a1a1a;
+}
+
+.change-changed {
+  background: #fff3d4;
+  color: #6d4a00;
+}
+
+.comparison-empty-v09,
+.comparison-error-v09 {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.comparison-empty-v09 {
+  background: #edf6ed;
+}
+
+.comparison-error-v09 {
+  background: #f9e4e4;
+  color: #7a1a1a;
+}
+
+.workspace-merge-preview-v09 {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.workspace-merge-preview-v09.has-error {
+  border-color: #8b1e1e;
+  background: #fdf0f0;
+}
+
+.merge-analysis-v09 {
+  margin: 12px 0;
+  padding-left: 22px;
+}
+
+.merge-analysis-v09 li {
+  margin: 6px 0;
+}
+
+.pwa-panel-v09 {
+  position: relative;
+}
+
+.pwa-status-v09 {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+#installPwaButtonV09[hidden] {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .archive-filter-grid-v09,
+  .revision-compare-controls-v09,
+  .workspace-merge-controls-v09 {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-badge-v09 {
+    white-space: normal;
+  }
+
+  .archive-select-v09 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+@media print {
+  #archiveToolbarV09,
+  #revisionComparisonV09,
+  #workspaceMergePanelV09,
+  #pwaPanelV09 {
+    display: none !important;
+  }
+}
