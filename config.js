@@ -4,7 +4,8 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.8.0",
+  schemaVersion: "0.9.0",
+  appShellVersion: "0.9.0",
   revisionLimit: 50,
   storageKeys: {
     records: "methodzMeetingRecords",
@@ -19,7 +20,9 @@ window.METHODZ_MEETING_CONFIG = {
     revisions: "methodzMeetingRevisions",
     archivedRecords: "methodzArchivedMeetingRecords",
     preRestoreBackup: "methodzPreRestoreBackup",
-    accessibilityPreferences: "methodzAccessibilityPreferences"
+    accessibilityPreferences: "methodzAccessibilityPreferences",
+    migrationState: "methodzMigrationState",
+    mergeLog: "methodzWorkspaceMergeLog"
   },
   brand: {
     appName: "Methodz Meeting Manager",
