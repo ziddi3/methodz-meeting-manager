@@ -1,0 +1,102 @@
+/* Methodz Meeting Manager optional static app-shell service worker. */
+const CACHE_NAME = "methodz-meeting-manager-v0.9.0";
+const APP_SHELL = [
+  "./",
+  "./meeting.html",
+  "./archive.html",
+  "./style.css",
+  "./features-v04.css",
+  "./features-v05.css",
+  "./features-v06.css",
+  "./features-v07.css",
+  "./features-v08.css",
+  "./features-v09.css",
+  "./config.js",
+  "./migrations.js",
+  "./data-adapter.js",
+  "./app.js",
+  "./archive.js",
+  "./features-v03.js",
+  "./features-v03-startup.js",
+  "./features-v04-templates.js",
+  "./features-v04-records.js",
+  "./features-v05-attachments.js",
+  "./features-v05-directory.js",
+  "./features-v05-startup.js",
+  "./features-v06-settings.js",
+  "./features-v06-governance.js",
+  "./features-v07-organizations.js",
+  "./features-v07-navigation.js",
+  "./features-v08-history.js",
+  "./features-v08-workspace.js",
+  "./adapter-contract-tests.js",
+  "./features-v08-accessibility.js",
+  "./features-v09-archive.js",
+  "./features-v09-revisions.js",
+  "./features-v09-workspace-merge.js",
+  "./features-v09-pwa.js",
+  "./manifest.webmanifest",
+  "./assets/icons/methodz-meeting.svg"
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.allSettled(APP_SHELL.map((asset) => cache.add(asset)));
+    await self.skipWaiting();
+  })());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.filter((name) => name.startsWith("methodz-meeting-manager-") && name !== CACHE_NAME).map((name) => caches.delete(name)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+    const networkPromise = fetch(request)
+      .then(async (response) => {
+        if (response && response.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, response.clone());
+        }
+        return response;
+      })
+      .catch(() => null);
+
+    if (cached) {
+      event.waitUntil(networkPromise);
+      return cached;
+    }
+
+    const network = await networkPromise;
+    if (network) return network;
+
+    if (request.mode === "navigate") {
+      return caches.match("./meeting.html");
+    }
+
+    return new Response("Offline resource unavailable.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    });
+  })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "METHODZ_REFRESH_CACHE") return;
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.allSettled(APP_SHELL.map((asset) => cache.add(asset)));
+  })());
+});
