@@ -6,9 +6,11 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current Version
 
-**Version:** 0.8.0 history, recovery, and accessibility build
+**Version:** 0.9.0 migration, archive operations, workspace merge, browser automation, and optional PWA build
 
-The app remains intentionally static: HTML, CSS, vanilla JavaScript, and browser storage. It can run by opening `meeting.html` directly, or it can be deployed to any static host without a build command.
+The application remains intentionally static: HTML, CSS, vanilla JavaScript, and browser storage. It can run by opening `meeting.html` directly, or it can be deployed to any static host without a build command.
+
+Hosted deployments can optionally register the included service worker and install the app shell. Direct-file mode remains fully supported.
 
 ## Entry Points
 
@@ -28,7 +30,9 @@ features-v05.css
 features-v06.css
 features-v07.css
 features-v08.css
+features-v09.css
 config.js
+migrations.js
 data-adapter.js
 app.js
 archive.js
@@ -47,6 +51,14 @@ features-v08-history.js
 features-v08-workspace.js
 adapter-contract-tests.js
 features-v08-accessibility.js
+features-v09-archive.js
+features-v09-revisions.js
+features-v09-workspace-merge.js
+features-v09-pwa.js
+manifest.webmanifest
+service-worker.js
+playwright.config.js
+tests/browser-smoke.spec.js
 PROJECT.md
 CHANGELOG.md
 docs/
@@ -59,7 +71,7 @@ docs/
 - Use typed attendance signatures and signature-audit metadata.
 - Save drafts automatically.
 - Store records in browser `localStorage`.
-- Search, filter, open, edit, revise, archive, restore, export, import, print, and permanently delete records only after explicit confirmation.
+- Search, filter, open, edit, revise, compare, archive, restore, export, import, print, and permanently delete records only after explicit confirmation.
 - Use **Assigned To** for task responsibility.
 - Use **Organizations / Representatives Present** for participating groups.
 - Keep Methodz identified as a brand and operating ecosystem.
@@ -85,11 +97,9 @@ docs/
 
 ### v0.5 attachment and directory layer
 
-- Attachment References
-- Attachment Index
+- Attachment References and Attachment Index
 - Attendee Directory
-- Signature Controls
-- Signature Audit
+- Signature Controls and Signature Audit
 
 Attachment References store locations and notes only. They do not store private binary files in local storage.
 
@@ -98,100 +108,140 @@ Attachment References store locations and notes only. They do not store private 
 - Meeting Numbering Settings
 - Organization Presets
 - Duplicate Record Review
-- Duplicate report export
-- Local Sync Readiness
-- Local sync queue metadata
-- Sync package JSON export
-
-The v0.6 sync package is export-only. It does not send data anywhere.
+- Local Sync Readiness and export-only sync packages
 
 ### v0.7 archive and adapter layer
 
 - Dedicated `archive.html` record detail page
-- Saved-record **Archive Page** action
-- Current unsaved meeting archive preview
-- Edit handoff from archive page back to `meeting.html`
-- Print-focused attachment, attendance, signature-audit, task, and record-audit sections
-- `data-adapter.js` record-storage contract
-- Local storage adapter with health checks and export envelopes
+- Data-adapter contract and local storage provider
 - Organization / Representative Directory
-- Organization details stored as meeting-time snapshots
-- Organization directory JSON export/import
+- Meeting-time organization detail snapshots
+- Stronger print layout
 
 ### v0.8 history, recovery, and accessibility layer
 
-- Record revision history with up to 50 saved revisions per record by default
-- Revision JSON preview and restoration
-- Automatic current-state snapshot before restoring an older revision
+- Record revision history
+- Revision restore with automatic current-state preservation
 - Non-destructive Archive Vault
-- Restore, download, and permanently delete actions for archived records
-- Complete workspace backup package
-- Checksum validation and restore preview
-- Automatic pre-restore recovery package
-- Isolated data-adapter contract test harness
-- Skip navigation, live status announcements, dynamic field labels, visible focus, reduced-motion support, and keyboard shortcuts
+- Complete workspace backup and replacement restore
+- Adapter contract test harness
+- Keyboard navigation, focus improvements, reduced motion, and live announcements
+
+### v0.9 migration, archive operations, merge, and PWA layer
+
+- Stable ordered schema migration registry
+- Active, archived, revision, and draft migration
+- Migration validation and run metadata
+- Archive search and filters
+- Archive selection and bulk JSON export
+- Revision-to-revision and revision-to-current comparison
+- Added, removed, and changed field-path reporting
+- Non-destructive workspace package merge
+- Prefer newest, keep local, and keep both conflict strategies
+- Automatic pre-merge recovery package
+- Optional web app manifest and service worker
+- Direct-file-safe PWA controls
+- Automated Playwright browser smoke tests in GitHub Actions
 
 ## Using the App
 
 1. Download or clone the repository.
-2. Open `meeting.html`.
+2. Open `meeting.html`, or serve the repository through a local/static web server.
 3. Apply a meeting template or organization preset when helpful.
 4. Add meeting details, attendees, decisions, tasks, attachments, and summary.
 5. Run Record Readiness Review.
 6. Save the record.
-7. Open **Revision History** after later edits when an earlier state must be reviewed or restored.
+7. Use **Revision History** to review, compare, or restore older states.
 8. Open **Archive Page** for a dedicated detail and print view.
 9. Use **Archive** to remove a record from the active workspace without destroying it.
 10. Export a Workspace Backup after important meetings or before changing devices or browsers.
 
-## Revision History
+## Schema Migration
 
-Every successful save creates a full snapshot in browser-local revision storage.
+`migrations.js` runs before the core workspace reads local data.
 
-A revision contains:
+It migrates:
 
-- revision number
-- capture timestamp
-- save or restore reason
-- content hash
-- complete record snapshot
+- active records
+- archived record snapshots
+- revision snapshots
+- the current auto-saved draft
 
-Restoring a revision preserves the current record first, then restores the selected version and creates a new restore revision. Revision history is stored separately from active records under `methodzMeetingRevisions`.
-
-Change the default retention limit in `config.js`:
+Public API:
 
 ```js
-revisionLimit: 50
+window.MethodzMigrations.migrateRecord(record)
+window.MethodzMigrations.migrateWorkspace()
+window.MethodzMigrations.validateRecord(record)
+window.MethodzMigrations.getState()
 ```
 
-## Archive Vault
+Migrations are ordered, additive, unknown-field preserving, and safe to run repeatedly. The latest run summary is stored under `methodzMigrationState`.
 
-The saved-record **Archive** action is non-destructive.
+## Archive Search and Bulk Export
 
-Archived records move from the active record collection into `methodzArchivedMeetingRecords`. They can be:
+The Archive Vault now supports:
 
-- restored to the active workspace
-- downloaded as JSON
-- permanently deleted after explicit confirmation
+- full-text search
+- meeting-status filter
+- organization / representative filter
+- select filtered records
+- export selected records as JSON
+- export all filtered results as JSON
 
-The Archive Vault lifecycle is separate from the meeting `status` value named `Archived`.
+Filtering and exporting do not change archived records.
 
-## Workspace Backup and Restore
+## Revision Comparison
 
-The Workspace Backup panel exports all recognized Methodz Meeting Manager browser data as one JSON package, including:
+Open **Revision History**, choose two versions, and select **Compare Versions**.
 
-- active and archived records
-- revision history
-- current draft
-- templates
-- attendee and organization directories
-- numbering and organization presets
-- sync metadata
-- future browser keys beginning with `methodz`
+The comparison view reports:
 
-A restore package is validated and previewed before changes are applied. Immediately before restore, the app saves a complete local recovery package under `methodzPreRestoreBackup`.
+- total differences
+- added field paths
+- removed field paths
+- changed field paths
+- left and right values
 
-Browser storage is device- and profile-specific. Workspace backup is the preferred transfer path between devices until live sync exists.
+A complete comparison can be exported as JSON. Comparison is read-only and never creates or modifies a revision.
+
+## Workspace Backup, Restore, and Merge
+
+### Replacement restore
+
+The v0.8 Workspace Backup panel can replace all recognized Methodz workspace data with a backup package. A pre-restore recovery package is saved first.
+
+### Non-destructive merge
+
+The v0.9 Workspace Package Merge panel adds incoming data while preserving local-only workspace entries.
+
+Conflict strategies:
+
+```text
+Prefer the newest record
+Keep local values
+Keep both record versions
+```
+
+A pre-merge recovery package is saved under `methodzPreRestoreBackup`, and the completed merge is summarized under `methodzWorkspaceMergeLog`.
+
+## Optional PWA Shell
+
+When hosted over HTTPS or localhost:
+
+- `manifest.webmanifest` describes the installable app
+- `service-worker.js` caches the static app shell
+- the PWA panel reports service-worker status
+- installation is offered when supported by the browser
+- offline cache refresh can be requested manually
+
+When opened directly through `file:`:
+
+- service-worker registration is skipped
+- installation controls remain unavailable
+- all core meeting, archive, revision, backup, import, export, and print features continue to work
+
+The service worker caches static application files only. Meeting records remain in browser local storage.
 
 ## Adapter Contract
 
@@ -223,30 +273,6 @@ window.MethodzMeetingData.registerAdapter(adapter);
 window.MethodzMeetingData.useAdapter(adapter.id);
 ```
 
-Version 0.8 adds:
-
-```js
-window.MethodzMeetingData.validateAdapter(adapter);
-window.MethodzMeetingData.requiredMethods;
-window.MethodzMeetingData.optionalMethods;
-```
-
-The Adapter Contract Tests panel runs CRUD, export, and health checks against a temporary local-storage adapter. Active records are not modified.
-
-## Dedicated Archive Page
-
-`archive.html` reads a saved record through the active data adapter.
-
-From a saved record card:
-
-1. Choose **Archive Page**.
-2. Review the complete meeting record.
-3. Print or save PDF.
-4. Download the record as JSON.
-5. Choose **Edit Record** to return to the main workspace with that record open.
-
-The main quick-action area also provides **Open Archive Preview** for the current unsaved meeting. Preview mode does not create a saved record.
-
 ## Keyboard Navigation
 
 | Shortcut | Action |
@@ -257,37 +283,6 @@ The main quick-action area also provides **Open Archive Preview** for the curren
 | Alt + A | Jump to Archive Vault |
 | Alt + H | Toggle keyboard shortcut guide |
 | Escape | Close keyboard help or revision history |
-
-A skip link appears when keyboard focus enters the page.
-
-## Local Storage Warning
-
-Saved records, archives, revisions, directories, settings, and drafts live in the browser and device where they were created. Clearing browser data can delete them.
-
-Recommended backup habits:
-
-- Export a Workspace Backup after important meetings.
-- Export before clearing browser data or changing devices.
-- Download the pre-restore recovery package after testing a restore.
-- Keep important JSON packages in a separate backed-up folder or Drive location.
-
-## Configuration
-
-Edit `config.js` to change:
-
-- app title and subtitle
-- logo paths
-- default organizations and organization types
-- organization presets
-- meeting-numbering defaults
-- meeting statuses
-- meeting templates
-- attendance types
-- task priorities and statuses
-- attachment types
-- agenda categories
-- revision retention limit
-- storage keys
 
 ## Storage Keys
 
@@ -305,9 +300,22 @@ methodzMeetingRevisions
 methodzArchivedMeetingRecords
 methodzPreRestoreBackup
 methodzAccessibilityPreferences
+methodzMigrationState
+methodzWorkspaceMergeLog
 ```
 
 The original prototype key `meetingRecords` is still migrated when needed.
+
+## Local Storage Warning
+
+Saved records, archives, revisions, directories, settings, drafts, migration state, and merge logs live in the browser and device where they were created. Clearing browser data can delete them.
+
+Recommended backup habits:
+
+- Export a Workspace Backup after important meetings.
+- Export before clearing browser data or changing devices.
+- Keep important JSON packages in a separate backed-up folder or Drive location.
+- Preserve the pre-restore or pre-merge recovery package until the imported workspace has been verified.
 
 ## Static Deployment
 
@@ -323,52 +331,54 @@ Deploy the repository directory to:
 - any ordinary web server
 - a local static server
 
-Keep `meeting.html`, `archive.html`, JavaScript, CSS, and asset paths together.
+Keep both HTML entry points, JavaScript, CSS, manifest, service worker, and asset paths together.
+
+## Automated Validation
+
+GitHub Actions runs:
+
+1. JavaScript syntax checks
+2. required static-file and wiring checks
+3. manifest JSON validation
+4. Playwright browser smoke tests against a temporary localhost server
+
+Playwright is installed only in CI. The deployed application has no runtime package dependency.
 
 ## Development Rules
 
 - Keep the base app offline-first.
 - Keep it deployable as static files.
-- Avoid frameworks until the core workflow is proven.
+- Avoid runtime frameworks until the core workflow is proven.
 - Avoid the word **Owner** for task responsibility.
 - Use **Assigned To**.
 - Use **Organizations / Representatives Present**.
 - Do not imply Methodz is a registered company.
 - Keep records exportable before adding live cloud sync.
-- Preserve old record fields during schema upgrades.
+- Preserve unknown and older record fields during schema upgrades.
 - Treat destructive actions as confirmation-required.
-- Preserve current state before revision or workspace restores.
-- Keep adapter tests isolated from active records.
+- Preserve current state before revision, restore, or merge operations.
+- Keep adapter and browser tests isolated from production records.
 
 ## Documentation
 
 ```text
 docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
-docs/V0.8-NOTES.md
-docs/V0.8-ARCHITECTURE.md
-docs/V0.8-TESTS.md
+docs/V0.9-NOTES.md
+docs/V0.9-ARCHITECTURE.md
+docs/V0.9-TESTS.md
 ```
 
 ## Roadmap
 
-### v0.9
-
-- Stable schema migration registry
-- Archive search, filters, and bulk export
-- Revision comparison view
-- Workspace package merge mode
-- Improved automated browser tests
-- Optional installable PWA shell while preserving direct-file compatibility
-
 ### v1.0
 
-- Full archive workspace
-- Role-aware records
-- Improved signature controls
+- Consolidated full archive workspace
+- Role-aware records and policies
+- Improved signature consent and verification controls
 - Cloud-sync-ready asynchronous provider implementation
 - Attachment storage adapter boundary
-- Stable migration and validation pipeline
+- Final schema validation and release hardening
 
 ### v2.0
 
