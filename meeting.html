@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Offline-first meeting record manager for Canadian Soft Water Corporation, Method HVAC Inc., and Methodz partner workflows." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
   <title>Methodz Meeting Manager</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="features-v04.css" />
@@ -11,6 +15,7 @@
   <link rel="stylesheet" href="features-v06.css" />
   <link rel="stylesheet" href="features-v07.css" />
   <link rel="stylesheet" href="features-v08.css" />
+  <link rel="stylesheet" href="features-v09.css" />
 </head>
 <body>
   <header class="app-header">
@@ -25,7 +30,7 @@
       <div>
         <p class="eyebrow">Offline Meeting Record</p>
         <h2 id="meetingNumberLabel">Meeting #001</h2>
-        <p class="helper-text">Create, save, print, archive, revise, export, and re-open meeting records locally before cloud sync is added.</p>
+        <p class="helper-text">Create, save, print, archive, revise, compare, migrate, merge, export, and re-open meeting records locally before cloud sync is added.</p>
       </div>
       <div class="hero-meta">
         <div class="status-pill" id="statusPill">Scheduled</div>
@@ -140,6 +145,7 @@
   </main>
 
   <script src="config.js"></script>
+  <script src="migrations.js"></script>
   <script src="data-adapter.js"></script>
   <script src="app.js"></script>
   <script src="features-v03.js"></script>
@@ -157,5 +163,9 @@
   <script src="features-v08-workspace.js"></script>
   <script src="adapter-contract-tests.js"></script>
   <script src="features-v08-accessibility.js"></script>
+  <script src="features-v09-archive.js"></script>
+  <script src="features-v09-revisions.js"></script>
+  <script src="features-v09-workspace-merge.js"></script>
+  <script src="features-v09-pwa.js"></script>
 </body>
 </html>
