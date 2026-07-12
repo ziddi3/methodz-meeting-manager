@@ -4,7 +4,12 @@
 
   const config = global.METHODZ_MEETING_CONFIG || {};
   const keys = config.storageKeys || {};
+  const recordsKey = keys.records || "methodzMeetingRecords";
+  const archiveKey = keys.archivedRecords || "methodzArchivedMeetingRecords";
+  const revisionsKey = keys.revisions || "methodzMeetingRevisions";
   const preRestoreKey = keys.preRestoreBackup || "methodzPreRestoreBackup";
+  const mergeLogKey = keys.mergeLog || "methodzWorkspaceMergeLog";
+  const migrationStateKey = keys.migrationState || "methodzMigrationState";
   let pendingPackage = null;
   let pendingFileName = "";
 
@@ -26,7 +31,7 @@
       <div class="section-subheader">
         <div>
           <h2>Workspace Package Merge</h2>
-          <p class="helper-text">Merge another Methodz workspace package into this browser without replacing the complete local workspace. A pre-merge recovery package is saved automatically.</p>
+          <p class="helper-text">Merge another Methodz workspace package into this browser without replacing the complete local workspace. A valid pre-merge recovery package is saved automatically.</p>
         </div>
         <span class="workspace-badge-v09">Non-destructive import</span>
       </div>
@@ -49,6 +54,7 @@
 
     if (backupPanel) backupPanel.insertAdjacentElement("afterend", panel);
     else savedCard.insertAdjacentElement("beforebegin", panel);
+
     document.getElementById("workspaceMergeFileV09")?.addEventListener("change", previewWorkspaceMergeV09);
     document.getElementById("workspaceMergeStrategyV09")?.addEventListener("change", refreshMergePreviewV09);
   }
@@ -78,6 +84,7 @@
     if (!preview || !pendingPackage) return;
     const strategy = document.getElementById("workspaceMergeStrategyV09")?.value || "prefer-newest";
     const analysis = analyzeWorkspaceMergeV09(pendingPackage, strategy);
+
     preview.classList.remove("is-hidden", "has-error");
     preview.innerHTML = `
       <h3>Merge Preview</h3>
@@ -94,7 +101,7 @@
         <li>${analysis.newArchived} archive entries are new; ${analysis.archiveConflicts} archive IDs already exist.</li>
         <li>Revision snapshots, directories, templates, presets, settings, and sync metadata are merged by storage type.</li>
       </ul>
-      <p class="helper-text">This operation does not clear current Methodz storage keys. Existing local-only entries remain in place.</p>
+      <p class="helper-text">Current local-only keys remain in place. Migration and merge log metadata from the incoming package are not imported.</p>
       <div class="button-row">
         <button type="button" onclick="applyWorkspaceMergeV09()">Apply Workspace Merge</button>
         <button type="button" onclick="cancelWorkspaceMergeV09()">Cancel</button>
@@ -103,7 +110,7 @@
   }
 
   function validateWorkspacePackageV09(payload) {
-    if (!payload || typeof payload !== "object") throw new Error("The selected file is not a JSON object.");
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("The selected file is not a JSON object.");
     if (payload.packageType !== "methodz-meeting-manager-workspace") throw new Error("This is not a Methodz Meeting Manager workspace package.");
     if (!payload.entries || typeof payload.entries !== "object" || Array.isArray(payload.entries)) throw new Error("The package does not contain a valid entries object.");
 
@@ -122,19 +129,19 @@
   }
 
   function analyzeWorkspaceMergeV09(payload, strategy) {
-    const incomingRecords = parseEntryV09(payload.entries[keys.records || "methodzMeetingRecords"], []);
-    const localRecords = readLocalJsonV09(keys.records || "methodzMeetingRecords", []);
-    const incomingArchive = parseEntryV09(payload.entries[keys.archivedRecords || "methodzArchivedMeetingRecords"], []);
-    const localArchive = readLocalJsonV09(keys.archivedRecords || "methodzArchivedMeetingRecords", []);
-    const localRecordIds = new Set(arrayV09(localRecords).map((record) => record?.id).filter(Boolean));
-    const localArchiveIds = new Set(arrayV09(localArchive).map((entry) => entry?.archiveId).filter(Boolean));
-    const incomingRecordIds = arrayV09(incomingRecords).map((record) => record?.id).filter(Boolean);
-    const incomingArchiveIds = arrayV09(incomingArchive).map((entry) => entry?.archiveId).filter(Boolean);
+    const incomingRecords = arrayV09(parseEntryV09(payload.entries[recordsKey], []));
+    const localRecords = arrayV09(readLocalJsonV09(recordsKey, []));
+    const incomingArchive = arrayV09(parseEntryV09(payload.entries[archiveKey], []));
+    const localArchive = arrayV09(readLocalJsonV09(archiveKey, []));
+    const localRecordIds = new Set(localRecords.map((record) => record?.id).filter(Boolean));
+    const localArchiveIds = new Set(localArchive.map((entry) => entry?.archiveId).filter(Boolean));
+    const incomingRecordIds = incomingRecords.map((record) => record?.id).filter(Boolean);
+    const incomingArchiveIds = incomingArchive.map((entry) => entry?.archiveId).filter(Boolean);
 
     return {
       strategy,
-      incomingActive: arrayV09(incomingRecords).length,
-      incomingArchived: arrayV09(incomingArchive).length,
+      incomingActive: incomingRecords.length,
+      incomingArchived: incomingArchive.length,
       newActive: incomingRecordIds.filter((id) => !localRecordIds.has(id)).length,
       activeConflicts: incomingRecordIds.filter((id) => localRecordIds.has(id)).length,
       newArchived: incomingArchiveIds.filter((id) => !localArchiveIds.has(id)).length,
@@ -154,10 +161,13 @@
       const recovery = typeof global.createWorkspacePackageV08 === "function"
         ? global.createWorkspacePackageV08()
         : createFallbackPackageV09();
-      global.localStorage.setItem(preRestoreKey, JSON.stringify({ ...recovery, recoveryReason: "Automatic pre-merge recovery", createdAt: new Date().toISOString() }));
 
+      // Keep the recovery package byte-for-byte valid so its checksum can be verified by the v0.8 restore workflow.
+      global.localStorage.setItem(preRestoreKey, JSON.stringify(recovery));
+
+      const skippedKeys = new Set([preRestoreKey, mergeLogKey, migrationStateKey]);
       Object.entries(pendingPackage.entries).forEach(([key, incomingRaw]) => {
-        if (!(key.startsWith("methodz") || key === "meetingRecords") || key === preRestoreKey || typeof incomingRaw !== "string") return;
+        if (!(key.startsWith("methodz") || key === "meetingRecords") || skippedKeys.has(key) || typeof incomingRaw !== "string") return;
         const localRaw = global.localStorage.getItem(key);
         const mergedRaw = mergeStorageEntryV09(key, localRaw, incomingRaw, strategy);
         if (mergedRaw !== null) global.localStorage.setItem(key, mergedRaw);
@@ -170,7 +180,7 @@
         strategy,
         analysis: analyzeWorkspaceMergeV09(pendingPackage, strategy)
       };
-      global.localStorage.setItem(keys.mergeLog || "methodzWorkspaceMergeLog", JSON.stringify(report));
+      global.localStorage.setItem(mergeLogKey, JSON.stringify(report));
       announceV09("Workspace merge applied. Reloading the application.");
       global.location.reload();
     } catch (error) {
@@ -184,10 +194,9 @@
     const local = parseEntryV09(localRaw, localRaw);
     const incoming = parseEntryV09(incomingRaw, incomingRaw);
 
-    if (key === (keys.records || "methodzMeetingRecords")) return JSON.stringify(mergeRecordsV09(arrayV09(local), arrayV09(incoming), strategy));
-    if (key === (keys.archivedRecords || "methodzArchivedMeetingRecords")) return JSON.stringify(mergeArchiveV09(arrayV09(local), arrayV09(incoming), strategy));
-    if (key === (keys.revisions || "methodzMeetingRevisions")) return JSON.stringify(mergeRevisionMapsV09(objectV09(local), objectV09(incoming)));
-
+    if (key === recordsKey) return JSON.stringify(mergeRecordsV09(arrayV09(local), arrayV09(incoming), strategy));
+    if (key === archiveKey) return JSON.stringify(mergeArchiveV09(arrayV09(local), arrayV09(incoming), strategy));
+    if (key === revisionsKey) return JSON.stringify(mergeRevisionMapsV09(objectV09(local), objectV09(incoming)));
     if (Array.isArray(local) && Array.isArray(incoming)) return JSON.stringify(mergeGenericArraysV09(local, incoming, strategy));
     if (isObjectV09(local) && isObjectV09(incoming)) return JSON.stringify(mergeObjectsV09(local, incoming, strategy));
     return strategy === "prefer-newest" ? incomingRaw : localRaw;
@@ -208,19 +217,19 @@
       const index = byId.get(record.id);
       const existing = result[index];
       if (JSON.stringify(existing) === JSON.stringify(record) || strategy === "keep-local") return;
+
       if (strategy === "prefer-newest") {
         if (recordTimestampV09(record) > recordTimestampV09(existing)) result[index] = record;
         return;
       }
 
-      const copy = {
+      result.push({
         ...record,
-        id: `meeting-merged-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id: uniqueIdV09("meeting-merged"),
         importedFromRecordId: record.id,
         title: `${record.title || "Imported Meeting"} (Imported Copy)`,
         updatedAt: new Date().toISOString()
-      };
-      result.push(copy);
+      });
     });
     return result;
   }
@@ -228,6 +237,7 @@
   function mergeArchiveV09(local, incoming, strategy) {
     const result = local.map(cloneV09);
     const byId = new Map(result.map((entry, index) => [entry?.archiveId, index]).filter(([id]) => id));
+
     incoming.forEach((source) => {
       const entry = cloneV09(source);
       if (!entry?.archiveId || !byId.has(entry.archiveId)) {
@@ -235,12 +245,14 @@
         if (entry?.archiveId) byId.set(entry.archiveId, result.length - 1);
         return;
       }
+
       const index = byId.get(entry.archiveId);
       if (JSON.stringify(result[index]) === JSON.stringify(entry) || strategy === "keep-local") return;
+
       if (strategy === "prefer-newest") {
         if (recordTimestampV09(entry.record || entry) > recordTimestampV09(result[index].record || result[index])) result[index] = entry;
       } else {
-        result.push({ ...entry, archiveId: `archive-merged-${Date.now()}-${Math.random().toString(16).slice(2)}`, mergedFromArchiveId: entry.archiveId });
+        result.push({ ...entry, archiveId: uniqueIdV09("archive-merged"), mergedFromArchiveId: entry.archiveId });
       }
     });
     return result;
@@ -250,9 +262,9 @@
     const result = cloneV09(local);
     Object.entries(incoming).forEach(([recordId, revisions]) => {
       const existing = arrayV09(result[recordId]);
-      const seen = new Set(existing.map((revision) => revision?.id || `${revision?.contentHash}|${revision?.capturedAt}`));
+      const seen = new Set(existing.map(revisionIdentityV09));
       arrayV09(revisions).forEach((revision) => {
-        const identity = revision?.id || `${revision?.contentHash}|${revision?.capturedAt}`;
+        const identity = revisionIdentityV09(revision);
         if (!seen.has(identity)) {
           existing.push(cloneV09(revision));
           seen.add(identity);
@@ -264,17 +276,25 @@
     return result;
   }
 
+  function revisionIdentityV09(revision) {
+    return revision?.id || `${revision?.contentHash || ""}|${revision?.capturedAt || ""}|${revision?.reason || ""}`;
+  }
+
   function mergeGenericArraysV09(local, incoming, strategy) {
     const result = local.map(cloneV09);
     const identity = (item) => item?.id || item?.email || item?.name || item?.label || JSON.stringify(item);
     const indexByIdentity = new Map(result.map((item, index) => [identity(item), index]));
+
     incoming.forEach((item) => {
       const id = identity(item);
       if (!indexByIdentity.has(id)) {
         result.push(cloneV09(item));
         indexByIdentity.set(id, result.length - 1);
       } else if (strategy === "prefer-newest") {
-        result[indexByIdentity.get(id)] = { ...result[indexByIdentity.get(id)], ...cloneV09(item) };
+        const index = indexByIdentity.get(id);
+        result[index] = isObjectV09(result[index]) && isObjectV09(item)
+          ? { ...result[index], ...cloneV09(item) }
+          : cloneV09(item);
       } else if (strategy === "keep-both" && JSON.stringify(result[indexByIdentity.get(id)]) !== JSON.stringify(item)) {
         result.push(cloneV09(item));
       }
@@ -307,7 +327,13 @@
       const key = global.localStorage.key(index);
       if (key && key !== preRestoreKey && (key.startsWith("methodz") || key === "meetingRecords")) entries[key] = global.localStorage.getItem(key);
     }
-    return { packageType: "methodz-meeting-manager-workspace", packageVersion: 1, schemaVersion: config.schemaVersion || "0.9.0", exportedAt: new Date().toISOString(), entries };
+    return {
+      packageType: "methodz-meeting-manager-workspace",
+      packageVersion: 1,
+      schemaVersion: config.schemaVersion || "0.9.0",
+      exportedAt: new Date().toISOString(),
+      entries
+    };
   }
 
   function readLocalJsonV09(key, fallback) {
@@ -317,13 +343,28 @@
   function parseEntryV09(raw, fallback) {
     if (raw == null) return fallback;
     if (typeof raw !== "string") return raw;
-    try { return JSON.parse(raw); } catch (error) { return fallback; }
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      return fallback;
+    }
   }
 
-  function arrayV09(value) { return Array.isArray(value) ? value : []; }
-  function objectV09(value) { return isObjectV09(value) ? value : {}; }
-  function isObjectV09(value) { return value && typeof value === "object" && !Array.isArray(value); }
-  function cloneV09(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+  function arrayV09(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function objectV09(value) {
+    return isObjectV09(value) ? value : {};
+  }
+
+  function isObjectV09(value) {
+    return Boolean(value && typeof value === "object" && !Array.isArray(value));
+  }
+
+  function cloneV09(value) {
+    return value == null ? value : JSON.parse(JSON.stringify(value));
+  }
 
   function recordTimestampV09(record) {
     const value = record?.updatedAt || record?.savedAt || record?.createdAt || record?.archivedAt || "";
@@ -331,8 +372,14 @@
     return Number.isNaN(time) ? 0 : time;
   }
 
+  function uniqueIdV09(prefix) {
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
   function strategyLabelV09(strategy) {
-    return strategy === "keep-local" ? "Keep local values" : strategy === "keep-both" ? "Keep both record versions" : "Prefer the newest record";
+    if (strategy === "keep-local") return "Keep local values";
+    if (strategy === "keep-both") return "Keep both record versions";
+    return "Prefer the newest record";
   }
 
   function formatBytesV09(bytes) {
@@ -353,12 +400,19 @@
 
   function stableStringifyV09(value) {
     if (Array.isArray(value)) return `[${value.map(stableStringifyV09).join(",")}]`;
-    if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringifyV09(value[key])}`).join(",")}}`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringifyV09(value[key])}`).join(",")}}`;
+    }
     return JSON.stringify(value);
   }
 
   function escapeV09(value) {
-    return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function announceV09(message) {
