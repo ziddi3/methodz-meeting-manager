@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.9.0
+
+### Added
+
+- `migrations.js` with an ordered, idempotent schema migration registry.
+- Active-record, archived-record, revision-snapshot, and draft migration.
+- Record validation and migration-run metadata under `methodzMigrationState`.
+- `features-v09-archive.js` with archive search, status and organization filters, selection, and bulk JSON export.
+- `features-v09-revisions.js` with revision-to-revision and revision-to-current comparison.
+- Added, removed, and changed field-path reporting with comparison JSON export.
+- `features-v09-workspace-merge.js` with non-destructive workspace package merge.
+- Prefer-newest, keep-local, and keep-both merge strategies.
+- Automatic pre-merge recovery and merge reporting under `methodzWorkspaceMergeLog`.
+- `manifest.webmanifest`, `service-worker.js`, `features-v09-pwa.js`, and an SVG app icon.
+- Optional install prompt, hosted offline app-shell cache, and manual cache refresh.
+- Playwright browser smoke tests for save, migration, archive, merge helpers, manifest, and service-worker delivery.
+- `features-v09.css` and v0.9 release, architecture, and test documentation.
+
+### Changed
+
+- Bumped the configuration schema and app-shell version to `0.9.0`.
+- Added migration-state and workspace-merge-log storage keys.
+- Loaded the migration registry before the adapter and core app on both HTML entry points.
+- Updated GitHub Actions to run static validation and real browser smoke tests.
+- Updated the main workspace to load v0.9 archive, revision, merge, and PWA modules.
+- Updated README documentation and the roadmap toward v1.0 release hardening.
+
+### Notes
+
+- Direct-file mode remains fully supported.
+- Service-worker registration is attempted only when served over HTTPS or localhost.
+- The service worker caches static files only and does not store meeting records.
+- Workspace merge is separate from complete workspace replacement restore.
+- Revision comparison is read-only.
+- Archive bulk export does not modify archive contents.
+- Playwright is installed only in CI and is not a runtime dependency.
+
 ## 0.8.0
 
 ### Added
