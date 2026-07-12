@@ -6,10 +6,19 @@
   const currentVersion = config.schemaVersion || "0.9.0";
   const storageKeys = config.storageKeys || {};
   const migrationStateKey = storageKeys.migrationState || "methodzMigrationState";
+  const legacyRecordsKey = "meetingRecords";
   const registry = [];
 
   function clone(value) {
     return value == null ? value : JSON.parse(JSON.stringify(value));
+  }
+
+  function ensureArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function ensureObject(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   }
 
   function versionParts(version) {
@@ -37,20 +46,13 @@
     registry.sort((a, b) => compareVersions(a.version, b.version));
   }
 
-  function ensureArray(value) {
-    return Array.isArray(value) ? value : [];
-  }
-
-  function ensureObject(value) {
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  }
-
-  function baseNormalize(record) {
-    const now = new Date().toISOString();
+  function normalizeRecordShape(record, migratedAt) {
     const source = ensureObject(record);
+    const now = migratedAt || new Date().toISOString();
     return {
       ...source,
       id: source.id || `meeting-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      schemaVersion: currentVersion,
       meetingNumber: source.meetingNumber || "IMP",
       title: source.title || "Imported Meeting",
       status: source.status || "Archived",
@@ -58,34 +60,41 @@
       location: source.location || "",
       facilitator: source.facilitator || "",
       organizations: ensureArray(source.organizations),
+      organizationDetails: ensureArray(source.organizationDetails),
       attendees: ensureArray(source.attendees),
-      agenda: ensureArray(source.agenda),
+      agenda: ensureArray(source.agenda).map((item) => ({
+        ...ensureObject(item),
+        group: item?.group || "General",
+        item: item?.item || (typeof item === "string" ? item : ""),
+        completed: Boolean(item?.completed)
+      })),
       notes: source.notes || "",
       decisions: source.decisions || "",
+      decisionsList: ensureArray(source.decisionsList),
       tasks: ensureArray(source.tasks),
+      attachments: ensureArray(source.attachments),
+      attachmentSummary: ensureObject(source.attachmentSummary),
+      signatureAudit: ensureObject(source.signatureAudit),
+      directorySnapshot: ensureArray(source.directorySnapshot),
       summary: source.summary || "",
+      validation: ensureArray(source.validation),
+      governance: ensureObject(source.governance),
+      syncMetadata: ensureObject(source.syncMetadata || source.syncMeta),
+      adapterMetadata: ensureObject(source.adapterMetadata),
+      recordMeta: ensureObject(source.recordMeta),
       createdAt: source.createdAt || source.savedAt || now,
       updatedAt: source.updatedAt || source.savedAt || now,
       savedAt: source.savedAt || source.createdAt || now
     };
   }
 
-  registerMigration("0.3.0", "Add structured decisions and validation metadata", (record) => ({
+  registerMigration("0.3.0", "Add structured decision and validation fields", (record) => ({
     ...record,
     decisionsList: ensureArray(record.decisionsList),
     validation: ensureArray(record.validation)
   }));
 
-  registerMigration("0.4.0", "Preserve custom agenda and template-era record fields", (record) => ({
-    ...record,
-    agenda: ensureArray(record.agenda).map((item) => ({
-      group: item?.group || "General",
-      item: item?.item || String(item || ""),
-      completed: Boolean(item?.completed)
-    }))
-  }));
-
-  registerMigration("0.5.0", "Add attachment, directory, and signature audit fields", (record) => ({
+  registerMigration("0.5.0", "Add attachment, directory, and signature fields", (record) => ({
     ...record,
     attachments: ensureArray(record.attachments),
     attachmentSummary: ensureObject(record.attachmentSummary),
@@ -93,53 +102,29 @@
     directorySnapshot: ensureArray(record.directorySnapshot)
   }));
 
-  registerMigration("0.6.0", "Add governance and sync readiness metadata", (record) => ({
+  registerMigration("0.6.0", "Add governance and sync metadata", (record) => ({
     ...record,
     governance: ensureObject(record.governance),
-    syncMetadata: ensureObject(record.syncMetadata)
+    syncMetadata: ensureObject(record.syncMetadata || record.syncMeta)
   }));
 
-  registerMigration("0.7.0", "Add organization detail snapshots and adapter metadata", (record) => ({
+  registerMigration("0.7.0", "Add organization and adapter snapshots", (record) => ({
     ...record,
     organizationDetails: ensureArray(record.organizationDetails),
     adapterMetadata: ensureObject(record.adapterMetadata)
   }));
 
-  registerMigration("0.8.0", "Add history and recovery-compatible record metadata", (record) => ({
+  registerMigration("0.8.0", "Add history-compatible metadata", (record) => ({
     ...record,
     recordMeta: ensureObject(record.recordMeta)
   }));
 
-  registerMigration("0.9.0", "Normalize record collections and stamp migration provenance", (record, context) => {
-    const normalized = baseNormalize(record);
-    const migratedFrom = context.fromVersion || record.schemaVersion || "0.1.0";
-    return {
-      ...normalized,
-      schemaVersion: currentVersion,
-      decisionsList: ensureArray(normalized.decisionsList),
-      validation: ensureArray(normalized.validation),
-      attachments: ensureArray(normalized.attachments),
-      attachmentSummary: ensureObject(normalized.attachmentSummary),
-      signatureAudit: ensureObject(normalized.signatureAudit),
-      directorySnapshot: ensureArray(normalized.directorySnapshot),
-      governance: ensureObject(normalized.governance),
-      syncMetadata: ensureObject(normalized.syncMetadata),
-      organizationDetails: ensureArray(normalized.organizationDetails),
-      adapterMetadata: ensureObject(normalized.adapterMetadata),
-      recordMeta: {
-        ...ensureObject(normalized.recordMeta),
-        migratedFrom,
-        migratedTo: currentVersion,
-        migratedAt: context.migratedAt
-      }
-    };
-  });
+  registerMigration("0.9.0", "Normalize complete record shape", (record, context) => normalizeRecordShape(record, context.migratedAt));
 
   function migrateRecord(input, options = {}) {
-    const original = baseNormalize(input);
-    const fromVersion = String(input?.schemaVersion || "0.1.0");
     const migratedAt = options.migratedAt || new Date().toISOString();
-    let record = clone(original);
+    const fromVersion = String(input?.schemaVersion || "0.1.0");
+    let record = clone(ensureObject(input));
     const applied = [];
 
     registry.forEach((entry) => {
@@ -149,19 +134,21 @@
       }
     });
 
-    record = baseNormalize(record);
-    record.schemaVersion = currentVersion;
+    const beforeFinalNormalization = JSON.stringify(record);
+    record = normalizeRecordShape(record, migratedAt);
+    const shapeChanged = beforeFinalNormalization !== JSON.stringify(record);
+    const changed = JSON.stringify(input || {}) !== JSON.stringify(record);
 
-    if (applied.length && !record.recordMeta?.migratedAt) {
+    if (changed) {
       record.recordMeta = {
         ...ensureObject(record.recordMeta),
         migratedFrom: fromVersion,
         migratedTo: currentVersion,
-        migratedAt
+        migratedAt,
+        shapeNormalized: shapeChanged
       };
     }
 
-    const changed = JSON.stringify(input || {}) !== JSON.stringify(record);
     return { record, changed, fromVersion, toVersion: currentVersion, applied };
   }
 
@@ -172,10 +159,24 @@
     if (!record?.id) errors.push("Record ID is missing.");
     if (!record?.title) warnings.push("Meeting title is missing.");
     if (!record?.date) warnings.push("Meeting date is missing.");
-    ["organizations", "attendees", "agenda", "tasks", "decisionsList", "attachments"].forEach((field) => {
+
+    [
+      "organizations",
+      "organizationDetails",
+      "attendees",
+      "agenda",
+      "decisionsList",
+      "tasks",
+      "attachments",
+      "directorySnapshot",
+      "validation"
+    ].forEach((field) => {
       if (!Array.isArray(record?.[field])) errors.push(`${field} must be an array.`);
     });
-    if (compareVersions(record?.schemaVersion, currentVersion) !== 0) warnings.push(`Record schema is ${record?.schemaVersion || "unknown"}; expected ${currentVersion}.`);
+
+    if (compareVersions(record?.schemaVersion, currentVersion) !== 0) {
+      warnings.push(`Record schema is ${record?.schemaVersion || "unknown"}; expected ${currentVersion}.`);
+    }
     return { valid: errors.length === 0, errors, warnings };
   }
 
@@ -209,12 +210,30 @@
     return { migrated, changedCount };
   }
 
+  function importLegacyRecordsIfNeeded(recordsKey) {
+    const currentRaw = global.localStorage.getItem(recordsKey);
+    const legacyRaw = global.localStorage.getItem(legacyRecordsKey);
+    if (currentRaw !== null || legacyRaw === null) return false;
+
+    try {
+      const legacyRecords = JSON.parse(legacyRaw);
+      global.localStorage.setItem(recordsKey, JSON.stringify(ensureArray(legacyRecords)));
+      global.localStorage.removeItem(legacyRecordsKey);
+      return true;
+    } catch (error) {
+      console.warn("Unable to migrate legacy meetingRecords storage", error);
+      return false;
+    }
+  }
+
   function migrateWorkspace() {
     const migratedAt = new Date().toISOString();
+    const recordsKey = storageKeys.records || "methodzMeetingRecords";
     const summary = {
       currentVersion,
       startedAt: migratedAt,
       completedAt: "",
+      legacyRecordsImported: false,
       activeRecordsChanged: 0,
       archivedRecordsChanged: 0,
       revisionSnapshotsChanged: 0,
@@ -224,7 +243,8 @@
     };
 
     try {
-      const recordsKey = storageKeys.records || "methodzMeetingRecords";
+      summary.legacyRecordsImported = importLegacyRecordsIfNeeded(recordsKey);
+
       const records = readJson(recordsKey, []);
       const activeResult = migrateRecordArray(records, migratedAt);
       summary.activeRecordsChanged = activeResult.changedCount;
@@ -255,7 +275,7 @@
 
       const draftKey = storageKeys.draft || "methodzMeetingDraft";
       const draft = readJson(draftKey, null);
-      if (draft && typeof draft === "object") {
+      if (draft && typeof draft === "object" && !Array.isArray(draft)) {
         const result = migrateRecord(draft, { migratedAt });
         const nextDraft = { ...result.record, draftSavedAt: draft.draftSavedAt || migratedAt };
         summary.draftChanged = result.changed ? 1 : 0;
