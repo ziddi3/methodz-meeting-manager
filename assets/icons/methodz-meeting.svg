@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Methodz Meeting Manager</title>
+  <desc id="desc">A dark rounded square with a gold M and meeting checklist.</desc>
+  <rect width="512" height="512" rx="112" fill="#111111"/>
+  <path d="M106 132h66l84 112 84-112h66v248h-68V238l-82 106-82-106v142h-68z" fill="#d5a642"/>
+  <rect x="338" y="290" width="112" height="138" rx="18" fill="#ffffff"/>
+  <path d="M360 326h18l10 12 20-24" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M360 366h18l10 12 20-24" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M418 326h16M418 366h16" stroke="#111111" stroke-width="10" stroke-linecap="round"/>
+</svg>
