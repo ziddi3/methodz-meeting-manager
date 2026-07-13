@@ -17,6 +17,7 @@ test("v1.1 retention and partner-safe export panels load", async ({ page }) => {
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
     retentionVersion: window.MethodzRetentionV11.version,
     redactionVersion: window.MethodzRedactionV11.version,
+    publicSummaryPolicy: window.__methodzV11RedactionPolicyPatched,
     migrationRegistered: window.MethodzMigrations.registry.some((entry) => entry.version === "1.1.0")
   }));
 
@@ -24,15 +25,19 @@ test("v1.1 retention and partner-safe export panels load", async ({ page }) => {
     schema: "1.1.0",
     retentionVersion: "1.1.0",
     redactionVersion: "1.1.0",
+    publicSummaryPolicy: true,
     migrationRegistered: true
   });
 });
 
-test("saved records preserve retention and legal-hold metadata", async ({ page }) => {
+test("saved records preserve retention and legal-hold metadata without duplicate placement history", async ({ page }) => {
   await page.locator("#meetingTitle").fill("Retention Smoke Test");
   await page.locator("#legalHoldActiveV11").check();
   await page.locator("#legalHoldActorV11").fill("Release Auditor");
   await page.locator("#legalHoldReasonV11").fill("Insurance record preservation request");
+
+  page.once("dialog", async (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Save Record" }).first().click();
 
   page.once("dialog", async (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Save Record" }).first().click();
@@ -43,7 +48,7 @@ test("saved records preserve retention and legal-hold metadata", async ({ page }
   expect(record.retentionMetadata.reviewDate).toBeTruthy();
   expect(record.retentionMetadata.legalHold.active).toBe(true);
   expect(record.retentionMetadata.legalHold.placedBy).toBe("Release Auditor");
-  expect(record.retentionMetadata.holdHistory[0].action).toBe("placed");
+  expect(record.retentionMetadata.holdHistory.filter((event) => event.action === "placed")).toHaveLength(1);
   expect(record.schemaAudit.valid).toBe(true);
 });
 
@@ -98,10 +103,7 @@ test("partner-safe redaction removes signatures, internal notes, contacts, and f
       retentionMetadata: { policyId: "business-review-7y", reviewDate: "2033-07-13", lifecycleStatus: "Active", legalHold: { active: false } }
     };
     const output = window.MethodzRedactionV11.redactRecord(source, "partner-safe");
-    return {
-      output,
-      serialized: JSON.stringify(output.record)
-    };
+    return { output, serialized: JSON.stringify(output.record) };
   });
 
   expect(result.output.manifest.signatureDataIncluded).toBe(false);
@@ -117,6 +119,30 @@ test("partner-safe redaction removes signatures, internal notes, contacts, and f
   expect(result.serialized).not.toContain("private@example.com");
   expect(result.serialized).not.toContain("/private/path/photo.jpg");
   expect(result.serialized).not.toContain("PRIVATE POLICY NOTE");
+});
+
+test("public summary excludes free-form decisions and keeps only approved structured decisions", async ({ page }) => {
+  const output = await page.evaluate(() => window.MethodzRedactionV11.redactRecord({
+    meetingNumber: "102",
+    title: "Public Summary Test",
+    date: "2026-07-13",
+    organizations: ["Method HVAC Inc."],
+    agenda: [{ group: "Operations", item: "Approved item", completed: true }],
+    decisions: "PRIVATE FREE-FORM DECISION NOTES",
+    decisionsList: [
+      { decision: "Approved public decision", status: "Approved" },
+      { decision: "Draft internal decision", status: "Draft" }
+    ],
+    summary: "Approved public summary"
+  }, "public-summary"));
+
+  expect(output.record.decisions).toBeUndefined();
+  expect(output.record.decisionsList).toEqual([
+    { decision: "Approved public decision", approvedBy: "", date: "", status: "Approved", conditions: "" }
+  ]);
+  expect(JSON.stringify(output.record)).not.toContain("PRIVATE FREE-FORM DECISION NOTES");
+  expect(JSON.stringify(output.record)).not.toContain("Draft internal decision");
+  expect(output.manifest.removedPaths).toContain("decisions");
 });
 
 test("external package integrity is labeled accurately", async ({ page }) => {
