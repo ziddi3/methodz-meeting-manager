@@ -39,24 +39,28 @@ jobs:
           test -f style.css
           test -f config.js
           test -f migrations.js
+          test -f migrations-v10.js
           test -f data-adapter.js
+          test -f async-data-adapter.js
+          test -f attachment-adapter.js
           test -f app.js
           test -f manifest.webmanifest
           test -f service-worker.js
 
-      - name: Verify v0.9 assets are loaded
+      - name: Verify v1.0 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'features-v09.css' meeting.html
-          grep -q 'migrations.js' meeting.html
-          grep -q 'features-v09-archive.js' meeting.html
-          grep -q 'features-v09-revisions.js' meeting.html
-          grep -q 'features-v09-workspace-merge.js' meeting.html
-          grep -q 'features-v09-pwa.js' meeting.html
-          grep -q 'manifest.webmanifest' meeting.html
-          grep -q 'migrations.js' archive.html
-          grep -q 'methodz-meeting-manager-v0.9.0' service-worker.js
+          grep -q 'features-v10.css' meeting.html
+          grep -q 'migrations-v10.js' meeting.html
+          grep -q 'async-data-adapter.js' meeting.html
+          grep -q 'attachment-adapter.js' meeting.html
+          grep -q 'features-v10-governance.js' meeting.html
+          grep -q 'features-v10-signatures.js' meeting.html
+          grep -q 'features-v10-release.js' meeting.html
+          grep -q 'archive-v10.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.0.0' service-worker.js
+          grep -q '"1.0.0"' config.js
 
       - name: Validate JSON manifest
         shell: bash
