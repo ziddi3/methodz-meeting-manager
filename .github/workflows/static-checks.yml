@@ -48,6 +48,7 @@ jobs:
           test -f app.js
           test -f features-v11-retention.js
           test -f features-v11-redaction.js
+          test -f features-v11-redaction-policy.js
           test -f archive-v11.js
           test -f manifest.webmanifest
           test -f service-worker.js
@@ -68,12 +69,14 @@ jobs:
           grep -q 'features-v10-release.js' meeting.html
           grep -q 'features-v11-retention.js' meeting.html
           grep -q 'features-v11-redaction.js' meeting.html
+          grep -q 'features-v11-redaction-policy.js' meeting.html
           grep -q 'archive-v10.js' archive.html
           grep -q 'archive-v11.js' archive.html
           grep -q 'methodz-meeting-manager-v1.1.0' service-worker.js
           grep -q 'schemaVersion = "1.1.0"' config-v11.js
           grep -q 'features-v11-retention.js' service-worker.js
           grep -q 'features-v11-redaction.js' service-worker.js
+          grep -q 'features-v11-redaction-policy.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
