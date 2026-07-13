@@ -118,11 +118,32 @@
       body.innerHTML = '<p class="helper-text">No records match the filters.</p>';
       return;
     }
-    body.innerHTML = filtered.map((row) => {
+    body.innerHTML = "";
+    filtered.forEach((row) => {
       const record = row.record;
       const audit = validateRecord(record);
-      return `<article class="workspace-record-v10"><div><strong>#${escapeHtml(record.meetingNumber || "?")} ${escapeHtml(record.title || "Untitled Meeting")}</strong><p>${escapeHtml(row.source)} • ${escapeHtml(record.date || "No date")} • ${escapeHtml(record.accessControl?.classification || "Internal")}</p></div><span class="${audit.valid ? "is-ready-v10" : "has-issue-v10"}">${audit.valid ? "Ready" : `${audit.errors.length} issue(s)`}</span><button type="button" onclick="openWorkspaceRecordV10('${escapeHtml(record.id)}','${row.source}','${escapeHtml(row.archiveId || "")}')">Open</button></article>`;
-    }).join("");
+      const article = document.createElement("article");
+      article.className = "workspace-record-v10";
+
+      const details = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = `#${record.meetingNumber || "?"} ${record.title || "Untitled Meeting"}`;
+      const metadata = document.createElement("p");
+      metadata.textContent = `${row.source} • ${record.date || "No date"} • ${record.accessControl?.classification || "Internal"}`;
+      details.append(title, metadata);
+
+      const badge = document.createElement("span");
+      badge.className = audit.valid ? "is-ready-v10" : "has-issue-v10";
+      badge.textContent = audit.valid ? "Ready" : `${audit.errors.length} issue(s)`;
+
+      const openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.textContent = "Open";
+      openButton.addEventListener("click", () => openWorkspaceRecord(record.id, row.source, row.archiveId || ""));
+
+      article.append(details, badge, openButton);
+      body.appendChild(article);
+    });
   }
 
   function openWorkspaceRecord(recordId, source, archiveId) {
