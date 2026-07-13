@@ -1,0 +1,178 @@
+/* Methodz Meeting Manager v1.1 retention and partner-safe export styles. */
+.v11-card {
+  border-color: #d9c99a;
+}
+
+.release-badge-v11,
+.retention-badge-v11,
+.hold-badge-v11,
+.due-badge-v11,
+.archive-retention-v11 {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.release-badge-v11,
+.retention-badge-v11,
+.archive-retention-v11 {
+  background: #f2ead2;
+  color: #5c4712;
+  border: 1px solid #d8c27e;
+}
+
+.hold-badge-v11 {
+  background: #ffe3e3;
+  color: #7c1515;
+  border: 1px solid #d99a9a;
+}
+
+.due-badge-v11 {
+  background: #fff1cf;
+  color: #6d4800;
+  border: 1px solid #dfbf6a;
+}
+
+.retention-badges-v11 {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.retention-grid-v11,
+.external-export-grid-v11,
+.retention-filter-grid-v11 {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.retention-hold-v11,
+.custom-export-fields-v11 {
+  margin-top: 18px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfbfb;
+}
+
+.inline-check-v11 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.inline-check-v11 input {
+  width: auto;
+  margin: 0;
+}
+
+.hold-status-v11,
+.external-export-status-v11 {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid #d6d6d6;
+  background: #f7f7f7;
+}
+
+.hold-status-v11.is-hold-v11,
+.external-export-status-v11[data-state="error"] {
+  background: #fff0f0;
+  border-color: #d9a4a4;
+  color: #7b1f1f;
+}
+
+.hold-status-v11.is-clear-v11,
+.external-export-status-v11[data-state="ready"] {
+  background: #eff9f0;
+  border-color: #a6cda9;
+  color: #235c2a;
+}
+
+.external-export-status-v11[data-state="working"] {
+  background: #eef5ff;
+  border-color: #adc5e5;
+  color: #244f7c;
+}
+
+.retention-row-v11 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.retention-row-v11:last-child {
+  border-bottom: 0;
+}
+
+.retention-row-v11 p {
+  margin: 4px 0 0;
+  color: #666666;
+}
+
+.external-export-preview-v11 {
+  margin-top: 14px;
+  border: 1px solid #d7d7d7;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.external-export-preview-v11 summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.external-export-preview-v11 pre {
+  max-height: 520px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f3f3f3;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.archived-record-v08 button[data-action="delete"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.archive-retention-detail-v11.archive-hold-active-v11 {
+  border-color: #d99a9a;
+  background: #fffafa;
+}
+
+.archive-hold-warning-v11 {
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #fff0f0;
+  color: #7b1f1f;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .retention-row-v11 {
+    grid-template-columns: 1fr;
+  }
+
+  .retention-badges-v11 {
+    display: flex;
+    margin: 8px 0 0;
+  }
+}
+
+@media print {
+  #recordRetentionPanelV11,
+  #retentionDashboardV11,
+  #externalExportPanelV11 {
+    display: none !important;
+  }
+}
