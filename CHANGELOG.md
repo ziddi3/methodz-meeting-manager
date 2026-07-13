@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.1.0
+
+### Added
+
+- `config-v11.js` with retention presets, lifecycle statuses, redaction profiles, and external-export-log configuration.
+- `migrations-v11.js` with retention, preservation-hold, redaction, and v1.1 validation defaults.
+- `features-v11-retention.js` with record review dates, hold placement and release history, a retention dashboard, and retention report export.
+- Active legal-hold protection for Archive Vault permanent deletion.
+- `features-v11-redaction.js` with Partner Safe, Public Summary, and Custom External Copy profiles.
+- Redaction manifests listing removed field paths and warnings.
+- SHA-256 package integrity through Web Crypto with an explicitly labeled FNV-1a compatibility fallback.
+- Browser-local external-export activity logging.
+- `archive-v11.js` with printable retention and preservation details.
+- `features-v11.css`, v1.1 browser smoke tests, architecture notes, release notes, and a manual test checklist.
+
+### Changed
+
+- Bumped the active schema and app-shell version to `1.1.0` through the configuration extension.
+- Updated `meeting.html` and `archive.html` to load v1.1 configuration, migration, feature, archive, and style assets in order.
+- Updated the service-worker cache to `methodz-meeting-manager-v1.1.0`.
+- Extended release validation to cover retention metadata, review-date gaps, and active hold reasons.
+- Updated v1.0 smoke coverage to accept the current v1.1 schema while preserving governance and consent regression checks.
+- Extended GitHub Actions wiring validation for all v1.1 assets.
+
+### Notes
+
+- External exports create a separate copy and never mutate the controlled source record.
+- Typed signatures, consent records, and verification details are excluded from every external-copy profile.
+- A package digest detects changes but is not a digital signature or identity proof.
+- Retention presets are workflow aids, not legal advice.
+- Legal-hold protection is enforced by the local interface; future remote providers must enforce it server-side.
+- Direct-file mode remains supported with no runtime dependencies or cloud endpoint.
+
 ## 1.0.0
 
 ### Added
