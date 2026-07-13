@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.0.0
+
+### Added
+
+- `migrations-v10.js` for v1.0 schema defaults and release validation.
+- `async-data-adapter.js` with a Promise-based provider contract for future remote storage.
+- `attachment-adapter.js` with metadata-only attachment-reference validation.
+- `features-v10-governance.js` with record classifications, policies, local role context, and workflow action gates.
+- `features-v10-signatures.js` with explicit typed-signature consent and verification metadata.
+- `features-v10-release.js` with the consolidated active/archive workspace, provider health checks, and release audit export.
+- `archive-v10.js` with governance and signature-consent detail on archive pages.
+- `features-v10.css`, v1.0 browser smoke tests, security notes, architecture notes, and a release checklist.
+
+### Changed
+
+- Bumped configuration schema and app-shell version to `1.0.0`.
+- Updated the service-worker cache to `methodz-meeting-manager-v1.0.0`.
+- Older typed signatures now migrate without silently claiming consent.
+- CI wiring checks now require v1.0 modules and assets.
+
+### Notes
+
+- Direct-file mode remains supported.
+- No runtime dependency or cloud endpoint was added.
+- Local role controls are workflow safeguards, not authentication.
+- The default attachment provider stores references only, never binary files.
+
 ## 0.9.0
 
 ### Added
