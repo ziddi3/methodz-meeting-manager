@@ -1,0 +1,211 @@
+/* Methodz Meeting Manager v1.0 release styles. */
+.v10-card {
+  border-top: 4px solid var(--accent);
+}
+
+.release-badge-v10,
+.governance-badge-v10,
+.source-badge-v10,
+.release-ready-v10,
+.release-issue-v10 {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.28rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.release-badge-v10,
+.governance-badge-v10,
+.source-active-v10,
+.release-ready-v10 {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border: 1px solid #a5d6a7;
+}
+
+.source-archived-v10 {
+  background: #eceff1;
+  color: #37474f;
+  border: 1px solid #b0bec5;
+}
+
+.release-issue-v10,
+.has-issue-v10 {
+  background: #fff3e0;
+  color: #8a4b00;
+  border-color: #ffcc80;
+}
+
+.governance-context-grid-v10,
+.workspace-filter-grid-v10 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.governance-fieldset-v10,
+.signature-controls-v10 fieldset {
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.governance-fieldset-v10 legend,
+.signature-controls-v10 legend {
+  padding: 0 6px;
+  font-weight: 700;
+}
+
+.governance-role-grid-v10 label,
+.consent-label-v10 {
+  font-weight: normal;
+}
+
+.governance-evaluation-v10,
+.signature-review-v10,
+.release-ready-message-v10 {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7f7f7;
+  border: 1px solid var(--border);
+}
+
+.governance-evaluation-v10 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.signature-review-v10 {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+#signatureReviewSummaryV10 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#signatureReviewSummaryV10 span {
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid var(--border);
+}
+
+.signature-controls-v10 {
+  margin-top: 14px;
+  border-top: 1px dashed var(--border);
+  padding-top: 2px;
+}
+
+.signature-consent-accepted-v10 {
+  width: auto;
+  margin-right: 8px;
+}
+
+.records-workspace-body-v10 {
+  margin-top: 14px;
+}
+
+.workspace-record-v10 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.workspace-record-v10 p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.records-workspace-table-v10 th,
+.records-workspace-table-v10 td {
+  vertical-align: top;
+}
+
+.provider-grid-v10 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.provider-card-v10,
+.release-findings-v10 article {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.provider-card-v10 p {
+  margin: 6px 0 0;
+}
+
+.release-findings-v10 {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.release-findings-v10 article p {
+  margin-bottom: 0;
+}
+
+.release-error-v10 {
+  color: #8b1e1e;
+}
+
+.release-warning-v10 {
+  color: #8a4b00;
+}
+
+.archive-governance-v10,
+.archive-consent-v10 {
+  page-break-inside: avoid;
+}
+
+@media (max-width: 720px) {
+  .records-workspace-table-v10 {
+    min-width: 900px;
+  }
+
+  .workspace-record-v10 {
+    grid-template-columns: 1fr;
+  }
+
+  .governance-evaluation-v10 {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  #recordsWorkspaceV10,
+  #providerReadinessV10,
+  #releaseGateV10,
+  #recordGovernancePanelV10 .button-row,
+  .signature-review-v10 .button-row {
+    display: none !important;
+  }
+
+  .signature-controls-v10 fieldset,
+  .governance-fieldset-v10 {
+    background: white;
+  }
+}
