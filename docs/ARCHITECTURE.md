@@ -1,12 +1,12 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first application. The design goal is to keep the workflow inspectable and directly deployable while creating clean boundaries for revision history, archive lifecycle, workspace recovery, and future cloud providers.
+Methodz Meeting Manager is a static, offline-first application. The design keeps the workflow inspectable and directly deployable while creating replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, and future cloud providers.
 
 ## Entry Points
 
 ```text
-meeting.html   Meeting creation, editing, dashboards, settings, history, archive vault, backup, and exports
-archive.html   Dedicated record detail, archive review, and print surface
+meeting.html   Creation, editing, dashboards, settings, history, archive, recovery, retention, redaction, and exports
+archive.html   Dedicated record detail, governance, consent, retention, audit, and print surface
 ```
 
 No server, package manager, or build command is required.
@@ -16,52 +16,82 @@ No server, package manager, or build command is required.
 ```text
 meeting.html
   ├─ config.js
+  ├─ config-v11.js
+  ├─ migrations.js
+  ├─ migrations-v10.js
+  ├─ migrations-v11.js
   ├─ data-adapter.js
+  ├─ async-data-adapter.js
+  ├─ attachment-adapter.js
   ├─ app.js
-  ├─ features-v03.js
-  ├─ features-v03-startup.js
-  ├─ features-v04-templates.js
-  ├─ features-v04-records.js
-  ├─ features-v05-attachments.js
-  ├─ features-v05-directory.js
-  ├─ features-v05-startup.js
-  ├─ features-v06-settings.js
-  ├─ features-v06-governance.js
-  ├─ features-v07-organizations.js
-  ├─ features-v07-navigation.js
-  ├─ features-v08-history.js
-  ├─ features-v08-workspace.js
-  ├─ adapter-contract-tests.js
-  └─ features-v08-accessibility.js
+  ├─ features-v03*.js through features-v09*.js
+  ├─ features-v10-governance.js
+  ├─ features-v10-signatures.js
+  ├─ features-v10-release.js
+  ├─ features-v11-retention.js
+  └─ features-v11-redaction.js
 
 archive.html
   ├─ config.js
+  ├─ config-v11.js
+  ├─ migrations.js
+  ├─ migrations-v10.js
+  ├─ migrations-v11.js
   ├─ data-adapter.js
-  └─ archive.js
+  ├─ attachment-adapter.js
+  ├─ archive.js
+  ├─ archive-v10.js
+  └─ archive-v11.js
 ```
 
-Feature modules extend the stable core through browser globals and DOM injection. This keeps the project dependency-free while allowing incremental releases.
+Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. This keeps the deployed application dependency-free while allowing incremental releases.
 
-The v0.8 accessibility module loads last so it can improve the final wrapped versions of dynamic form builders and status actions.
+Script order is intentional. Later layers wrap final versions installed by earlier layers.
+
+`config-v11.js` loads before `migrations.js`, allowing the migration registry to capture schema `1.1.0` as the current version.
 
 ## Core Responsibilities
 
-### `config.js`
+### Configuration
 
-Owns editable defaults:
+`config.js` owns stable editable defaults:
 
 - brand labels and logo paths
 - organizations and organization types
-- organization presets
-- agenda groups and meeting templates
+- agenda groups and templates
 - meeting, attendance, task, and attachment options
 - numbering defaults
-- revision retention limit
+- governance roles and policies
+- signature-consent statement
 - storage keys
 
-### `data-adapter.js`
+`config-v11.js` extends the stable object with:
 
-Owns the synchronous record-storage interface.
+- schema and app-shell version `1.1.0`
+- retention policy presets
+- lifecycle statuses
+- redaction profiles
+- redaction export log key
+
+### Migration
+
+`migrations.js` owns the ordered migration registry and workspace migration across:
+
+- active records
+- archived records
+- revision snapshots
+- drafts
+- the original `meetingRecords` key
+
+`migrations-v10.js` adds governance, signature-consent, attachment-provider, and release-audit fields.
+
+`migrations-v11.js` adds retention, legal-hold, and redaction metadata while extending validation.
+
+Migration functions must remain ordered, idempotent, and additive. Unknown fields are preserved.
+
+### Record Providers
+
+`data-adapter.js` owns the synchronous record-storage interface.
 
 Public manager:
 
@@ -69,13 +99,7 @@ Public manager:
 window.MethodzMeetingData
 ```
 
-Default provider:
-
-```js
-LocalStorageMeetingAdapter
-```
-
-Required provider operations:
+Required operations:
 
 ```text
 listRecords()
@@ -86,122 +110,59 @@ deleteRecord(recordId)
 healthCheck()
 ```
 
-Optional provider operation:
+`async-data-adapter.js` defines Promise-returning equivalents for future Firebase, Supabase, CRM, Drive, or Methodz API providers.
+
+The active providers remain local and transmit nothing.
+
+### Attachment Provider
+
+`attachment-adapter.js` owns metadata-only attachment references.
+
+Required operations:
 
 ```text
-createExportEnvelope(extra)
+listReferences(record)
+getReference(record, referenceId)
+upsertReference(record, reference)
+deleteReference(record, referenceId)
+validateReference(reference)
+healthCheck()
 ```
 
-Version 0.8 adds contract metadata and validation:
+Binary files are not stored by the default provider.
 
-```js
-window.MethodzMeetingData.requiredMethods
-window.MethodzMeetingData.optionalMethods
-window.MethodzMeetingData.validateAdapter(adapter)
-```
+### Stable Core
 
-The main app redirects global `getRecords()` and `setRecords()` through the active adapter.
-
-### `app.js`
-
-Owns the stable meeting core:
+`app.js` owns:
 
 - startup rendering
-- legacy storage migration
-- meeting collection
-- base validation
+- basic meeting collection and validation
 - save and edit flow
 - draft auto-save
 - saved-record search
-- import and export
+- basic import and export
 - print and download actions
 
-### `archive.js`
+Later modules add fields and policy without replacing the direct-file core.
 
-Owns the dedicated read-only archive page:
+### Archive Detail
 
-- record resolution through the active adapter
-- same-session fallback handling
-- current unsaved preview
-- complete record rendering
-- print and JSON download
-- edit handoff back to `meeting.html`
+`archive.js` resolves and renders a complete record.
 
-### `features-v08-history.js`
+`archive-v10.js` appends governance, consent, and role-aware actions.
 
-Owns:
-
-- saved revision snapshots
-- revision preview and restoration
-- automatic current-state preservation before restore
-- non-destructive archive lifecycle
-- Archive Vault restore, download, and permanent delete
-
-### `features-v08-workspace.js`
-
-Owns:
-
-- complete workspace package creation
-- discovered/configured storage key collection
-- package checksum
-- restore validation and preview
-- pre-restore recovery capture
-- workspace replacement and reload
-
-### `adapter-contract-tests.js`
-
-Owns the isolated in-browser adapter test harness. It uses a temporary local-storage key and does not modify active meeting records.
-
-### `features-v08-accessibility.js`
-
-Owns:
-
-- skip navigation
-- main landmark focus target
-- live status announcements
-- generated label associations for dynamic fields
-- keyboard shortcuts
-- visible focus behavior
-- reduced-motion-aware navigation
+`archive-v11.js` appends retention and legal-hold status.
 
 ## Feature Layers
 
-### v0.3
+### v0.3 through v0.7
 
-- structured decisions
-- readiness review
-- task filters
-- minutes preview
-- HTML export
-
-### v0.4
-
-- default and custom templates
-- import preview
-- saved-record filters
-- open-task dashboard
-- record details
-
-### v0.5
-
-- attachment references and index
-- attendee directory
-- signature helpers and audit
-
-### v0.6
-
-- numbering settings
-- organization presets
-- duplicate review
-- sync queue and package export
-
-### v0.7
-
-- dedicated archive page
-- data adapter contract
-- organization / representative directory
-- meeting-time organization snapshots
-- stronger print layout
+- structured decisions and readiness review
+- templates and custom agenda
+- attachment references and attendee directory
+- numbering, organization presets, duplicate review, and sync package export
+- dedicated archive page and organization directory
+- synchronous data adapter
 
 ### v0.8
 
@@ -210,6 +171,195 @@ Owns:
 - complete workspace backup and restore
 - adapter contract tests
 - accessibility and keyboard navigation
+
+### v0.9
+
+- schema migration registry
+- archive search, filtering, selection, and export
+- revision comparison
+- non-destructive workspace merge
+- optional installable app shell
+- Playwright smoke testing
+
+### v1.0
+
+- role-aware record governance
+- explicit typed-signature consent
+- signature verification metadata
+- asynchronous record-provider contract
+- attachment-reference provider contract
+- consolidated active and archived workspace
+- release validation
+
+### v1.1
+
+- retention policy and review-date metadata
+- legal-hold placement, release, and history
+- hold-protected archive disposition
+- retention dashboard and report
+- partner-safe, public-summary, and custom external copies
+- redaction manifests and activity log
+- SHA-256 package integrity with labeled compatibility fallback
+
+## Current Record Shape
+
+The schema is additive. Optional feature layers preserve old records and add fields only when available.
+
+```json
+{
+  "id": "meeting-1234567890",
+  "schemaVersion": "1.1.0",
+  "meetingNumber": "001",
+  "title": "Partnership Operations Meeting",
+  "status": "Completed",
+  "date": "2026-07-13",
+  "location": "Office",
+  "facilitator": "Name",
+  "organizations": ["Canadian Soft Water Corporation"],
+  "organizationDetails": [],
+  "attendees": [],
+  "agenda": [],
+  "notes": "",
+  "decisions": "",
+  "decisionsList": [],
+  "tasks": [],
+  "attachments": [],
+  "signatureAudit": {},
+  "directorySnapshot": [],
+  "summary": "",
+  "validation": [],
+  "governance": {},
+  "accessControl": {},
+  "retentionMetadata": {
+    "policyId": "business-review-7y",
+    "reviewDate": "2033-07-13",
+    "lifecycleStatus": "Active",
+    "note": "",
+    "legalHold": {
+      "active": false,
+      "reason": "",
+      "placedBy": "",
+      "placedAt": "",
+      "releasedBy": "",
+      "releasedAt": "",
+      "releaseNote": ""
+    },
+    "holdHistory": [],
+    "updatedAt": "ISO timestamp"
+  },
+  "redactionMetadata": {},
+  "attachmentAdapterMetadata": {},
+  "schemaAudit": {},
+  "releaseMetadata": {},
+  "createdAt": "ISO timestamp",
+  "updatedAt": "ISO timestamp",
+  "savedAt": "ISO timestamp"
+}
+```
+
+## Revision and Archive Shapes
+
+Revision history is stored separately:
+
+```json
+{
+  "id": "revision-...",
+  "recordId": "meeting-...",
+  "revisionNumber": 1,
+  "capturedAt": "ISO timestamp",
+  "reason": "Record updated",
+  "contentHash": "fnv1a-...",
+  "snapshot": {}
+}
+```
+
+Archived records use:
+
+```json
+{
+  "archiveId": "archive-...",
+  "archivedAt": "ISO timestamp",
+  "originalRecordId": "meeting-...",
+  "record": {}
+}
+```
+
+Archive lifecycle is separate from the business-facing meeting `status`.
+
+An active `record.retentionMetadata.legalHold.active` blocks Archive Vault permanent deletion.
+
+## Workspace Recovery
+
+Complete workspace backup preserves raw localStorage values for all discovered Methodz keys.
+
+Restore sequence:
+
+```text
+parse
+  → validate package type
+  → validate recognized entries
+  → validate checksum
+  → preview
+  → confirm
+  → create pre-restore recovery
+  → replace Methodz storage keys
+  → reload
+```
+
+Workspace merge remains separate from replacement restore and creates its own recovery package.
+
+## Governance and Consent
+
+`accessControl` records classification, policy, allowed roles, prepared-by, reviewed-by, review status, protected fields, and policy note.
+
+Role controls are workflow safeguards, not authentication.
+
+Typed signatures require explicit consent. Verification metadata does not prove identity.
+
+Remote providers must enforce authenticated permissions independently.
+
+## Retention and Legal Hold
+
+The retention module wraps the final meeting data flow to append `retentionMetadata`.
+
+Hold transitions append chronological events:
+
+```text
+inactive → active   placed event
+active → inactive   released event
+```
+
+The retention dashboard is read-only and indexes active and archived records.
+
+Retention presets are workflow aids, not legal advice.
+
+## External-Copy Pipeline
+
+The v1.1 redaction pipeline is:
+
+```text
+resolve source
+  → enforce export permission
+  → clone source
+  → apply allow-listed profile
+  → recursively strip unsafe keys
+  → append redaction manifest
+  → compute package integrity
+  → preview or download
+  → record export activity metadata
+```
+
+The controlled source record is never modified.
+
+Every profile removes typed signatures, signature consent, verification, and signer timestamps.
+
+### Integrity
+
+Hosted mode prefers SHA-256 through Web Crypto.
+
+Direct-file environments without Web Crypto use an explicitly labeled FNV-1a-32 compatibility checksum.
+
+Neither result is a digital signature or proof of identity.
 
 ## Storage Keys
 
@@ -227,169 +377,14 @@ methodzMeetingRevisions
 methodzArchivedMeetingRecords
 methodzPreRestoreBackup
 methodzAccessibilityPreferences
+methodzMigrationState
+methodzWorkspaceMergeLog
+methodzMeetingRoleContext
+methodzMeetingReleaseState
+methodzRedactionExportLog
 ```
 
 The original prototype key `meetingRecords` is migrated when needed.
-
-## Record Shape
-
-The schema is additive. Optional feature layers preserve old records and add fields only when available.
-
-```json
-{
-  "id": "meeting-1234567890",
-  "schemaVersion": "0.8.0",
-  "meetingNumber": "001",
-  "title": "Partnership Operations Meeting",
-  "status": "Scheduled",
-  "date": "2026-07-10",
-  "location": "Office",
-  "facilitator": "Name",
-  "organizations": ["Canadian Soft Water Corporation"],
-  "organizationDetails": [],
-  "attendees": [],
-  "agenda": [],
-  "notes": "",
-  "decisions": "",
-  "decisionsList": [],
-  "tasks": [],
-  "attachments": [],
-  "signatureAudit": {},
-  "directorySnapshot": [],
-  "summary": "",
-  "validation": [],
-  "numbering": {},
-  "syncMeta": null,
-  "createdAt": "ISO timestamp",
-  "updatedAt": "ISO timestamp",
-  "savedAt": "ISO timestamp"
-}
-```
-
-## Revision Shape
-
-Revision history is stored separately from active records.
-
-```json
-{
-  "id": "revision-...",
-  "recordId": "meeting-...",
-  "revisionNumber": 1,
-  "capturedAt": "ISO timestamp",
-  "reason": "Record updated",
-  "contentHash": "fnv1a-...",
-  "snapshot": {}
-}
-```
-
-The revision limit is configurable. Restoration keeps the active record ID and records both the pre-restore state and restored state.
-
-## Archive Shape
-
-```json
-{
-  "archiveId": "archive-...",
-  "archivedAt": "ISO timestamp",
-  "originalRecordId": "meeting-...",
-  "record": {}
-}
-```
-
-Archive lifecycle is deliberately separate from the business-facing `status` field.
-
-## Workspace Package Shape
-
-```json
-{
-  "packageType": "methodz-meeting-manager-workspace",
-  "packageVersion": 1,
-  "appName": "Methodz Meeting Manager",
-  "schemaVersion": "0.8.0",
-  "exportedAt": "ISO timestamp",
-  "entries": {
-    "methodzMeetingRecords": "raw JSON string"
-  },
-  "summary": {},
-  "checksum": "fnv1a-..."
-}
-```
-
-Raw local-storage strings are preserved to avoid accidental module-specific schema rewrites during backup.
-
-Restore sequence:
-
-```text
-parse
-  → validate package type
-  → validate recognized entries
-  → validate checksum
-  → preview
-  → confirm
-  → create pre-restore recovery
-  → replace Methodz storage keys
-  → reload
-```
-
-## Organization Snapshot Rule
-
-The Organization / Representative Directory is mutable local reference data.
-
-When an entry is selected for a meeting, relevant details are copied into `organizationDetails`. Old meeting records retain the original meeting context even if the directory changes later.
-
-## Archive Navigation
-
-Saved record detail page:
-
-```text
-record card
-  → archive.html?id=<record-id>
-  → active adapter
-  → complete archive render
-```
-
-Unsaved preview:
-
-```text
-current form
-  → collectMeetingData()
-  → sessionStorage preview
-  → archive.html?preview=current
-```
-
-Edit handoff:
-
-```text
-archive.html
-  → sessionStorage record ID
-  → meeting.html
-  → loadRecordForEditing(recordId)
-```
-
-Archive Vault lifecycle:
-
-```text
-active records
-  → non-destructive archive
-  → archived record store
-  → restore or permanent delete
-```
-
-## Adapter Test Isolation
-
-The in-app test harness validates the active interface, then exercises a temporary `LocalStorageMeetingAdapter` instance.
-
-It tests:
-
-- empty list
-- create
-- read
-- update
-- replace
-- delete
-- export envelope
-- health check
-
-The temporary key is removed in a `finally` block.
 
 ## Print Strategy
 
@@ -398,34 +393,49 @@ The archive page is the primary complete-record print surface.
 Print mode:
 
 - hides interactive controls
-- keeps attendance and signature audit visible
-- keeps task and attachment tables visible
+- keeps attendance, consent, decisions, tasks, attachments, governance, retention, and record audit visible
+- displays an active hold warning
 - avoids page breaks inside logical cards where possible
-- includes record audit metadata
-- hides v0.8 workspace-management panels
+- hides operational dashboards and external-export controls
 
-## Future Cloud Path
+## Service Worker
 
-A future provider can register through:
+The optional service worker caches static application assets only.
 
-```js
-window.MethodzMeetingData.registerAdapter(provider);
-window.MethodzMeetingData.useAdapter(provider.id);
-```
+It does not intentionally cache:
 
-The current contract is synchronous because the existing offline core is synchronous. A future v1.0 provider layer should add asynchronous compatibility without forcing the form and archive renderer to know provider details.
+- meeting records
+- archived records
+- revision history
+- signatures
+- attachment files
+- redacted packages
+- activity logs
 
-Likely extraction targets:
+## Testing
 
-```text
-RevisionProvider
-ArchiveProvider
-WorkspacePackageService
-SchemaMigrationRegistry
-AsyncMeetingDataAdapter
-AttachmentStorageAdapter
-RolePolicyProvider
-```
+GitHub Actions runs:
+
+- `node --check` for every JavaScript file
+- static file and wiring checks
+- manifest JSON validation
+- Playwright browser smoke tests
+
+The v1.1 suite covers retention persistence, active-hold archive protection, redaction safety, and integrity labeling.
+
+## Future Provider Requirements
+
+A future hosted provider must independently enforce:
+
+- authentication
+- authorization
+- organization tenancy
+- secure transport and storage
+- legal holds and disposition
+- retention policy
+- immutable audit where required
+- external-copy authorization
+- server-side redaction policy
 
 ## Design Principles
 
@@ -440,8 +450,10 @@ RolePolicyProvider
 - Attachment references before binary storage.
 - Historical snapshots for mutable directory data.
 - Non-destructive archive before permanent deletion.
-- Recovery snapshot before workspace replacement.
-- Isolated tests before active-adapter mutation.
+- Recovery snapshot before workspace replacement or merge.
+- Legal hold before disposition.
+- Allow-listed external copies before broad export.
+- Accurate integrity labels without overstating trust.
 
 ## Deployment
 
@@ -454,5 +466,6 @@ Static deployment targets include:
 - Render static sites
 - ordinary web servers
 - local static servers
+- direct `file:` use
 
 Keep both HTML entry points and all referenced JavaScript, CSS, and asset paths together.
