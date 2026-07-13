@@ -38,29 +38,42 @@ jobs:
           test -f archive.html
           test -f style.css
           test -f config.js
+          test -f config-v11.js
           test -f migrations.js
           test -f migrations-v10.js
+          test -f migrations-v11.js
           test -f data-adapter.js
           test -f async-data-adapter.js
           test -f attachment-adapter.js
           test -f app.js
+          test -f features-v11-retention.js
+          test -f features-v11-redaction.js
+          test -f archive-v11.js
           test -f manifest.webmanifest
           test -f service-worker.js
 
-      - name: Verify v1.0 assets are loaded
+      - name: Verify v1.1 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'features-v10.css' meeting.html
+          grep -q 'features-v11.css' meeting.html
+          grep -q 'config-v11.js' meeting.html
           grep -q 'migrations-v10.js' meeting.html
+          grep -q 'migrations-v11.js' meeting.html
           grep -q 'async-data-adapter.js' meeting.html
           grep -q 'attachment-adapter.js' meeting.html
           grep -q 'features-v10-governance.js' meeting.html
           grep -q 'features-v10-signatures.js' meeting.html
           grep -q 'features-v10-release.js' meeting.html
+          grep -q 'features-v11-retention.js' meeting.html
+          grep -q 'features-v11-redaction.js' meeting.html
           grep -q 'archive-v10.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.0.0' service-worker.js
-          grep -q '"1.0.0"' config.js
+          grep -q 'archive-v11.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.1.0' service-worker.js
+          grep -q 'schemaVersion = "1.1.0"' config-v11.js
+          grep -q 'features-v11-retention.js' service-worker.js
+          grep -q 'features-v11-redaction.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
