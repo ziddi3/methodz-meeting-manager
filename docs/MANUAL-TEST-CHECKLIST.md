@@ -1,160 +1,213 @@
 # Manual Test Checklist
 
-Use this checklist after each major change.
+Use this checklist after each major change. Release-specific detail is available in:
+
+```text
+docs/V1.0-TESTS.md
+docs/V1.1-TESTS.md
+```
 
 ## Open App
 
 - [ ] Open `meeting.html` directly in a browser.
 - [ ] Confirm the page loads with no visible script error.
 - [ ] Confirm logo placeholders appear if logo image files are missing.
-- [ ] Confirm the status pill starts as `Scheduled`.
-- [ ] Confirm the date field defaults to today.
-- [ ] Confirm the Record Readiness Review panel appears below quick actions.
-- [ ] Confirm Meeting Templates appear.
-- [ ] Confirm Attendee Directory appears before Attendance Sign-On.
-- [ ] Confirm Attachment References appears after Meeting Summary.
-- [ ] Confirm Open Task Dashboard and Attachment Index appear near Saved Meeting Records.
+- [ ] Confirm status starts as `Scheduled` and date defaults to today.
+- [ ] Confirm governance, signature review, retention, templates, directories, attachment references, archive, recovery, provider, and release panels load.
+- [ ] Confirm Retention Review Dashboard and Partner-Safe Export appear near the records workspace.
+- [ ] Open the app through localhost or HTTPS and confirm the optional service worker registers.
+- [ ] Confirm direct-file mode remains fully usable without service-worker registration.
 
 ## Meeting Form
 
-- [ ] Enter a meeting title.
-- [ ] Change meeting status.
-- [ ] Enter location / video link.
-- [ ] Enter meeting facilitator.
-- [ ] Select organizations / representatives present.
+- [ ] Enter meeting title, status, date, location, and facilitator.
+- [ ] Select Organizations / Representatives Present.
 - [ ] Add at least two attendees.
-- [ ] Add typed digital signatures.
-- [ ] Check multiple agenda items.
-- [ ] Enter notes.
-- [ ] Enter free-form decisions.
-- [ ] Add at least one structured decision.
-- [ ] Confirm structured decisions have decision, confirmed-by, date, status, and notes fields.
-- [ ] Add at least two follow-up tasks.
-- [ ] Confirm task responsibility label says `Assigned To`.
-- [ ] Enter meeting summary.
-- [ ] Add at least one attachment reference.
-- [ ] Confirm attachment reference fields include name, type, date, location, added-by, and notes.
+- [ ] Add typed signatures and explicit consent.
+- [ ] Confirm a typed signature without consent cannot save.
+- [ ] Check agenda items.
+- [ ] Enter discussion notes.
+- [ ] Enter free-form and structured decisions.
+- [ ] Add follow-up tasks.
+- [ ] Confirm task responsibility says `Assigned To`.
+- [ ] Add a meeting summary.
+- [ ] Add attachment references.
+- [ ] Select classification, policy, allowed roles, protected fields, and review status.
 
-## Attendee Directory
+## Retention and Legal Hold
 
-- [ ] Enter two attendee names and organization / role values.
-- [ ] Click `Save Current Attendees`.
-- [ ] Confirm the Attendee Directory dropdown updates.
-- [ ] Add a saved attendee preset back into the meeting.
-- [ ] Confirm the preset does not auto-fill a signature.
-- [ ] Export the directory as JSON.
-- [ ] Export the directory as CSV.
-- [ ] Import a directory JSON file.
-- [ ] Delete a directory preset.
-- [ ] Confirm saved meeting records are not changed when deleting a directory preset.
+- [ ] Confirm a default retention policy and review date appear.
+- [ ] Switch between two-year, seven-year, permanent, and custom policies.
+- [ ] Confirm permanent policy clears the review date.
+- [ ] Enter lifecycle status and retention note.
+- [ ] Place a legal hold with actor and reason.
+- [ ] Save and confirm `placedAt` and a `placed` history event.
+- [ ] Save again and confirm no duplicate placement event.
+- [ ] Release the hold with actor and reason.
+- [ ] Confirm release metadata and a `released` history event.
+- [ ] Archive a held record and confirm Permanent Delete is disabled.
+- [ ] Confirm the Retention Dashboard counts holds, due reviews, and missing dates.
+- [ ] Export the retention report and confirm it is an index, not a full record backup.
 
-## Signature Controls
+## Attendee and Organization Directories
 
-- [ ] Add attendee names with blank signatures.
-- [ ] Confirm Signature Controls shows unsigned attendees.
-- [ ] Click `Fill Unsigned From Names` only after confirming this is the intended sign-off.
-- [ ] Confirm signature fields are filled from attendee names.
-- [ ] Add an empty attendee row.
-- [ ] Click `Remove Empty Rows`.
-- [ ] Confirm at least one attendee row remains.
+- [ ] Save repeat attendees and organization representatives.
+- [ ] Add saved entries back into a meeting.
+- [ ] Confirm attendee presets never contain signatures.
+- [ ] Confirm meeting-time organization snapshots remain stable after directory changes.
+- [ ] Export and import directory JSON.
+- [ ] Export attendee directory CSV.
 
-## Record Readiness Review
+## Record Readiness and Release Audit
 
-- [ ] Clear the meeting title and confirm the review panel reports a required item.
-- [ ] Restore the meeting title and confirm the required warning clears.
-- [ ] Add an attendee name without a signature and confirm the review warns about missing signatures.
-- [ ] Add a task without Assigned To and confirm the review warns about assignment gaps.
-- [ ] Add an open Critical task and confirm the review warns about open critical tasks.
-- [ ] Click `Review Now` and confirm the panel updates.
+- [ ] Remove the title and confirm readiness reports it.
+- [ ] Add an unsigned attendee and confirm a warning.
+- [ ] Add an unassigned task and confirm a warning.
+- [ ] Add an active hold without a reason and confirm the release audit reports an error.
+- [ ] Remove a non-permanent retention review date and confirm a warning.
+- [ ] Run the v1.0 Release Gate.
+- [ ] Export the release audit JSON.
 
-## Task Filters
+## Save, Edit, and Revision History
 
-- [ ] Create tasks with different priorities.
-- [ ] Create tasks with different progress values.
-- [ ] Filter by task text.
-- [ ] Filter by progress.
-- [ ] Filter by priority.
-- [ ] Clear filters and confirm all tasks return.
+- [ ] Save a new record.
+- [ ] Confirm schema version is `1.1.0`.
+- [ ] Confirm governance, consent, retention, redaction, attachment, and audit metadata are present.
+- [ ] Open the record for editing.
+- [ ] Confirm all fields restore.
+- [ ] Change a field and save.
+- [ ] Confirm the existing record updates rather than duplicating.
+- [ ] Open Revision History.
+- [ ] Compare revisions.
+- [ ] Restore an older revision.
+- [ ] Confirm the current state was preserved before restoration.
 
-## Save and Edit
+## Archive Vault
 
-- [ ] Click `Save Record`.
-- [ ] Confirm the record appears in Saved Meeting Records.
-- [ ] Click `View JSON`.
-- [ ] Confirm JSON opens and closes.
-- [ ] Confirm JSON includes `decisionsList`, `validation`, `attachments`, `signatureAudit`, and `directorySnapshot`.
-- [ ] Click `Open / Edit`.
-- [ ] Confirm attachment references restore.
-- [ ] Confirm attendee signatures and signature audit summary restore.
-- [ ] Change a field.
-- [ ] Click `Save Record` again.
-- [ ] Confirm the existing record updates instead of creating an accidental duplicate.
+- [ ] Archive a normal active record.
+- [ ] Search and filter the archive.
+- [ ] Select filtered records and export JSON.
+- [ ] Restore a record.
+- [ ] Confirm ID conflict handling does not overwrite an active record.
+- [ ] Permanently delete a non-held record only after confirmation.
+- [ ] Confirm a held record cannot be permanently deleted.
 
-## Search and Archive Filters
+## Consolidated Records Workspace
 
-- [ ] Search by meeting title.
-- [ ] Search by task text.
-- [ ] Search by decision text.
-- [ ] Search by attachment reference text.
-- [ ] Clear the search box.
-- [ ] Confirm all records return.
-- [ ] Filter saved records by status.
-- [ ] Filter saved records by organization / representative.
-- [ ] Clear archive filters.
+- [ ] Search active and archived records together.
+- [ ] Filter by source, classification, and release readiness.
+- [ ] Open active records for editing.
+- [ ] Open archived records in the detail view.
+- [ ] Export the filtered index.
+- [ ] Run synchronous, asynchronous, and attachment provider health checks.
 
-## Attachment Index
+## Partner-Safe Export
 
-- [ ] Save at least one record with attachment references.
-- [ ] Confirm the Attachment Index shows those references.
-- [ ] Confirm references without locations are visually flagged.
-- [ ] Click `Open` from the Attachment Index and confirm the related record opens.
-- [ ] Export the Attachment Index as CSV.
-- [ ] Export current meeting attachments as CSV.
+- [ ] Create a source record containing signatures, internal notes, contact data, tasks, decisions, and an attachment location.
+- [ ] Select Partner Safe and preview.
+- [ ] Confirm typed signatures, consent, verification, signed timestamps, notes, contacts, policy notes, and file locations are absent.
+- [ ] Confirm operational decisions, tasks, agenda, summary, and allowed attachment metadata remain.
+- [ ] Download JSON and HTML.
+- [ ] Confirm the source record is unchanged.
+- [ ] Confirm the package includes a redaction manifest.
+- [ ] Confirm `signatureDataIncluded` is `false`.
 
-## Export / Import
+## Public Summary and Custom Export
 
-- [ ] Download current meeting as TXT.
-- [ ] Confirm TXT includes structured decisions, record review output, attachment references, and signature audit.
-- [ ] Download current meeting as JSON.
-- [ ] Preview meeting minutes.
-- [ ] Confirm HTML minutes include attachment references and signature audit.
-- [ ] Export current meeting as HTML.
-- [ ] Export a saved meeting as HTML.
-- [ ] Open the exported HTML file in a browser.
-- [ ] Export all records as JSON.
-- [ ] Import an exported JSON file.
-- [ ] Confirm imported records appear.
+- [ ] Select Public Summary.
+- [ ] Confirm only high-level metadata, organizations, completed agenda, approved decisions, and summary remain.
+- [ ] Select Custom External Copy.
+- [ ] Test each section checkbox.
+- [ ] Include discussion notes and confirm a manual-review warning.
+- [ ] Confirm signatures remain excluded under every option.
+- [ ] Switch to a role that cannot export and confirm the workflow is blocked.
+
+## Integrity and Export Activity
+
+- [ ] On HTTPS or localhost, confirm external package integrity uses SHA-256.
+- [ ] In a browser without Web Crypto, confirm the fallback is labeled FNV-1a-32 compatibility checksum.
+- [ ] Confirm the app never calls either value a digital signature.
+- [ ] Preview without downloading and confirm no activity entry is added.
+- [ ] Download JSON and HTML and confirm activity entries are added.
+- [ ] Export the activity log.
+- [ ] Confirm it contains metadata and digest only, not meeting content.
+
+## Attachment Index and Open Tasks
+
+- [ ] Confirm saved attachment references appear in the Attachment Index.
+- [ ] Confirm missing locations are flagged.
+- [ ] Open the related record from the index.
+- [ ] Export attachment CSV.
+- [ ] Confirm open tasks appear in the task dashboard.
+- [ ] Filter tasks and export CSV.
+
+## Workspace Backup, Restore, and Merge
+
+- [ ] Export a complete workspace backup.
+- [ ] Confirm retention, hold, redaction log, archives, revisions, directories, templates, and settings are included.
+- [ ] Preview replacement restore.
+- [ ] Confirm a pre-restore recovery package is created.
+- [ ] Test workspace merge with prefer-newest, keep-local, and keep-both strategies.
+- [ ] Confirm a pre-merge recovery package is created.
+- [ ] Confirm migration and recovery checksums remain valid.
+
+## Migration
+
+- [ ] Seed v0.9 or v1.0 active, archived, revision, and draft records.
+- [ ] Reload and confirm migration to `1.1.0`.
+- [ ] Confirm unknown fields remain.
+- [ ] Confirm retention and redaction defaults are added.
+- [ ] Reload again and confirm migration is idempotent.
+- [ ] Inspect `methodzMigrationState`.
+
+## Export and Import
+
+- [ ] Download current meeting as TXT and JSON.
+- [ ] Export saved record JSON and HTML.
+- [ ] Export all records.
+- [ ] Import exported records.
+- [ ] Confirm imported fields survive normalization and migration.
+- [ ] Confirm partner-safe packages are not mistaken for complete workspace backups.
 
 ## Draft
 
-- [ ] Type in a new unsaved meeting.
-- [ ] Add a structured decision.
-- [ ] Add an attachment reference.
-- [ ] Wait for draft status to say auto-saved.
-- [ ] Refresh the page.
-- [ ] Confirm the draft restores.
-- [ ] Confirm structured decisions restore.
-- [ ] Confirm attachment references restore.
+- [ ] Enter unsaved meeting, governance, retention, decisions, tasks, and attachments.
+- [ ] Wait for auto-save.
+- [ ] Refresh and confirm draft restoration.
 - [ ] Clear the draft.
 - [ ] Confirm saved records remain untouched.
 
-## Print
+## Archive Detail and Print
 
-- [ ] Click Print / Save PDF.
-- [ ] Confirm browser print opens.
-- [ ] Confirm buttons are hidden in print preview.
-- [ ] Confirm cards are readable.
-- [ ] Preview meeting minutes, then print.
-- [ ] Confirm the minutes preview is readable in print mode.
-- [ ] Confirm directory controls and attachment dashboard controls are not printed as operational controls.
+- [ ] Open `archive.html` from an active record.
+- [ ] Confirm attendance, consent, governance, retention, hold status, tasks, attachments, and audit are readable.
+- [ ] Confirm an active hold warning is visible.
+- [ ] Print or save PDF.
+- [ ] Confirm interactive controls and workspace dashboards are hidden.
 
-## Mobile
+## Accessibility and Mobile
 
-- [ ] Open on phone width.
-- [ ] Confirm buttons stack cleanly.
-- [ ] Confirm saved records are readable.
-- [ ] Confirm forms are touch-friendly.
-- [ ] Confirm the structured decision form is usable on a phone.
-- [ ] Confirm task filters stack cleanly.
-- [ ] Confirm Attendee Directory controls stack cleanly.
-- [ ] Confirm Attachment Reference fields are usable on a phone.
+- [ ] Navigate the complete app using keyboard only.
+- [ ] Confirm focus remains visible.
+- [ ] Confirm dynamic controls have associated labels.
+- [ ] Confirm meaningful status changes are announced.
+- [ ] Confirm reduced-motion preference is respected.
+- [ ] Test phone width.
+- [ ] Confirm controls stack without horizontal page scrolling.
+- [ ] Confirm redaction preview scrolls inside its own container.
+- [ ] Confirm disabled held-record deletion communicates why it is unavailable.
+
+## Failure Conditions
+
+Do not mark a release stable if:
+
+- direct-file mode fails
+- signatures can save without consent
+- an external copy contains signature or verification data
+- redaction mutates the source record
+- a held record can be permanently deleted
+- migration removes unknown fields
+- restore or merge lacks a recovery package
+- local role selection is described as authentication
+- a checksum is described as a digital signature
+- the service worker caches meeting data
