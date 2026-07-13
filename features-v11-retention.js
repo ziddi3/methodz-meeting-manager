@@ -4,7 +4,8 @@
 
   const config = global.METHODZ_MEETING_CONFIG || {};
   const archiveKey = config.storageKeys?.archivedRecords || "methodzArchivedMeetingRecords";
-  let currentRetentionState = null;
+  let baselineRetentionState = null;
+  let workingRetentionState = null;
   let archiveObserver = null;
 
   global.addEventListener("DOMContentLoaded", initialize);
@@ -14,6 +15,7 @@
     installRetentionPanel();
     installRetentionDashboard();
     patchDataFlow();
+    patchSaveWorkflow();
     patchRecordCards();
     patchArchiveProtection();
     restoreRetentionDraft();
@@ -151,53 +153,50 @@
       reviewDate: calculateReviewDate(document.getElementById("meetingDate")?.value, policy?.years),
       lifecycleStatus: "Active",
       note: "",
-      legalHold: {
-        active: false,
-        reason: "",
-        placedBy: "",
-        placedAt: "",
-        releasedBy: "",
-        releasedAt: "",
-        releaseNote: ""
-      },
+      legalHold: emptyHold(),
       holdHistory: [],
       updatedAt: new Date().toISOString()
     };
   }
 
+  function emptyHold() {
+    return {
+      active: false,
+      reason: "",
+      placedBy: "",
+      placedAt: "",
+      releasedBy: "",
+      releasedAt: "",
+      releaseNote: ""
+    };
+  }
+
   function normalizeRetention(value) {
-    const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
-    const hold = source.legalHold && typeof source.legalHold === "object" ? source.legalHold : {};
+    const source = isPlainObject(value) ? value : {};
+    const hold = isPlainObject(source.legalHold) ? source.legalHold : {};
     const fallback = defaultRetention();
     return {
       policyId: source.policyId || fallback.policyId,
       reviewDate: source.reviewDate || "",
       lifecycleStatus: source.lifecycleStatus || "Active",
       note: source.note || "",
-      legalHold: {
-        active: Boolean(hold.active),
-        reason: hold.reason || "",
-        placedBy: hold.placedBy || "",
-        placedAt: hold.placedAt || "",
-        releasedBy: hold.releasedBy || "",
-        releasedAt: hold.releasedAt || "",
-        releaseNote: hold.releaseNote || ""
-      },
+      legalHold: { ...emptyHold(), ...hold, active: Boolean(hold.active) },
       holdHistory: Array.isArray(source.holdHistory) ? clone(source.holdHistory) : [],
       updatedAt: source.updatedAt || fallback.updatedAt
     };
   }
 
   function collectRetention() {
-    const previous = normalizeRetention(currentRetentionState || {});
+    const previous = normalizeRetention(workingRetentionState || baselineRetentionState || defaultRetention());
     const active = Boolean(document.getElementById("legalHoldActiveV11")?.checked);
     const actor = readValue("legalHoldActorV11");
     const reason = readValue("legalHoldReasonV11");
     const now = new Date().toISOString();
+    const hold = { ...previous.legalHold };
     const history = clone(previous.holdHistory || []);
-    const hold = { ...previous.legalHold, active };
 
     if (active && !previous.legalHold.active) {
+      hold.active = true;
       hold.placedBy = actor;
       hold.placedAt = now;
       hold.reason = reason;
@@ -205,14 +204,24 @@
       hold.releasedAt = "";
       hold.releaseNote = "";
       history.push({ action: "placed", at: now, by: actor, reason });
+    } else if (active && previous.legalHold.active) {
+      hold.active = true;
+      hold.placedBy = actor || hold.placedBy;
+      hold.reason = reason || hold.reason;
+      updateLatestTransition(history, "placed", hold.placedAt, hold.placedBy, hold.reason);
     } else if (!active && previous.legalHold.active) {
+      hold.active = false;
       hold.releasedBy = actor;
       hold.releasedAt = now;
       hold.releaseNote = reason;
       history.push({ action: "released", at: now, by: actor, reason });
-    } else if (active) {
-      hold.placedBy = actor || hold.placedBy;
-      hold.reason = reason || hold.reason;
+    } else {
+      hold.active = false;
+      if (hold.releasedAt) {
+        hold.releasedBy = actor || hold.releasedBy;
+        hold.releaseNote = reason || hold.releaseNote;
+        updateLatestTransition(history, "released", hold.releasedAt, hold.releasedBy, hold.releaseNote);
+      }
     }
 
     const next = {
@@ -226,13 +235,24 @@
     };
 
     if (!sameRetentionCore(previous, next)) next.updatedAt = now;
-    currentRetentionState = clone(next);
+    workingRetentionState = clone(next);
     return next;
   }
 
-  function populateRetention(value) {
+  function updateLatestTransition(history, action, timestamp, actor, reason) {
+    for (let index = history.length - 1; index >= 0; index -= 1) {
+      const event = history[index];
+      if (event?.action !== action) continue;
+      if (timestamp && event.at && event.at !== timestamp) continue;
+      history[index] = { ...event, by: actor || event.by || "", reason: reason || event.reason || "" };
+      return;
+    }
+  }
+
+  function populateRetention(value, options = {}) {
     const retention = normalizeRetention(value);
-    currentRetentionState = clone(retention);
+    workingRetentionState = clone(retention);
+    if (options.persisted !== false) baselineRetentionState = clone(retention);
     setValue("retentionPolicyV11", retention.policyId);
     setValue("retentionReviewDateV11", retention.reviewDate);
     setValue("retentionLifecycleV11", retention.lifecycleStatus);
@@ -249,7 +269,8 @@
     try {
       const key = config.storageKeys?.draft || "methodzMeetingDraft";
       const draft = JSON.parse(global.localStorage.getItem(key) || "null");
-      populateRetention(draft?.retentionMetadata || defaultRetention());
+      if (draft?.retentionMetadata) populateRetention(draft.retentionMetadata, { persisted: false });
+      else populateRetention(defaultRetention());
     } catch (error) {
       console.warn("Unable to restore v1.1 retention draft", error);
       populateRetention(defaultRetention());
@@ -336,6 +357,36 @@
     }
   }
 
+  function patchSaveWorkflow() {
+    if (global.__methodzV11RetentionSavePatched || typeof global.saveMeeting !== "function") return;
+    const original = global.saveMeeting;
+    global.saveMeeting = function saveMeetingRetentionV11(...args) {
+      const active = Boolean(document.getElementById("legalHoldActiveV11")?.checked);
+      const actor = readValue("legalHoldActorV11");
+      const reason = readValue("legalHoldReasonV11");
+      if (active && !actor) {
+        alert("An active legal hold requires the name of the authorized person placing it.");
+        return;
+      }
+      if (active && !reason) {
+        alert("An active legal hold requires a preservation reason.");
+        return;
+      }
+
+      const result = original.apply(this, args);
+      const editingId = document.getElementById("editingRecordId")?.value || "";
+      const saved = editingId && typeof global.getRecords === "function"
+        ? global.getRecords().find((record) => record.id === editingId)
+        : null;
+      if (saved?.retentionMetadata) {
+        baselineRetentionState = normalizeRetention(saved.retentionMetadata);
+        workingRetentionState = clone(baselineRetentionState);
+      }
+      return result;
+    };
+    global.__methodzV11RetentionSavePatched = true;
+  }
+
   function patchRecordCards() {
     if (global.__methodzV11RetentionCardsPatched || typeof global.createRecordCard !== "function") return;
     const original = global.createRecordCard;
@@ -382,7 +433,7 @@
     }
 
     archiveObserver = new MutationObserver(() => global.setTimeout(decorateArchiveCards, 0));
-    archiveObserver.observe(list, { childList: true, subtree: true });
+    archiveObserver.observe(list, { childList: true });
     decorateArchiveCards();
   }
 
@@ -399,14 +450,16 @@
     cards.forEach((card) => {
       const entry = archivedEntryForCard(card);
       if (!entry) return;
-      card.querySelectorAll(".archive-retention-v11").forEach((node) => node.remove());
       const retention = normalizeRetention(entry.record?.retentionMetadata || {});
       const meta = card.querySelector("div p") || card.querySelector("div");
       if (meta) {
-        const badge = document.createElement("span");
-        badge.className = "archive-retention-v11";
+        let badge = meta.querySelector(".archive-retention-v11");
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "archive-retention-v11";
+          meta.append(" • ", badge);
+        }
         badge.textContent = retention.legalHold.active ? "Legal Hold" : isReviewDue(retention) ? "Review Due" : "Retention Tracked";
-        meta.append(" • ", badge);
       }
       const deleteButton = card.querySelector('button[data-action="delete"]');
       if (deleteButton) {
@@ -527,6 +580,10 @@
   function setValue(id, value) {
     const element = document.getElementById(id);
     if (element) element.value = value || "";
+  }
+
+  function isPlainObject(value) {
+    return Boolean(value && typeof value === "object" && !Array.isArray(value));
   }
 
   function clone(value) {
