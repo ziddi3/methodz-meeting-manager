@@ -4,8 +4,8 @@
 */
 
 window.METHODZ_MEETING_CONFIG = {
-  schemaVersion: "0.9.0",
-  appShellVersion: "0.9.0",
+  schemaVersion: "1.0.0",
+  appShellVersion: "1.0.0",
   revisionLimit: 50,
   storageKeys: {
     records: "methodzMeetingRecords",
@@ -22,7 +22,9 @@ window.METHODZ_MEETING_CONFIG = {
     preRestoreBackup: "methodzPreRestoreBackup",
     accessibilityPreferences: "methodzAccessibilityPreferences",
     migrationState: "methodzMigrationState",
-    mergeLog: "methodzWorkspaceMergeLog"
+    mergeLog: "methodzWorkspaceMergeLog",
+    roleContext: "methodzMeetingRoleContext",
+    releaseState: "methodzMeetingReleaseState"
   },
   brand: {
     appName: "Methodz Meeting Manager",
@@ -86,6 +88,54 @@ window.METHODZ_MEETING_CONFIG = {
       organizations: ["Sole Proprietor / Partner", "Guest / Other"]
     }
   ],
+  roles: ["Administrator", "Facilitator", "Recorder", "Participant", "Auditor", "Guest"],
+  recordClassifications: ["Internal", "Confidential", "Partner Shared", "Public Summary"],
+  recordPolicies: [
+    {
+      id: "standard",
+      label: "Standard Internal Record",
+      actions: {
+        view: ["Administrator", "Facilitator", "Recorder", "Participant", "Auditor"],
+        edit: ["Administrator", "Facilitator", "Recorder"],
+        export: ["Administrator", "Facilitator", "Recorder", "Auditor"],
+        verifySignatures: ["Administrator", "Facilitator", "Auditor"]
+      }
+    },
+    {
+      id: "restricted",
+      label: "Restricted Record",
+      actions: {
+        view: ["Administrator", "Facilitator", "Auditor"],
+        edit: ["Administrator", "Facilitator"],
+        export: ["Administrator", "Auditor"],
+        verifySignatures: ["Administrator", "Facilitator", "Auditor"]
+      }
+    },
+    {
+      id: "read-only-archive",
+      label: "Read-Only Archive",
+      actions: {
+        view: ["Administrator", "Facilitator", "Recorder", "Auditor"],
+        edit: [],
+        export: ["Administrator", "Auditor"],
+        verifySignatures: []
+      }
+    },
+    {
+      id: "partner-share",
+      label: "Partner Shared Record",
+      actions: {
+        view: ["Administrator", "Facilitator", "Recorder", "Participant", "Auditor", "Guest"],
+        edit: ["Administrator", "Facilitator", "Recorder"],
+        export: ["Administrator", "Facilitator", "Recorder", "Auditor"],
+        verifySignatures: ["Administrator", "Facilitator", "Auditor"]
+      }
+    }
+  ],
+  signatureConsent: {
+    version: "1.0",
+    statement: "I consent to use my typed full name as an electronic signature for this meeting record."
+  },
   attendanceTypes: ["In Person", "Remote", "Phone"],
   priorities: ["Normal", "Low", "High", "Critical"],
   taskStatuses: ["Pending", "In Progress", "Completed"],
