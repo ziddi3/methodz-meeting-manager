@@ -148,7 +148,7 @@ test("identical saved records receive different source-bound approval fingerprin
       { ...base, id: "source-record-a" },
       { ...base, id: "source-record-b" }
     ]));
-    window.refreshExternalRecordSourcesV11();
+    window.loadSavedRecords();
     document.getElementById("externalProfileV11").value = "public-summary";
 
     document.getElementById("externalRecordSourceV11").value = "active:source-record-a";
