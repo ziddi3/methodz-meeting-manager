@@ -2,37 +2,35 @@
 
 Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC Inc., and future partner workflows connected through the Methodz brand ecosystem.
 
-> Methodz is treated as a shared brand identity and operating ecosystem, not as a separate company.
+> Methodz is a shared brand identity and operating ecosystem, not a separate company.
 
-## Current Release
+## Current release
 
-**Version 1.1.0**
+**Version 1.2.0**
 
 The application remains a static HTML/CSS/JavaScript app with no runtime package dependencies and no build command. It works by opening `meeting.html` directly and can also be deployed to any ordinary static host.
 
-Version 1.1 adds:
+Version 1.2 adds:
 
-- record retention policies and review dates
-- preservation / legal-hold tracking and history
-- permanent-delete blocking for archived records on active hold
-- a cross-record retention review dashboard
-- partner-safe, public-summary, and custom external-copy profiles
-- irreversible redaction manifests
-- SHA-256 package integrity where Web Crypto is available
-- explicitly labeled compatibility checksums when it is not
-- browser-local external-export activity logging
-- automated v1.1 browser smoke coverage
+- external-export review requests and reviewer approval;
+- recipient-policy and redaction-profile allow-lists;
+- source-content fingerprint validation;
+- approval metadata inside redacted export packages;
+- disposition approval before permanent archive deletion;
+- preservation-hold precedence over disposition approval;
+- browser-local approval and disposition audit exports;
+- automated v1.2 browser smoke coverage.
 
-Version 1.0 capabilities remain intact, including governance policies, signature consent, provider contracts, archive history, migration, recovery, and consolidated records.
+Version 1.1 retention, legal-hold, redaction, and integrity features remain intact. Version 1.0 governance, signature consent, provider contracts, archive history, migration, recovery, and consolidated records also remain intact.
 
-## Entry Points
+## Entry points
 
 ```text
 meeting.html   Main meeting workspace
 archive.html   Dedicated detail and print view
 ```
 
-## Core Principles
+## Core principles
 
 - Offline first
 - Static and directly deployable
@@ -43,39 +41,43 @@ archive.html   Dedicated detail and print view
 - Explicit confirmation before destructive actions
 - Separate controlled source records from redacted external copies
 - Preserve active legal holds before disposition
+- Require review before external download and permanent disposition
 - **Assigned To**, never “Owner,” for task responsibility
 - **Organizations / Representatives Present** for participating groups
 - Methodz described as a brand and operating ecosystem
 
-## Main Architecture
+## Architecture
 
 ```text
 Configuration
   config.js
   config-v11.js
+  config-v12.js
 
 Schema and migration
   migrations.js
   migrations-v10.js
   migrations-v11.js
+  migrations-v12.js
 
 Record providers
   data-adapter.js
   async-data-adapter.js
 
-Attachment providers
+Attachment provider
   attachment-adapter.js
 
 Core workspace
   app.js
 
 Feature layers
-  features-v03*.js through features-v11*.js
+  features-v03*.js through features-v12*.js
 
 Archive detail
   archive.js
   archive-v10.js
   archive-v11.js
+  archive-v12.js
 
 Static app shell
   manifest.webmanifest
@@ -84,7 +86,52 @@ Static app shell
 
 Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
 
-## v1.1 Record Retention
+## v1.2 external-export approval
+
+External download approval is bound to:
+
+- the selected source record or current meeting form;
+- a normalized source-content fingerprint;
+- the selected redaction profile;
+- the selected recipient policy;
+- approval status and optional expiration date.
+
+Changing source content, recipient policy, or redaction profile invalidates the approval.
+
+Default recipient policies:
+
+```text
+Approved Partner Organization   Partner Safe only
+Public Communications           Public Summary only
+Contractual / Custom Recipient  Partner Safe or reviewed Custom
+```
+
+Default approval roles:
+
+```text
+Administrator
+Auditor
+```
+
+Previewing a redacted package is allowed before approval. JSON and HTML downloads are blocked until approval is valid.
+
+Approved packages include an approval snapshot. Package integrity is recomputed after that metadata is attached.
+
+## v1.2 permanent disposition approval
+
+Permanent deletion from the Archive Vault requires:
+
+1. no active preservation hold;
+2. a documented disposition review request;
+3. approval by an authorized role;
+4. a fingerprint matching the archived record;
+5. the existing permanent-delete confirmation.
+
+A completed permanent deletion consumes the approval and records an audit event.
+
+An active preservation hold always blocks disposition, even when an older approval exists.
+
+## v1.1 retention and preservation holds
 
 Each record can carry:
 
@@ -98,7 +145,7 @@ retentionMetadata.holdHistory
 retentionMetadata.updatedAt
 ```
 
-Default policy presets:
+Default retention presets:
 
 ```text
 Operational Review - 2 Years
@@ -107,77 +154,21 @@ Permanent / Do Not Dispose
 Custom Review Date
 ```
 
-These presets are internal workflow aids, not legal advice. Confirm the applicable tax, employment, privacy, insurance, safety, litigation, and contractual requirements before disposition.
+These presets are internal workflow aids, not legal advice. Confirm applicable tax, employment, privacy, insurance, safety, litigation, and contractual requirements before disposition.
 
-### Preservation Hold
+## v1.1 partner-safe export
 
-A hold records:
+External sharing creates a new redacted package and never edits the controlled source record.
 
-- active state
-- reason
-- person placing the hold
-- placement timestamp
-- person releasing the hold
-- release timestamp
-- release note
-- chronological hold history
+Profiles:
 
-An archived record with an active legal hold cannot be permanently deleted through the local Archive Vault interface.
+- **Partner Safe** keeps operational content while removing signatures, internal notes, contact details, protected governance notes, file locations, directory snapshots, and internal provider metadata.
+- **Public Summary** exports only high-level metadata, organizations, completed agenda items, approved structured decisions, and the summary.
+- **Custom External Copy** allows reviewed section-level inclusion while always removing signatures and signature verification.
 
-This is a workflow safeguard. A future hosted provider must enforce hold rules on the server.
+Every package contains a redaction manifest with removed field paths, warnings, an irreversible-redaction marker, and `signatureDataIncluded: false`.
 
-### Retention Dashboard
-
-The dashboard indexes active and archived records and can filter:
-
-- all records
-- active legal holds
-- review dates that are due
-- missing review dates
-
-The filtered index can be exported as JSON without modifying records.
-
-## v1.1 Partner-Safe Export
-
-External sharing creates a new redacted package. It never edits the controlled source record.
-
-### Partner Safe
-
-Keeps operational meeting content while removing signatures, internal discussion notes, contact details, protected governance notes, file locations, directory snapshots, and internal adapter or synchronization metadata.
-
-### Public Summary
-
-Exports only high-level meeting metadata, organizations, completed agenda items, approved or confirmed decisions, and the meeting summary.
-
-### Custom External Copy
-
-Allows section-level inclusion for:
-
-- attendee names and roles
-- agenda
-- discussion notes
-- decisions
-- follow-up tasks
-- attachment metadata
-- limited retention summary
-
-Typed signatures, consent records, and verification details are excluded from every profile.
-
-### Redaction Manifest
-
-Every package records:
-
-- selected profile
-- generation timestamp
-- source meeting reference
-- removed field paths
-- warnings
-- irreversible-redaction state
-- `signatureDataIncluded: false`
-
-### Integrity Digest
-
-Preferred hosted algorithm:
+Preferred integrity algorithm:
 
 ```text
 SHA-256 through Web Crypto
@@ -189,23 +180,19 @@ Direct-file compatibility fallback:
 FNV-1a-32 compatibility checksum
 ```
 
-The package labels the algorithm and explains its boundary. A digest detects package changes. It is not a digital signature, identity proof, or proof of approval.
+A digest detects package changes. It is not a digital signature, identity proof, or proof of approval.
 
-### Export Activity Log
+## v1.0 record governance
 
-Completed JSON and HTML downloads add a browser-local metadata entry containing the source reference, profile, time, format, and package digest. The log does not store a second copy of meeting content.
+Records can carry:
 
-## v1.0 Record Governance
-
-Each record can carry:
-
-- classification
-- policy ID
-- allowed viewing roles
-- prepared-by and reviewed-by names
-- review status
-- protected record areas
-- policy note
+- classification;
+- policy ID;
+- allowed viewing roles;
+- prepared-by and reviewed-by names;
+- review status;
+- protected record areas;
+- policy note.
 
 Default roles:
 
@@ -218,55 +205,21 @@ Auditor
 Guest
 ```
 
-Default policies:
-
-```text
-Standard Internal Record
-Restricted Record
-Read-Only Archive
-Partner Shared Record
-```
-
 These controls enforce workflow behavior in the local interface. They are not an authentication boundary. A future remote provider must enforce permissions on the server.
 
-## Electronic Signature Consent
+## Electronic signature consent
 
 A typed signature requires explicit consent before the record can be saved.
 
-Recorded fields include:
-
-- consent accepted state
-- consent statement version
-- consent method
-- consent timestamp
-- verification status
-- verifier
-- verification timestamp
-- verification note
+Recorded fields include consent state, consent statement version, method, timestamp, verification status, verifier, verification time, and verification note.
 
 “Name Match” means only that normalized typed signature text matches the attendee name. It does not prove identity.
 
-Partner-safe exports never contain the typed signature or its consent and verification metadata.
+External copies never include typed signatures or their consent and verification metadata.
 
-## Consolidated Records Workspace
+## Provider contracts
 
-The searchable index covers:
-
-- active records
-- archived records
-- classifications
-- policies
-- release-readiness results
-
-The workspace can export the filtered index as JSON without changing records.
-
-## Data Provider Contracts
-
-### Synchronous contract
-
-`data-adapter.js` remains the immediate local record boundary.
-
-Required methods:
+### Synchronous record adapter
 
 ```text
 listRecords()
@@ -277,28 +230,13 @@ deleteRecord(recordId)
 healthCheck()
 ```
 
-### Asynchronous contract
+### Asynchronous record adapter
 
 `async-data-adapter.js` defines the Promise-based boundary for future Firebase, Supabase, CRM, Drive, or Methodz API providers.
 
-The default `local-storage-async` provider wraps the current local adapter and transmits nothing.
+The default `local-storage-async` provider wraps the local adapter and transmits nothing.
 
-Register a future provider with:
-
-```js
-window.MethodzMeetingAsyncData.registerAdapter(adapter);
-window.MethodzMeetingAsyncData.useAdapter(adapter.id);
-```
-
-A future provider must enforce authenticated access, hold protection, retention policy, and external-copy authorization independently.
-
-## Attachment Provider Contract
-
-`attachment-adapter.js` defines a replaceable reference-storage boundary.
-
-The default provider stores metadata references inside meeting records. It does not store binary files and rejects base64 or `data:` payloads.
-
-Required methods:
+### Attachment adapter
 
 ```text
 listReferences(record)
@@ -309,26 +247,9 @@ validateReference(reference)
 healthCheck()
 ```
 
-Partner-safe exports remove attachment file locations and keep only allowed metadata.
+The default provider stores metadata references only. It does not store binary files and rejects base64 or `data:` payloads.
 
-## Release Validation
-
-The release gate checks:
-
-- record schema shape
-- title and date
-- governance fields
-- signature consent
-- declined or unverified signatures
-- task assignment gaps
-- attachment-reference safety and completeness
-- retention metadata
-- active hold reason
-- retention review-date gaps
-
-The audit can be exported as JSON.
-
-## Storage Keys
+## Storage keys
 
 ```text
 methodzMeetingRecords
@@ -349,24 +270,29 @@ methodzWorkspaceMergeLog
 methodzMeetingRoleContext
 methodzMeetingReleaseState
 methodzRedactionExportLog
+methodzExternalExportApprovals
+methodzExternalExportApprovalLog
+methodzDispositionApprovals
+methodzDispositionLog
 ```
 
 The original prototype key `meetingRecords` is still migrated when needed.
 
-## Local Storage Warning
+## Local storage warning
 
-Records live in the browser and device where they were created unless exported. Clearing browser data can remove them.
+Records and approvals live in the browser and device where they were created unless exported. Clearing browser data can remove them.
 
 Recommended practice:
 
 1. Export a Workspace Backup after important meetings.
 2. Export before changing devices, browsers, or hosting origins.
 3. Keep backups in a separate protected folder or Drive location.
-4. Preserve pre-restore and pre-merge recovery packages until the workspace is verified.
-5. Preserve controlled source records separately from partner-safe copies.
-6. Do not treat the browser-local export log as an immutable compliance ledger.
+4. Preserve pre-restore and pre-merge recovery packages until verified.
+5. Preserve controlled source records separately from external copies.
+6. Export approval and disposition audits for important release decisions.
+7. Do not treat browser-local logs as immutable compliance ledgers.
 
-## Static Deployment
+## Static deployment
 
 No build step is required.
 
@@ -383,23 +309,17 @@ Supported targets include:
 
 Service workers and SHA-256 through Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps the meeting workflow and uses the clearly labeled compatibility checksum when required.
 
-## Automated Validation
+## Automated validation
 
 GitHub Actions performs:
 
-1. JavaScript syntax checks
-2. required static-file checks
-3. v1.1 module-wiring checks
-4. manifest JSON validation
-5. Playwright browser smoke tests
+1. JavaScript syntax checks;
+2. required static-file checks;
+3. v1.2 module-wiring checks;
+4. manifest JSON validation;
+5. Playwright browser smoke tests.
 
-The v1.1 browser suite covers:
-
-- panel and migration registration
-- retention save metadata
-- legal-hold archive protection
-- partner-safe removal of sensitive fields
-- accurate integrity-algorithm labeling
+The v1.2 suite covers panel and migration registration, approved export package metadata, fingerprint invalidation, and disposition approval.
 
 Playwright is installed only in CI.
 
@@ -408,34 +328,33 @@ Playwright is installed only in CI.
 ```text
 docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
-docs/V1.0-NOTES.md
-docs/V1.0-ARCHITECTURE.md
-docs/V1.0-TESTS.md
-docs/V1.0-CHANGELOG.md
-docs/V1.1-NOTES.md
-docs/V1.1-ARCHITECTURE.md
-docs/V1.1-TESTS.md
 docs/SECURITY-AND-PRIVACY.md
 docs/RELEASE-CHECKLIST.md
+docs/V1.0-NOTES.md
+docs/V1.1-NOTES.md
+docs/V1.2-NOTES.md
+docs/V1.2-ARCHITECTURE.md
+docs/V1.2-TESTS.md
+docs/V1.2-CHANGELOG.md
 ```
 
 ## Roadmap
 
 ### 1.x hardening
 
-- complete browser and device regression testing
-- add export approval and reviewer sign-off metadata
-- add optional public-key package signatures only with explicit key management
-- improve disposition approval and immutable legal-hold audit support
-- refine partner field allow-lists for specific organizations
-- consolidate older feature layers without breaking direct-file compatibility
+- complete browser and device regression testing;
+- add optional public-key package signatures only with explicit key management;
+- move approval and legal-hold enforcement to an authenticated provider;
+- add append-only remote audit storage;
+- refine recipient-specific field allow-lists;
+- consolidate older feature layers without breaking direct-file compatibility.
 
 ### 2.0
 
-- Firebase or Supabase provider
-- authenticated user accounts and server permissions
-- server-enforced legal holds and retention policies
-- calendar integration
-- CRM integration
-- AI-assisted summaries with explicit review
-- audio or video recording workflows with consent controls
+- Firebase or Supabase provider;
+- authenticated user accounts and server permissions;
+- server-enforced legal holds, retention, export approval, and disposition approval;
+- calendar integration;
+- CRM integration;
+- AI-assisted summaries with explicit review;
+- audio or video recording workflows with consent controls.
