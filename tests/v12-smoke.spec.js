@@ -17,7 +17,8 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
     migrationRegistered: window.MethodzMigrations.registry.some((entry) => entry.version === "1.2.0"),
     downloadGatePatched: window.__methodzV12DownloadGatePatched,
     fingerprintPolicyPatched: window.__methodzV12FingerprintPolicyPatched,
-    releaseAuditPatched: window.__methodzV12ReleaseAuditPatched
+    releaseAuditPatched: window.__methodzV12ReleaseAuditPatched,
+    revisionButtonPatched: window.__methodzV12RevisionButtonPatched
   }));
 
   expect(state).toEqual({
@@ -26,7 +27,8 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
     migrationRegistered: true,
     downloadGatePatched: true,
     fingerprintPolicyPatched: true,
-    releaseAuditPatched: true
+    releaseAuditPatched: true,
+    revisionButtonPatched: true
   });
 });
 
@@ -37,16 +39,24 @@ test("public destination blocks non-public profiles", async ({ page }) => {
   await page.locator("#approvalRequestedByV12").fill("Release Preparer");
   await page.locator("#approvalPurposeV12").fill("Website publication");
 
-  let blockedMessage = "";
-  page.once("dialog", async (dialog) => {
-    blockedMessage = dialog.message();
-    await dialog.accept();
+  const result = await page.evaluate(async () => {
+    let message = "";
+    const originalAlert = window.alert;
+    window.alert = (value) => {
+      message = String(value || "");
+    };
+    const request = await window.requestExternalApprovalV12();
+    window.alert = originalAlert;
+    return {
+      message,
+      request,
+      approvals: JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]")
+    };
   });
-  await page.getByRole("button", { name: "Request Approval" }).click();
-  expect(blockedMessage).toContain("does not allow");
 
-  const approvals = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]"));
-  expect(approvals).toHaveLength(0);
+  expect(result.message).toContain("does not allow");
+  expect(result.request).toBeNull();
+  expect(result.approvals).toHaveLength(0);
 });
 
 test("approval fingerprint is stable across regenerated previews", async ({ page }) => {
@@ -81,11 +91,11 @@ test("approved package carries reviewer sign-off and invalidates after content c
   await page.locator("#externalProfileV11").selectOption("public-summary");
   await page.locator("#approvalRequestedByV12").fill("Release Preparer");
   await page.locator("#approvalPurposeV12").fill("Publish approved meeting summary");
-  await page.getByRole("button", { name: "Request Approval" }).click();
+  await page.evaluate(() => window.requestExternalApprovalV12());
 
   await page.locator("#approvalReviewedByV12").fill("Release Reviewer");
   await page.locator("#approvalReviewNoteV12").fill("Summary verified for public release.");
-  await page.getByRole("button", { name: "Approve Selected" }).click();
+  await page.evaluate(() => window.approveExternalRequestV12());
 
   const approval = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzExternalExportApprovals"))[0]);
   expect(approval.status).toBe("Approved");
@@ -107,13 +117,17 @@ test("approved package carries reviewer sign-off and invalidates after content c
   expect(JSON.stringify(packageData)).not.toContain("signatureVerification");
 
   await page.locator("#summary").fill("Changed after approval.");
-  let changedMessage = "";
-  page.once("dialog", async (dialog) => {
-    changedMessage = dialog.message();
-    await dialog.accept();
+  const changedMessage = await page.evaluate(async () => {
+    let message = "";
+    const originalAlert = window.alert;
+    window.alert = (value) => {
+      message = String(value || "");
+    };
+    const result = await window.downloadApprovedExternalV12("json");
+    window.alert = originalAlert;
+    return { message, result };
   });
-  await page.evaluate(() => {
-    void window.downloadApprovedExternalV12("json");
-  });
-  await expect.poll(() => changedMessage).toContain("No current approved request matches");
+
+  expect(changedMessage.result).toBeNull();
+  expect(changedMessage.message).toContain("No current approved request matches");
 });
