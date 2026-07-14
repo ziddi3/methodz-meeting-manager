@@ -54,6 +54,7 @@ jobs:
           test -f features-v12-export-approval.js
           test -f features-v12-fingerprint-policy.js
           test -f features-v12-release-audit.js
+          test -f features-v12-compatibility.js
           test -f features-v12.css
           test -f archive-v11.js
           test -f manifest.webmanifest
@@ -75,6 +76,7 @@ jobs:
           grep -q 'features-v12-export-approval.js' meeting.html
           grep -q 'features-v12-fingerprint-policy.js' meeting.html
           grep -q 'features-v12-release-audit.js' meeting.html
+          grep -q 'features-v12-compatibility.js' meeting.html
           grep -q 'methodz-meeting-manager-v1.2.0' service-worker.js
           grep -q 'schemaVersion = "1.2.0"' config-v12.js
           grep -q 'features-v12.css' service-worker.js
@@ -83,6 +85,7 @@ jobs:
           grep -q 'features-v12-export-approval.js' service-worker.js
           grep -q 'features-v12-fingerprint-policy.js' service-worker.js
           grep -q 'features-v12-release-audit.js' service-worker.js
+          grep -q 'features-v12-compatibility.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
