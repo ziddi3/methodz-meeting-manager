@@ -16,6 +16,7 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
     approvalVersion: window.MethodzExportApprovalV12.version,
     migrationRegistered: window.MethodzMigrations.registry.some((entry) => entry.version === "1.2.0"),
     downloadGatePatched: window.__methodzV12DownloadGatePatched,
+    fingerprintPolicyPatched: window.__methodzV12FingerprintPolicyPatched,
     releaseAuditPatched: window.__methodzV12ReleaseAuditPatched
   }));
 
@@ -24,6 +25,7 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
     approvalVersion: "1.2.0",
     migrationRegistered: true,
     downloadGatePatched: true,
+    fingerprintPolicyPatched: true,
     releaseAuditPatched: true
   });
 });
@@ -45,6 +47,31 @@ test("public destination blocks non-public profiles", async ({ page }) => {
 
   const approvals = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]"));
   expect(approvals).toHaveLength(0);
+});
+
+test("approval fingerprint is stable across regenerated previews", async ({ page }) => {
+  await page.locator("#meetingTitle").fill("Stable Fingerprint Test");
+  await page.locator("#summary").fill("Stable external summary.");
+  await page.locator("#externalDestinationV12").selectOption("public");
+  await page.locator("#externalProfileV11").selectOption("public-summary");
+
+  const result = await page.evaluate(async () => {
+    const first = await window.previewExternalExportV11();
+    const firstFingerprint = await window.MethodzExportApprovalV12.computeContentFingerprint(first, "public");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const second = await window.previewExternalExportV11();
+    const secondFingerprint = await window.MethodzExportApprovalV12.computeContentFingerprint(second, "public");
+    return {
+      first: firstFingerprint.digest,
+      second: secondFingerprint.digest,
+      generatedAt: second.record.externalCopy.generatedAt,
+      sourceTitle: second.record.externalCopy.sourceReference.title
+    };
+  });
+
+  expect(result.first).toBe(result.second);
+  expect(result.generatedAt).toBeUndefined();
+  expect(result.sourceTitle).toBe("Stable Fingerprint Test");
 });
 
 test("approved package carries reviewer sign-off and invalidates after content changes", async ({ page }) => {
