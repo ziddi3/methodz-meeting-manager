@@ -12,9 +12,21 @@
       const payload = await originalPreview.apply(this, args);
       if (!payload?.record) return payload;
 
+      const sourceSelector = String(document.getElementById("externalRecordSourceV11")?.value || "current");
+      const sourceBinding = global.MethodzRedactionV11?.computeIntegrity
+        ? await global.MethodzRedactionV11.computeIntegrity({
+            bindingType: "methodz-external-source-v1",
+            sourceSelector
+          })
+        : { algorithm: "Unavailable", digest: sourceSelector };
+
       payload.record.externalCopy = {
         ...(payload.record.externalCopy || {}),
-        sourceReference: clone(payload.manifest?.sourceReference || {})
+        sourceReference: clone(payload.manifest?.sourceReference || {}),
+        sourceBinding: {
+          algorithm: sourceBinding.algorithm,
+          digest: sourceBinding.digest
+        }
       };
       delete payload.record.externalCopy.generatedAt;
 
