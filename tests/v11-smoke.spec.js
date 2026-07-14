@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.1 retention and partner-safe export panels load", async ({ page }) => {
+test("v1.1 retention and partner-safe export panels load under the current schema", async ({ page }) => {
   await expect(page.locator("#recordRetentionPanelV11")).toBeVisible();
   await expect(page.locator("#retentionDashboardV11")).toBeVisible();
   await expect(page.locator("#externalExportPanelV11")).toBeVisible();
@@ -22,7 +22,7 @@ test("v1.1 retention and partner-safe export panels load", async ({ page }) => {
   }));
 
   expect(state).toEqual({
-    schema: "1.1.0",
+    schema: "1.2.0",
     retentionVersion: "1.1.0",
     redactionVersion: "1.1.0",
     publicSummaryPolicy: true,
@@ -43,7 +43,7 @@ test("saved records preserve retention and legal-hold metadata without duplicate
   await page.getByRole("button", { name: "Save Record" }).first().click();
 
   const record = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]);
-  expect(record.schemaVersion).toBe("1.1.0");
+  expect(record.schemaVersion).toBe("1.2.0");
   expect(record.retentionMetadata.policyId).toBe("business-review-7y");
   expect(record.retentionMetadata.reviewDate).toBeTruthy();
   expect(record.retentionMetadata.legalHold.active).toBe(true);
@@ -74,7 +74,7 @@ test("partner-safe redaction removes signatures, internal notes, contacts, and f
   const result = await page.evaluate(() => {
     const source = {
       id: "meeting-sensitive-test",
-      schemaVersion: "1.1.0",
+      schemaVersion: "1.2.0",
       meetingNumber: "101",
       title: "Sensitive Partner Meeting",
       date: "2026-07-13",
