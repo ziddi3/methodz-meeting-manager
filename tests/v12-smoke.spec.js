@@ -15,14 +15,16 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
     approvalVersion: window.MethodzExportApprovalV12.version,
     migrationRegistered: window.MethodzMigrations.registry.some((entry) => entry.version === "1.2.0"),
-    downloadGatePatched: window.__methodzV12DownloadGatePatched
+    downloadGatePatched: window.__methodzV12DownloadGatePatched,
+    releaseAuditPatched: window.__methodzV12ReleaseAuditPatched
   }));
 
   expect(state).toEqual({
     schema: "1.2.0",
     approvalVersion: "1.2.0",
     migrationRegistered: true,
-    downloadGatePatched: true
+    downloadGatePatched: true,
+    releaseAuditPatched: true
   });
 });
 
@@ -33,11 +35,13 @@ test("public destination blocks non-public profiles", async ({ page }) => {
   await page.locator("#approvalRequestedByV12").fill("Release Preparer");
   await page.locator("#approvalPurposeV12").fill("Website publication");
 
-  const dialogPromise = page.waitForEvent("dialog");
+  let blockedMessage = "";
+  page.once("dialog", async (dialog) => {
+    blockedMessage = dialog.message();
+    await dialog.accept();
+  });
   await page.getByRole("button", { name: "Request Approval" }).click();
-  const dialog = await dialogPromise;
-  expect(dialog.message()).toContain("does not allow");
-  await dialog.accept();
+  expect(blockedMessage).toContain("does not allow");
 
   const approvals = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]"));
   expect(approvals).toHaveLength(0);
@@ -76,9 +80,13 @@ test("approved package carries reviewer sign-off and invalidates after content c
   expect(JSON.stringify(packageData)).not.toContain("signatureVerification");
 
   await page.locator("#summary").fill("Changed after approval.");
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.evaluate(() => window.downloadApprovedExternalV12("json"));
-  const dialog = await dialogPromise;
-  expect(dialog.message()).toContain("No current approved request matches");
-  await dialog.accept();
+  let changedMessage = "";
+  page.once("dialog", async (dialog) => {
+    changedMessage = dialog.message();
+    await dialog.accept();
+  });
+  await page.evaluate(() => {
+    void window.downloadApprovedExternalV12("json");
+  });
+  await expect.poll(() => changedMessage).toContain("No current approved request matches");
 });
