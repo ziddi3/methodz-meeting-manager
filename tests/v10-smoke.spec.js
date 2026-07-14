@@ -21,13 +21,13 @@ test("v1.x panels and provider contracts load", async ({ page }) => {
     attachmentHealth: window.MethodzAttachmentData.healthCheck()
   }));
 
-  expect(contracts.schema).toBe("1.1.0");
+  expect(contracts.schema).toBe("1.2.0");
   expect(contracts.asyncHealth.ok).toBe(true);
   expect(contracts.attachmentHealth.ok).toBe(true);
 });
 
 test("typed signatures require consent and save release audit fields", async ({ page }) => {
-  await page.locator("#meetingTitle").fill("v1.1 Consent Smoke Test");
+  await page.locator("#meetingTitle").fill("v1.2 Consent Smoke Test");
   await page.locator(".attendee-name").first().fill("Charles Stenerson");
   await page.locator(".attendee-signature").first().fill("Charles Stenerson");
 
@@ -50,12 +50,13 @@ test("typed signatures require consent and save release audit fields", async ({ 
   expect(savedMessage).toContain("Meeting record saved");
 
   const record = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]);
-  expect(record.schemaVersion).toBe("1.1.0");
+  expect(record.schemaVersion).toBe("1.2.0");
   expect(record.attendees[0].signatureConsent.accepted).toBe(true);
   expect(record.accessControl.classification).toBe("Internal");
   expect(record.attachmentAdapterMetadata.adapterId).toBe("record-reference");
-  expect(record.schemaAudit.schemaVersion).toBe("1.1.0");
+  expect(record.schemaAudit.schemaVersion).toBe("1.2.0");
   expect(record.retentionMetadata.policyId).toBeTruthy();
+  expect(record.approvalMetadata.exportApprovalRequired).toBe(true);
 });
 
 test("consolidated workspace indexes active records", async ({ page }) => {
