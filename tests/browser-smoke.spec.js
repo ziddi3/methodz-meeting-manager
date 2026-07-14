@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("creates and saves a schema 0.9 meeting record", async ({ page }) => {
+test("creates and saves a schema 1.2 meeting record", async ({ page }) => {
   page.on("dialog", (dialog) => dialog.accept());
   await page.goto("/meeting.html");
 
@@ -19,8 +19,9 @@ test("creates and saves a schema 0.9 meeting record", async ({ page }) => {
   await expect(page.locator("#savedRecords")).toContainText("Automated Browser Smoke Meeting");
   const records = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]"));
   expect(records).toHaveLength(1);
-  expect(records[0].schemaVersion).toBe("0.9.0");
+  expect(records[0].schemaVersion).toBe("1.2.0");
   expect(records[0].title).toBe("Automated Browser Smoke Meeting");
+  expect(records[0].externalReleaseControl.approvalRequired).toBe(true);
 });
 
 test("imports and migrates the original legacy storage key before workspace initialization", async ({ page }) => {
@@ -52,11 +53,12 @@ test("imports and migrates the original legacy storage key before workspace init
     };
   });
 
-  expect(result.record.schemaVersion).toBe("0.9.0");
+  expect(result.record.schemaVersion).toBe("1.2.0");
   expect(result.record.decisionsList).toEqual([]);
   expect(result.record.attachments).toEqual([]);
   expect(result.record.organizationDetails).toEqual([]);
-  expect(result.state.currentVersion).toBe("0.9.0");
+  expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
+  expect(result.state.currentVersion).toBe("1.2.0");
   expect(result.state.legacyRecordsImported).toBe(true);
   expect(result.legacyRemoved).toBe(true);
 });
@@ -96,6 +98,7 @@ test("compares a saved revision with the current record", async ({ page }) => {
   const card = page.locator(".saved-record").filter({ hasText: "Revision Smoke Meeting" });
   await card.locator(".revision-history-button-v08").click();
   await expect(page.locator("#revisionComparisonV09")).toBeVisible();
+  await expect(page.locator("#revisionLeftV09 option")).toHaveCount(3);
   await page.locator("#revisionLeftV09").selectOption({ index: 0 });
   await page.locator("#revisionRightV09").selectOption("__current__");
   await page.getByRole("button", { name: "Compare Versions" }).click();
@@ -122,5 +125,5 @@ test("publishes a valid app manifest and service worker entry point", async ({ r
 
   const workerResponse = await request.get("/service-worker.js");
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v0.9.0");
+  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.2.0");
 });
