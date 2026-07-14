@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.2.0
+
+### Added
+
+- `config-v12.js` with external-release approval storage keys and destination policy presets.
+- `migrations-v12.js` with `externalReleaseControl` defaults and v1.2 validation.
+- `features-v12-export-approval.js` with approval request, approve, reject, revoke, expiry, and approved-download workflows.
+- Source-bound redacted-content fingerprints that distinguish otherwise identical saved records.
+- Intended-destination policies for Canadian Soft Water Corporation, Method HVAC Inc., Public / Website, and Other External Recipient.
+- Approved JSON and HTML packages containing requester, reviewer, purpose, expiry, approval ID, content fingerprint, and recalculated integrity metadata.
+- Browser-local approval and release audit export.
+- `features-v12-fingerprint-policy.js` for stable fingerprint content and source binding.
+- `features-v12-release-audit.js` for final validation after the complete v1.2 record shape is assembled.
+- `features-v12-compatibility.js` to preserve patched revision-history dispatch across layered feature modules.
+- `features-v12.css`, v1.2 browser smoke tests, release notes, architecture notes, and a manual test checklist.
+
+### Changed
+
+- Bumped the active schema and app-shell version to `1.2.0`.
+- Gated the existing v1.1 JSON and HTML external-download controls behind matching, unexpired approval metadata.
+- Removed volatile preview timestamps from approval fingerprints while preserving a separate package export timestamp.
+- Loaded v1.2 configuration and migration assets on both `meeting.html` and `archive.html` to prevent archive-page schema rollback.
+- Updated the service-worker cache to `methodz-meeting-manager-v1.2.0`.
+- Updated v1.0, v1.1, and core browser regression tests for the current schema.
+- Extended GitHub Actions checks for v1.2 wiring, archive schema safety, source-bound fingerprints, and approved HTML output.
+- Updated README documentation and the 1.x hardening roadmap.
+
+### Fixed
+
+- Prevented an approval created for one saved record from authorizing another record with identical visible redacted content.
+- Prevented the archive entry point from migrating v1.2 records backward to v1.1.
+- Repaired Revision History button dispatch so the later revision-comparison layer receives the selected record ID.
+- Corrected asynchronous browser tests that previously asserted approval state before the workflow completed.
+
+### Notes
+
+- Requester and reviewer names are browser-local workflow metadata, not authenticated identities or legal signatures.
+- Approval logs are not immutable compliance ledgers.
+- Typed signatures, consent records, and signature-verification details remain excluded from approved external copies.
+- Direct-file mode remains supported with no runtime dependencies or cloud endpoint.
+
 ## 1.1.0
 
 ### Added
