@@ -1,0 +1,68 @@
+/* Methodz Meeting Manager v1.2 approval and disposition presentation. */
+.v12-card {
+  border-top: 4px solid #7c5d15;
+}
+
+.release-badge-v12 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #f4e5b9;
+  color: #4d390c;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.approval-status-v12 {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #c8c8c8;
+  border-radius: 8px;
+  font-weight: 700;
+  background: #f6f6f6;
+}
+
+.approval-status-v12.is-approved-v12 {
+  border-color: #4f7f55;
+  background: #eef8ef;
+  color: #244c2a;
+}
+
+.approval-status-v12.is-blocked-v12 {
+  border-color: #9a6e21;
+  background: #fff8df;
+  color: #5e4314;
+}
+
+.approval-history-v12 {
+  margin-top: 1rem;
+}
+
+.approval-history-v12 ol {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.approval-history-v12 li {
+  margin: 0.55rem 0;
+  padding-left: 0.2rem;
+}
+
+.approval-history-v12 span {
+  color: var(--muted);
+}
+
+.external-approval-v12 textarea,
+.disposition-approval-v12 textarea {
+  min-height: 95px;
+}
+
+@media print {
+  #externalApprovalPanelV12,
+  #dispositionApprovalPanelV12 {
+    display: none !important;
+  }
+}
