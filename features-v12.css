@@ -1,0 +1,136 @@
+.v12-card {
+  border-top: 4px solid #315e3d;
+}
+
+.release-badge-v12 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #315e3d;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.approval-context-v12,
+.approval-status-v12 {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #c9d8cc;
+  border-radius: 8px;
+  background: #f2f8f3;
+}
+
+.approval-status-v12[data-state="working"] {
+  background: #fff8df;
+  border-color: #d8b24c;
+}
+
+.approval-status-v12[data-state="error"] {
+  background: #fff0f0;
+  border-color: #ad4545;
+}
+
+.approval-status-v12[data-state="warning"] {
+  background: #fff7e7;
+  border-color: #c6862c;
+}
+
+.compact-textarea-v12 {
+  min-height: 86px;
+}
+
+.approval-release-grid-v12 {
+  align-items: end;
+  margin-top: 12px;
+}
+
+.approval-downloads-v12 {
+  align-self: end;
+}
+
+.approval-list-v12 {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.approval-card-v12 {
+  padding: 14px;
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.approval-card-v12.selected-approval-v12 {
+  border-color: #315e3d;
+  box-shadow: 0 0 0 2px rgba(49, 94, 61, 0.14);
+}
+
+.approval-card-v12[data-status="rejected"],
+.approval-card-v12[data-status="revoked"] {
+  border-left: 4px solid #8b1e1e;
+}
+
+.approval-card-v12[data-status="approved"] {
+  border-left: 4px solid #315e3d;
+}
+
+.approval-card-v12[data-status="pending"] {
+  border-left: 4px solid #b5851f;
+}
+
+.approval-card-heading-v12 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.approval-state-v12 {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eeeeee;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.approval-card-v12 dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 5px 12px;
+  margin: 10px 0;
+}
+
+.approval-card-v12 dt {
+  font-weight: 700;
+}
+
+.approval-card-v12 dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .approval-card-heading-v12 {
+    flex-direction: column;
+  }
+
+  .approval-card-v12 dl {
+    grid-template-columns: 1fr;
+  }
+
+  .approval-card-v12 dt {
+    margin-top: 6px;
+  }
+}
+
+@media print {
+  #externalApprovalPanelV12 {
+    display: none !important;
+  }
+}
