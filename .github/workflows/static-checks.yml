@@ -77,6 +77,8 @@ jobs:
           grep -q 'features-v12-fingerprint-policy.js' meeting.html
           grep -q 'features-v12-release-audit.js' meeting.html
           grep -q 'features-v12-compatibility.js' meeting.html
+          grep -q 'config-v12.js' archive.html
+          grep -q 'migrations-v12.js' archive.html
           grep -q 'methodz-meeting-manager-v1.2.0' service-worker.js
           grep -q 'schemaVersion = "1.2.0"' config-v12.js
           grep -q 'features-v12.css' service-worker.js
