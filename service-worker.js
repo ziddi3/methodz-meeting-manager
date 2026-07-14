@@ -54,6 +54,7 @@ const APP_SHELL = [
   "./features-v11-redaction.js",
   "./features-v11-redaction-policy.js",
   "./features-v12-export-approval.js",
+  "./features-v12-release-audit.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
