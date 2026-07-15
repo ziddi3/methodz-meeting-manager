@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.2 approval layer and migration load", async ({ page }) => {
+test("v1.2 approval layer and migration load inside v1.3", async ({ page }) => {
   await expect(page.locator("#externalApprovalPanelV12")).toBeVisible();
 
   const state = await page.evaluate(() => ({
@@ -22,7 +22,7 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
   }));
 
   expect(state).toEqual({
-    schema: "1.2.0",
+    schema: "1.3.0",
     approvalVersion: "1.2.0",
     migrationRegistered: true,
     downloadGatePatched: true,
@@ -32,7 +32,7 @@ test("v1.2 approval layer and migration load", async ({ page }) => {
   });
 });
 
-test("archive page preserves v1.2 records instead of migrating them backward", async ({ page }) => {
+test("archive page migrates v1.2 records forward without losing release controls", async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem("methodzMeetingRecords", JSON.stringify([{
       id: "archive-schema-v12",
@@ -66,9 +66,10 @@ test("archive page preserves v1.2 records instead of migrating them backward", a
     record: JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]
   }));
 
-  expect(result.schema).toBe("1.2.0");
-  expect(result.record.schemaVersion).toBe("1.2.0");
+  expect(result.schema).toBe("1.3.0");
+  expect(result.record.schemaVersion).toBe("1.3.0");
   expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
+  expect(result.record.dispositionControl.approvalRequired).toBe(true);
 });
 
 test("public destination blocks non-public profiles", async ({ page }) => {
@@ -128,7 +129,7 @@ test("approval fingerprint is stable across regenerated previews", async ({ page
 test("identical saved records receive different source-bound approval fingerprints", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const base = {
-      schemaVersion: "1.2.0",
+      schemaVersion: "1.3.0",
       meetingNumber: "777",
       title: "Identical Visible Record",
       date: "2026-07-14",
@@ -142,7 +143,8 @@ test("identical saved records receive different source-bound approval fingerprin
       attachments: [],
       summary: "Same public summary",
       retentionMetadata: {},
-      externalReleaseControl: { approvalRequired: true }
+      externalReleaseControl: { approvalRequired: true },
+      dispositionControl: { approvalRequired: true }
     };
     localStorage.setItem("methodzMeetingRecords", JSON.stringify([
       { ...base, id: "source-record-a" },
