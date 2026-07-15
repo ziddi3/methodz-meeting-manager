@@ -6,24 +6,23 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**Version 1.3.0**
+**Version 1.4.0**
 
 The application remains a static HTML/CSS/JavaScript app with no runtime package dependencies and no build command. It works by opening `meeting.html` directly and can also be deployed to any ordinary static host.
 
-Version 1.3 adds:
+Version 1.4 adds:
 
-- documented disposition-review requests for archived records;
-- separate requester and authorized reviewer fields;
-- Administrator and Auditor review-role gates;
-- archived-record fingerprint binding;
-- preservation-hold precedence over disposition approval;
-- approval, rejection, revocation, and consumption states;
-- a browser-local preservation and disposition event chain;
-- event-chain verification and JSON export;
-- disposition audit details on the archive page;
-- schema 1.3 migration and automated browser coverage.
+- named recipient-specific external-export policies;
+- unique recipient destination IDs;
+- per-recipient redaction-profile limits;
+- per-recipient maximum field allow-lists;
+- policy status and review dates;
+- sensitive discussion-note safeguards;
+- recipient-policy snapshots in export manifests and approval records;
+- policy import/export and audit export;
+- schema 1.4 migration and browser smoke coverage.
 
-Version 1.2 external-export approvals, v1.1 retention and redaction, and all earlier archive, revision, recovery, directory, task, template, signature, and offline features remain intact.
+Version 1.3 disposition approvals, v1.2 external-export approvals, v1.1 retention and redaction, and all earlier archive, revision, recovery, directory, task, template, signature, and offline features remain intact.
 
 ## Entry points
 
@@ -44,6 +43,7 @@ archive.html   Dedicated detail and print view
 - Preserve active legal holds before disposition
 - Require review before external download and permanent disposition
 - Separate controlled source records from redacted external copies
+- Apply recipient allow-lists only after redaction
 - **Assigned To**, never “Owner,” for task responsibility
 - **Organizations / Representatives Present** for participating groups
 - Methodz described as a brand and operating ecosystem
@@ -56,6 +56,7 @@ Configuration
   config-v11.js
   config-v12.js
   config-v13.js
+  config-v14.js
 
 Schema and migration
   migrations.js
@@ -63,6 +64,7 @@ Schema and migration
   migrations-v11.js
   migrations-v12.js
   migrations-v13.js
+  migrations-v14.js
 
 Record providers
   data-adapter.js
@@ -75,7 +77,7 @@ Core workspace
   app.js
 
 Feature layers
-  features-v03*.js through features-v13*.js
+  features-v03*.js through features-v14*.js
 
 Archive detail
   archive.js
@@ -89,6 +91,46 @@ Static app shell
 ```
 
 Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
+
+## v1.4 recipient-specific export policies
+
+A recipient policy records:
+
+```text
+policy label
+named recipient or accountable contact
+organization
+contact reference
+base destination policy
+allowed redaction profiles
+maximum allowed field groups
+status
+review date
+verification note
+```
+
+Every active policy becomes a runtime destination:
+
+```text
+recipient:<policy-id>
+```
+
+The export pipeline is:
+
+```text
+controlled source record
+  -> redaction profile
+  -> recipient field allow-list
+  -> integrity calculation
+  -> fingerprint-bound approval
+  -> approved download
+```
+
+Recipient policies are subtractive. They can remove additional information but cannot restore anything removed by Partner Safe, Public Summary, or Custom External Copy.
+
+An inactive or overdue policy cannot be applied, previewed, or used to request approval. Enabling discussion notes requires a meaningful verification note.
+
+Because the approval fingerprint includes the unique destination-policy ID, an approval for one recipient policy cannot authorize a different recipient policy.
 
 ## v1.3 permanent disposition approval
 
@@ -122,7 +164,7 @@ A completed removal consumes the approval. A changed archived record invalidates
 
 The record fingerprint is a deterministic FNV-1a-32 local identity checksum. It detects local source changes but is not a digital signature, identity proof, or authenticated authorization.
 
-## v1.3 preservation event chain
+## Preservation event chain
 
 The local chain records:
 
@@ -138,7 +180,7 @@ Each event contains the previous digest and its own digest. The app can verify a
 
 This is a browser-local tamper-evidence aid only. Anyone with access to local browser storage may alter or replace the data. A future hosted provider must use authenticated identities, server-side authorization, append-only storage, and durable approval consumption.
 
-## v1.2 external-export approval
+## External-export approval
 
 External download approval is bound to:
 
@@ -146,15 +188,14 @@ External download approval is bound to:
 - a source-bound redacted-content fingerprint;
 - the selected redaction profile;
 - the intended destination policy;
+- the recipient-specific destination when used;
 - approval status and expiration.
 
-Changing source content, destination, profile, or custom sections invalidates the approval.
+Changing source content, destination, recipient policy, profile, or custom sections invalidates the approval.
 
-Default destination policies include Canadian Soft Water Corporation, Method HVAC Inc., Public / Website, and Other External Recipient.
+Previewing a redacted package is allowed before approval. JSON and HTML downloads require matching approval metadata.
 
-Previewing a redacted package is allowed before approval. JSON and HTML downloads require matching approval metadata. Approved packages contain requester, reviewer, purpose, expiry, destination, fingerprint, and recalculated integrity information.
-
-## v1.1 retention and preservation holds
+## Retention and preservation holds
 
 Each record can carry:
 
@@ -187,7 +228,7 @@ External sharing creates a new redacted package and never edits the controlled s
 
 Profiles:
 
-- **Partner Safe** keeps operational content while removing signatures, internal notes, contact details, protected governance notes, file locations, directory snapshots, and internal provider metadata.
+- **Partner Safe** keeps operational content while removing signatures, internal notes, contact details, protected governance notes, file locations, and internal provider metadata.
 - **Public Summary** exports high-level metadata, organizations, completed agenda items, approved structured decisions, and the summary.
 - **Custom External Copy** allows destination-policy-approved sections while always removing signatures and signature verification.
 
@@ -205,7 +246,7 @@ Direct-file compatibility fallback:
 FNV-1a-32 compatibility checksum
 ```
 
-A digest detects package changes. It is not a digital signature, identity proof, or proof of approval.
+A digest detects package changes. It is not a digital signature, identity proof, proof of recipient identity, or proof of approval.
 
 ## Electronic signature consent
 
@@ -275,13 +316,15 @@ methodzExternalExportApprovalLog
 methodzDispositionApprovals
 methodzDispositionAuditLog
 methodzPreservationEventChain
+methodzRecipientExportPolicies
+methodzRecipientPolicyAudit
 ```
 
 The original prototype key `meetingRecords` is still migrated when needed.
 
 ## Local storage warning
 
-Records, approvals, and audit events live in the browser and device where they were created unless exported. Clearing browser data can remove them.
+Records, policies, approvals, and audit events live in the browser and device where they were created unless exported. Clearing browser data can remove them.
 
 Recommended practice:
 
@@ -290,7 +333,7 @@ Recommended practice:
 3. Keep backups in a separate protected folder or Drive location.
 4. Preserve pre-restore and pre-merge recovery packages until verified.
 5. Preserve controlled source records separately from external copies.
-6. Export approval, disposition, and preservation audits for important decisions.
+6. Export approval, disposition, preservation, and recipient-policy audits for important decisions.
 7. Do not treat browser-local logs as immutable compliance ledgers.
 
 ## Static deployment
@@ -316,11 +359,11 @@ GitHub Actions performs:
 
 1. JavaScript syntax checks;
 2. required static-file checks;
-3. v1.3 module-wiring checks;
+3. v1.4 module-wiring checks;
 4. manifest JSON validation;
 5. Playwright browser smoke tests.
 
-The v1.3 suite covers migration and panel loading, fingerprint-bound disposition approval, requester/reviewer separation, preservation-hold precedence, approval consumption, and event-chain verification.
+The v1.4 suite covers schema loading, recipient destination generation, field allow-list enforcement, approval binding, sensitive-note validation, and overdue-policy blocking. Earlier governance, redaction, retention, archive, revision, migration, and disposition suites remain active.
 
 Playwright is installed only in CI.
 
@@ -335,8 +378,10 @@ docs/V1.0-NOTES.md
 docs/V1.1-NOTES.md
 docs/V1.2-NOTES.md
 docs/V1.3-NOTES.md
-docs/V1.3-ARCHITECTURE.md
-docs/V1.3-TESTS.md
+docs/V1.4-NOTES.md
+docs/V1.4-ARCHITECTURE.md
+docs/V1.4-TESTS.md
+docs/V1.4-CHANGELOG.md
 ```
 
 ## Roadmap
@@ -345,16 +390,16 @@ docs/V1.3-TESTS.md
 
 - complete browser and device regression testing;
 - add optional public-key signatures only with explicit key management;
-- move approval and legal-hold enforcement to an authenticated provider;
+- move recipient, approval, and legal-hold enforcement to an authenticated provider;
 - add append-only remote audit storage;
-- refine recipient-specific field allow-lists;
+- add organization-managed recipient policy administration;
 - consolidate older feature layers without breaking direct-file compatibility.
 
 ### 2.0
 
 - Firebase or Supabase provider;
 - authenticated user accounts and server permissions;
-- server-enforced legal holds, retention, export approval, and disposition approval;
+- server-enforced recipient policies, legal holds, retention, export approval, and disposition approval;
 - calendar integration;
 - CRM integration;
 - AI-assisted summaries with explicit review;
