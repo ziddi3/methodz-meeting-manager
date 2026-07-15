@@ -27,11 +27,12 @@ test("a separate authorized reviewer can approve fingerprint-bound disposition",
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: /Archive meeting/i }).click();
 
-  await page.locator("#dispositionRequestedByV13").fill("Records Coordinator");
-  await page.locator("#dispositionBasisV13").fill("Retention review completed and removal authorized under the internal policy.");
-  await page.getByRole("button", { name: "Request Disposition Review" }).click();
-  await page.locator("#dispositionReviewedByV13").fill("Records Auditor");
-  await page.getByRole("button", { name: "Approve Selected" }).nth(1).click();
+  const panel = page.locator("#dispositionPanelV13");
+  await panel.locator("#dispositionRequestedByV13").fill("Records Coordinator");
+  await panel.locator("#dispositionBasisV13").fill("Retention review completed and removal authorized under the internal policy.");
+  await panel.getByRole("button", { name: "Request Disposition Review" }).click();
+  await panel.locator("#dispositionReviewedByV13").fill("Records Auditor");
+  await panel.getByRole("button", { name: "Approve Selected", exact: true }).click();
 
   const result = await page.evaluate(() => {
     const entry = JSON.parse(localStorage.getItem("methodzArchivedMeetingRecords"))[0];
@@ -57,7 +58,7 @@ test("requester cannot approve their own disposition request", async ({ page }) 
   await page.getByRole("button", { name: /Archive meeting/i }).click();
   await page.locator("#dispositionRequestedByV13").fill("Same Person");
   await page.locator("#dispositionBasisV13").fill("Policy review complete.");
-  await page.getByRole("button", { name: "Request Disposition Review" }).click();
+  await page.locator("#dispositionPanelV13").getByRole("button", { name: "Request Disposition Review" }).click();
   await page.locator("#dispositionReviewedByV13").fill("Same Person");
 
   const result = await page.evaluate(() => {
@@ -104,11 +105,12 @@ test("approved archive removal consumes approval and preserves a verified audit 
   await page.getByRole("button", { name: "Save Record" }).first().click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: /Archive meeting/i }).click();
-  await page.locator("#dispositionRequestedByV13").fill("Records Coordinator");
-  await page.locator("#dispositionBasisV13").fill("Approved retention outcome.");
-  await page.getByRole("button", { name: "Request Disposition Review" }).click();
-  await page.locator("#dispositionReviewedByV13").fill("Records Auditor");
-  await page.getByRole("button", { name: "Approve Selected" }).nth(1).click();
+  const panel = page.locator("#dispositionPanelV13");
+  await panel.locator("#dispositionRequestedByV13").fill("Records Coordinator");
+  await panel.locator("#dispositionBasisV13").fill("Approved retention outcome.");
+  await panel.getByRole("button", { name: "Request Disposition Review" }).click();
+  await panel.locator("#dispositionReviewedByV13").fill("Records Auditor");
+  await panel.getByRole("button", { name: "Approve Selected", exact: true }).click();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#archiveVaultListV08 button[data-action='delete']").click();
