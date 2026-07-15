@@ -1,0 +1,16 @@
+/* Methodz Meeting Manager v1.3 disposition and preservation-audit presentation. */
+.v13-card { border-top: 4px solid #6f4a19; }
+.release-badge-v13 { display:inline-flex;align-items:center;justify-content:center;min-width:3.2rem;padding:.35rem .65rem;border-radius:999px;background:#f3e2c4;color:#49300d;font-weight:800; }
+.disposition-status-v13,.chain-status-v13 { margin-top:1rem;padding:.85rem 1rem;border:1px solid #c7c7c7;border-radius:8px;background:#f7f7f7;font-weight:700; }
+.is-approved-v13 { border-color:#4f7f55;background:#eef8ef;color:#244c2a; }
+.is-blocked-v13 { border-color:#9a6e21;background:#fff8df;color:#5e4314; }
+.is-error-v13 { border-color:#9a3434;background:#fff0f0;color:#682222; }
+.disposition-list-v13 { display:grid;gap:.75rem;margin-top:1rem; }
+.disposition-card-v13 { border:1px solid var(--border);border-radius:8px;padding:1rem;background:#fafafa; }
+.disposition-card-v13 dl { display:grid;grid-template-columns:max-content 1fr;gap:.35rem .8rem;margin:.7rem 0 0; }
+.disposition-card-v13 dt { font-weight:700; }
+.disposition-badge-v13 { display:inline-flex;margin-left:.5rem;padding:.2rem .55rem;border-radius:999px;background:#f3e2c4;color:#49300d;font-size:.78rem;font-weight:800; }
+.event-chain-v13 { max-height:24rem;overflow:auto;margin-top:1rem; }
+.event-chain-v13 code { overflow-wrap:anywhere; }
+@media (max-width:720px){.disposition-card-v13 dl{grid-template-columns:1fr}.disposition-card-v13 dd{margin:0 0 .5rem}}
+@media print { #dispositionPanelV13,#preservationAuditPanelV13{display:none!important;} }
