@@ -34,14 +34,16 @@ test("v1.4 recipient policy panel, schema migration, and API load", async ({ pag
     version: window.MethodzRecipientPolicyV14.version,
     migration: window.MethodzMigrations.registry.some((entry) => entry.version === "1.4.0"),
     previewPatched: window.__methodzV14PreviewPatched,
-    approvalPatched: window.__methodzV14ApprovalRequestPatched
+    approvalPatched: window.__methodzV14ApprovalRequestPatched,
+    stabilityPatched: window.__methodzV14PreviewStabilityHardened
   }));
   expect(state).toEqual({
     schema: "1.4.0",
     version: "1.4.0",
     migration: true,
     previewPatched: true,
-    approvalPatched: true
+    approvalPatched: true,
+    stabilityPatched: true
   });
 });
 
@@ -82,6 +84,10 @@ test("approval request is bound to the named recipient policy snapshot", async (
   await page.locator("#approvalRequestedByV12").fill("Records Coordinator");
   await page.locator("#approvalPurposeV12").fill("Provide an approved operational copy to the named recipient.");
   await page.locator("#externalApprovalPanelV12").getByRole("button", { name: "Request Approval" }).click();
+  await page.waitForFunction(() => {
+    const requests = JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]");
+    return requests.length === 1 && Boolean(requests[0]?.recipientPolicySnapshot);
+  });
 
   const request = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzExternalExportApprovals"))[0]);
   expect(request.destinationPolicyId).toBe("recipient:recipient-policy-test");
