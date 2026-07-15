@@ -40,10 +40,12 @@ jobs:
           test -f config.js
           test -f config-v11.js
           test -f config-v12.js
+          test -f config-v13.js
           test -f migrations.js
           test -f migrations-v10.js
           test -f migrations-v11.js
           test -f migrations-v12.js
+          test -f migrations-v13.js
           test -f data-adapter.js
           test -f async-data-adapter.js
           test -f attachment-adapter.js
@@ -55,39 +57,33 @@ jobs:
           test -f features-v12-fingerprint-policy.js
           test -f features-v12-release-audit.js
           test -f features-v12-compatibility.js
-          test -f features-v12.css
+          test -f features-v13-disposition.js
+          test -f features-v13.css
           test -f archive-v11.js
+          test -f archive-v13.js
           test -f manifest.webmanifest
           test -f service-worker.js
           test -f tests/v12-smoke.spec.js
+          test -f tests/v13-smoke.spec.js
 
-      - name: Verify v1.2 assets are loaded
+      - name: Verify v1.3 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'features-v11.css' meeting.html
-          grep -q 'features-v12.css' meeting.html
-          grep -q 'config-v11.js' meeting.html
-          grep -q 'config-v12.js' meeting.html
-          grep -q 'migrations-v11.js' meeting.html
-          grep -q 'migrations-v12.js' meeting.html
-          grep -q 'features-v11-redaction.js' meeting.html
-          grep -q 'features-v11-redaction-policy.js' meeting.html
-          grep -q 'features-v12-export-approval.js' meeting.html
-          grep -q 'features-v12-fingerprint-policy.js' meeting.html
-          grep -q 'features-v12-release-audit.js' meeting.html
-          grep -q 'features-v12-compatibility.js' meeting.html
-          grep -q 'config-v12.js' archive.html
-          grep -q 'migrations-v12.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.2.0' service-worker.js
-          grep -q 'schemaVersion = "1.2.0"' config-v12.js
-          grep -q 'features-v12.css' service-worker.js
-          grep -q 'config-v12.js' service-worker.js
-          grep -q 'migrations-v12.js' service-worker.js
-          grep -q 'features-v12-export-approval.js' service-worker.js
-          grep -q 'features-v12-fingerprint-policy.js' service-worker.js
-          grep -q 'features-v12-release-audit.js' service-worker.js
-          grep -q 'features-v12-compatibility.js' service-worker.js
+          grep -q 'features-v13.css' meeting.html
+          grep -q 'config-v13.js' meeting.html
+          grep -q 'migrations-v13.js' meeting.html
+          grep -q 'features-v13-disposition.js' meeting.html
+          grep -q 'config-v13.js' archive.html
+          grep -q 'migrations-v13.js' archive.html
+          grep -q 'archive-v13.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.3.0' service-worker.js
+          grep -q 'schemaVersion = "1.3.0"' config-v13.js
+          grep -q 'features-v13.css' service-worker.js
+          grep -q 'config-v13.js' service-worker.js
+          grep -q 'migrations-v13.js' service-worker.js
+          grep -q 'features-v13-disposition.js' service-worker.js
+          grep -q 'archive-v13.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
