@@ -62,6 +62,7 @@ jobs:
           test -f features-v13-disposition.js
           test -f features-v13.css
           test -f features-v14-recipient-policy.js
+          test -f features-v14-policy-hardening.js
           test -f features-v14.css
           test -f archive-v11.js
           test -f archive-v13.js
@@ -70,6 +71,7 @@ jobs:
           test -f tests/v12-smoke.spec.js
           test -f tests/v13-smoke.spec.js
           test -f tests/v14-smoke.spec.js
+          test -f tests/v14-stability.spec.js
 
       - name: Verify v1.4 assets are loaded
         shell: bash
@@ -79,6 +81,7 @@ jobs:
           grep -q 'config-v14.js' meeting.html
           grep -q 'migrations-v14.js' meeting.html
           grep -q 'features-v14-recipient-policy.js' meeting.html
+          grep -q 'features-v14-policy-hardening.js' meeting.html
           grep -q 'config-v14.js' archive.html
           grep -q 'migrations-v14.js' archive.html
           grep -q 'methodz-meeting-manager-v1.4.0' service-worker.js
@@ -87,6 +90,7 @@ jobs:
           grep -q 'config-v14.js' service-worker.js
           grep -q 'migrations-v14.js' service-worker.js
           grep -q 'features-v14-recipient-policy.js' service-worker.js
+          grep -q 'features-v14-policy-hardening.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
