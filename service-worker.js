@@ -66,6 +66,7 @@ const APP_SHELL = [
   "./features-v12-compatibility.js",
   "./features-v13-disposition.js",
   "./features-v14-recipient-policy.js",
+  "./features-v14-policy-hardening.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
