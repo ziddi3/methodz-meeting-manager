@@ -1,103 +1,127 @@
 # Changelog
 
+## 1.6.0
+
+### Added
+
+- `config-v16.js` with cryptographic package configuration and public-key storage keys.
+- `migrations-v16.js` with `externalSignatureControl` record metadata and schema validation.
+- `crypto-package-core.js` with canonical JSON, ECDSA P-256 signing, SHA-256 digests, JWK import and export, and offline verification.
+- Explicit key generation, private-key backup, public-key registration, revocation workflow, package signing, verification, and audit export.
+- Memory-only private-key handling. Private JWK material is never written to browser storage by the application.
+- Public-key registry sanitation that strips private JWK material and discards invalid entries.
+- Private-material detection that blocks signing packages containing private keys.
+- Standalone `verify.html` and `verify.js` entry point.
+- `features-v16.css`, browser signing tests, a Node Web Crypto self-test, release notes, architecture notes, and a manual checklist.
+
+### Changed
+
+- Bumped the active schema and application shell to `1.6.0`.
+- Preserved the v1.5 recipient-policy operations and release-receipt layer.
+- Updated both meeting and archive entry points to load the v1.6 configuration and migration.
+- Updated the service-worker cache to `methodz-meeting-manager-v1.6.0` and cached the standalone verifier.
+- Updated browser tests to expect the current schema while continuing to verify earlier feature-layer versions and migrations.
+- Bound package content and displayed signature metadata into the ECDSA signature.
+
+### Security notes
+
+- A valid signature proves package and signature-metadata integrity relative to a key. It does not independently authenticate the human signer or their authority.
+- Verify the public key ID through an independent trusted channel before relying on a signer label.
+- Browser-local key revocation and audit entries are workflow aids, not organization-wide or immutable controls.
+- Signed packages and public-key exports contain no private key material.
+
+## 1.5.0
+
+### Added
+
+- Recipient-policy stewardship, accountable roles, business purpose, risk tier, and review cadence.
+- Review history and recipient-policy operational status.
+- Chained release receipts for approved external downloads.
+- Receipt-ledger verification and export.
+
+### Changed
+
+- Bound recipient governance versions into external-copy fingerprints.
+- Invalidated stale approvals after recipient-policy governance changes.
+- Preserved v1.4 recipient allow-lists and destination-specific release controls.
+
+## 1.4.0
+
+### Added
+
+- Named recipient-specific external-export policies.
+- Unique recipient destination IDs.
+- Per-recipient redaction-profile limits and maximum field allow-lists.
+- Policy status, review dates, verification notes, import, export, and audit export.
+- Recipient-policy snapshots in manifests and approval requests.
+- Release metadata and recipient-policy audit events after approved downloads.
+
+### Changed
+
+- Applied recipient allow-lists after redaction so recipient policies cannot restore removed fields.
+- Stabilized approval fingerprints by excluding volatile preview timestamps.
+- Blocked inactive and overdue recipient policies.
+
+## 1.3.0
+
+### Added
+
+- Fingerprint-bound permanent disposition approval.
+- Separation of requester and reviewer duties.
+- Approval states for pending, approved, rejected, revoked, and consumed requests.
+- Preservation event chain with local digest verification and audit export.
+
+### Changed
+
+- Required a matching approval before permanent Archive Vault deletion.
+- Preserved active legal-hold protection as the highest-priority disposition block.
+
 ## 1.2.0
 
 ### Added
 
-- `config-v12.js` with external-release approval storage keys and destination policy presets.
-- `migrations-v12.js` with `externalReleaseControl` defaults and v1.2 validation.
-- `features-v12-export-approval.js` with approval request, approve, reject, revoke, expiry, and approved-download workflows.
-- Source-bound redacted-content fingerprints that distinguish otherwise identical saved records.
-- Intended-destination policies for Canadian Soft Water Corporation, Method HVAC Inc., Public / Website, and Other External Recipient.
-- Approved JSON and HTML packages containing requester, reviewer, purpose, expiry, approval ID, content fingerprint, and recalculated integrity metadata.
+- External-release approval requests, approval, rejection, revocation, expiry, and approved-download workflows.
+- Source-bound redacted-content fingerprints.
+- Destination policy presets.
+- Approved JSON and HTML packages with reviewer and integrity metadata.
 - Browser-local approval and release audit export.
-- `features-v12-fingerprint-policy.js` for stable fingerprint content and source binding.
-- `features-v12-release-audit.js` for final validation after the complete v1.2 record shape is assembled.
-- `features-v12-compatibility.js` to preserve patched revision-history dispatch across layered feature modules.
-- `features-v12.css`, v1.2 browser smoke tests, release notes, architecture notes, and a manual test checklist.
 
 ### Changed
 
-- Bumped the active schema and app-shell version to `1.2.0`.
-- Gated the existing v1.1 JSON and HTML external-download controls behind matching, unexpired approval metadata.
-- Removed volatile preview timestamps from approval fingerprints while preserving a separate package export timestamp.
-- Loaded v1.2 configuration and migration assets on both `meeting.html` and `archive.html` to prevent archive-page schema rollback.
-- Updated the service-worker cache to `methodz-meeting-manager-v1.2.0`.
-- Updated v1.0, v1.1, and core browser regression tests for the current schema.
-- Extended GitHub Actions checks for v1.2 wiring, archive schema safety, source-bound fingerprints, and approved HTML output.
-- Updated README documentation and the 1.x hardening roadmap.
-
-### Fixed
-
-- Prevented an approval created for one saved record from authorizing another record with identical visible redacted content.
-- Prevented the archive entry point from migrating v1.2 records backward to v1.1.
-- Repaired Revision History button dispatch so the later revision-comparison layer receives the selected record ID.
-- Corrected asynchronous browser tests that previously asserted approval state before the workflow completed.
-
-### Notes
-
-- Requester and reviewer names are browser-local workflow metadata, not authenticated identities or legal signatures.
-- Approval logs are not immutable compliance ledgers.
-- Typed signatures, consent records, and signature-verification details remain excluded from approved external copies.
-- Direct-file mode remains supported with no runtime dependencies or cloud endpoint.
+- Gated external JSON and HTML downloads behind matching, unexpired approvals.
+- Removed volatile preview timestamps from approval fingerprints.
+- Loaded current configuration and migration assets on both HTML entry points.
 
 ## 1.1.0
 
 ### Added
 
-- `config-v11.js` with retention presets, lifecycle statuses, redaction profiles, and external-export-log configuration.
-- `migrations-v11.js` with retention, preservation-hold, redaction, and v1.1 validation defaults.
-- `features-v11-retention.js` with record review dates, hold placement and release history, a retention dashboard, and retention report export.
-- Active legal-hold protection for Archive Vault permanent deletion.
-- `features-v11-redaction.js` with Partner Safe, Public Summary, and Custom External Copy profiles.
-- Redaction manifests listing removed field paths and warnings.
-- SHA-256 package integrity through Web Crypto with an explicitly labeled FNV-1a compatibility fallback.
-- Browser-local external-export activity logging.
-- `archive-v11.js` with printable retention and preservation details.
-- `features-v11.css`, v1.1 browser smoke tests, architecture notes, release notes, and a manual test checklist.
-
-### Changed
-
-- Bumped the active schema and app-shell version to `1.1.0` through the configuration extension.
-- Updated `meeting.html` and `archive.html` to load v1.1 configuration, migration, feature, archive, and style assets in order.
-- Updated the service-worker cache to `methodz-meeting-manager-v1.1.0`.
-- Extended release validation to cover retention metadata, review-date gaps, and active hold reasons.
-- Updated v1.0 smoke coverage to accept the current v1.1 schema while preserving governance and consent regression checks.
-- Extended GitHub Actions wiring validation for all v1.1 assets.
+- Retention policies, review dates, lifecycle status, and preservation holds.
+- Legal-hold protection for permanent deletion.
+- Partner Safe, Public Summary, and Custom External Copy redaction profiles.
+- Redaction manifests and package integrity metadata.
+- External-export activity logging.
 
 ### Notes
 
-- External exports create a separate copy and never mutate the controlled source record.
-- Typed signatures, consent records, and verification details are excluded from every external-copy profile.
-- A package digest detects changes but is not a digital signature or identity proof.
+- External exports create separate copies and never mutate the controlled source record.
+- Typed signatures and signature-verification details remain excluded from external copies.
 - Retention presets are workflow aids, not legal advice.
-- Legal-hold protection is enforced by the local interface; future remote providers must enforce it server-side.
-- Direct-file mode remains supported with no runtime dependencies or cloud endpoint.
 
 ## 1.0.0
 
 ### Added
 
-- `migrations-v10.js` for v1.0 schema defaults and release validation.
-- `async-data-adapter.js` with a Promise-based provider contract for future remote storage.
-- `attachment-adapter.js` with metadata-only attachment-reference validation.
-- `features-v10-governance.js` with record classifications, policies, local role context, and workflow action gates.
-- `features-v10-signatures.js` with explicit typed-signature consent and verification metadata.
-- `features-v10-release.js` with the consolidated active/archive workspace, provider health checks, and release audit export.
-- `archive-v10.js` with governance and signature-consent detail on archive pages.
-- `features-v10.css`, v1.0 browser smoke tests, security notes, architecture notes, and a release checklist.
-
-### Changed
-
-- Bumped configuration schema and app-shell version to `1.0.0`.
-- Updated the service-worker cache to `methodz-meeting-manager-v1.0.0`.
-- Older typed signatures now migrate without silently claiming consent.
-- CI wiring checks now require v1.0 modules and assets.
+- Release schema migration and validation.
+- Promise-based remote-provider boundary.
+- Metadata-only attachment adapter.
+- Record classifications and local role context.
+- Explicit typed-signature consent and verification metadata.
+- Consolidated active and archived record workspace.
 
 ### Notes
 
 - Direct-file mode remains supported.
-- No runtime dependency or cloud endpoint was added.
 - Local role controls are workflow safeguards, not authentication.
 - The default attachment provider stores references only, never binary files.
 
@@ -105,205 +129,10 @@
 
 ### Added
 
-- `migrations.js` with an ordered, idempotent schema migration registry.
-- Active-record, archived-record, revision-snapshot, and draft migration.
-- Record validation and migration-run metadata under `methodzMigrationState`.
-- `features-v09-archive.js` with archive search, status and organization filters, selection, and bulk JSON export.
-- `features-v09-revisions.js` with revision-to-revision and revision-to-current comparison.
-- Added, removed, and changed field-path reporting with comparison JSON export.
-- `features-v09-workspace-merge.js` with non-destructive workspace package merge.
-- Prefer-newest, keep-local, and keep-both merge strategies.
-- Automatic pre-merge recovery and merge reporting under `methodzWorkspaceMergeLog`.
-- `manifest.webmanifest`, `service-worker.js`, `features-v09-pwa.js`, and an SVG app icon.
-- Optional install prompt, hosted offline app-shell cache, and manual cache refresh.
-- Playwright browser smoke tests for save, migration, archive, merge helpers, manifest, and service-worker delivery.
-- `features-v09.css` and v0.9 release, architecture, and test documentation.
-
-### Changed
-
-- Bumped the configuration schema and app-shell version to `0.9.0`.
-- Added migration-state and workspace-merge-log storage keys.
-- Loaded the migration registry before the adapter and core app on both HTML entry points.
-- Updated GitHub Actions to run static validation and real browser smoke tests.
-- Updated the main workspace to load v0.9 archive, revision, merge, and PWA modules.
-- Updated README documentation and the roadmap toward v1.0 release hardening.
-
-### Notes
-
-- Direct-file mode remains fully supported.
-- Service-worker registration is attempted only when served over HTTPS or localhost.
-- The service worker caches static files only and does not store meeting records.
-- Workspace merge is separate from complete workspace replacement restore.
-- Revision comparison is read-only.
-- Archive bulk export does not modify archive contents.
-- Playwright is installed only in CI and is not a runtime dependency.
-
-## 0.8.0
-
-### Added
-
-- `features-v08-history.js` for saved revision snapshots, revision preview, revision restore, and the non-destructive Archive Vault.
-- `features-v08-workspace.js` for complete workspace backup, checksum validation, restore preview, and pre-restore recovery.
-- `adapter-contract-tests.js` for isolated adapter CRUD, export-envelope, and health-check tests.
-- `features-v08-accessibility.js` for skip navigation, live status announcements, dynamic field labels, keyboard shortcuts, visible focus, and reduced-motion support.
-- `features-v08.css` for revision, archive, backup, test, keyboard-help, focus, mobile, reduced-motion, and print styling.
-- Saved-record **Revision History** action.
-- Non-destructive saved-record **Archive** action.
-- Archive Vault restore, download, and permanent-delete controls.
-- Complete Methodz workspace package export and restore.
-- Automatic local pre-restore recovery package.
-- Adapter capability metadata and adapter contract validation.
-- v0.8 release notes, architecture notes, and manual test checklist.
-
-### Changed
-
-- Bumped configuration schema and adapter contract to `0.8.0`.
-- Added a configurable 50-revision retention limit.
-- Added revision, archive, pre-restore, and accessibility storage keys.
-- Replaced the default saved-record destructive action with non-destructive archiving.
-- Updated `meeting.html` to load the v0.8 stylesheet and feature modules.
-- Updated README and architecture documentation for history, recovery, testing, and accessibility workflows.
-
-### Notes
-
-- Workspace data remains browser-local unless the user exports it.
-- Revision and workspace hashes use FNV-1a for identity/integrity checks, not cryptographic signing.
-- Adapter contract tests use temporary storage and do not mutate active records.
-- Permanent deletion remains available only inside the Archive Vault and requires confirmation.
-- The app remains static, offline-first, dependency-free, and deployable without a build step.
-
-## 0.7.0
-
-### Added
-
-- `data-adapter.js` with a stable meeting-record adapter contract.
-- `archive.html` and `archive.js` for a dedicated saved-record detail and print page.
-- `features-v07-organizations.js` for a reusable Organization / Representative Directory.
-- `features-v07-navigation.js` for archive navigation, edit handoff, and adapter integration.
-- `features-v07.css` for archive, adapter, organization-directory, mobile, and print styling.
-- Saved-record **Archive Page** action.
-- Current unsaved meeting archive preview.
-- Edit handoff from the archive page back to the main meeting workspace.
-- Local adapter health checks and adapter snapshot export.
-- Organization directory JSON export/import.
-- Meeting-time `organizationDetails` snapshots.
-- Stronger print output for attendance, signatures, tasks, attachments, decisions, and record audit metadata.
-
-### Changed
-
-- Bumped configuration schema to `0.7.0`.
-- Added the `methodzOrganizationDirectory` storage key.
-- Added configurable organization types.
-- Routed the main record read/write functions through the active data adapter.
-- Updated `meeting.html` to load the v0.7 adapter, styles, and feature modules.
-- Updated README and architecture/testing documentation.
-
-### Notes
-
-- The default adapter still uses browser `localStorage`.
-- No meeting data is transmitted to a cloud service.
-- The archive page is the preferred complete-record print surface.
-- The app remains static, offline-first, dependency-free, and deployable without a build step.
-
-## 0.6.0
-
-### Added
-
-- Meeting Numbering Settings.
-- Organization Presets and browser-local custom presets.
-- Duplicate Record Review and report export.
-- Local Sync Readiness panel.
-- Local sync queue metadata.
-- Sync package JSON export.
-
-### Changed
-
-- Bumped configuration schema to `0.6.0`.
-- Added numbering, organization-preset, sync-queue, and last-export storage keys.
-
-### Notes
-
-- Sync readiness is export-only.
-- Duplicate Review is advisory and does not merge or delete records automatically.
-
-## 0.5.0
-
-### Added
-
-- Attachment References and cross-meeting Attachment Index.
-- Attendee Directory with JSON and CSV export/import.
-- Signature Controls and Signature Audit.
-- Attachment and signature sections in TXT and HTML exports.
-
-### Changed
-
-- Bumped configuration schema to `0.5.0`.
-- Added the attendee-directory storage key and configurable attachment types.
-
-### Notes
-
-- Attachment References store pointers and notes, not binary files.
-- Attendee Directory presets do not store signatures.
-
-## 0.4.0
-
-### Added
-
-- Default and custom meeting templates.
-- Custom agenda items.
-- Safer record import preview.
-- Saved-record filters.
-- Open Task Dashboard and CSV export.
-- Readable saved-record details panel.
-
-### Changed
-
-- Bumped configuration schema to `0.4.0`.
-- Continued modular enhancement without adding a build system.
-
-## 0.3.0
-
-### Added
-
-- Structured Decision Log.
-- Record Readiness Review.
-- Task filters.
-- Meeting Minutes Preview.
-- HTML meeting-minutes export.
-- Structured decisions and readiness checks in TXT output.
-
-### Changed
-
-- Bumped configuration schema to `0.3.0`.
-- Kept the app static, offline-first, and dependency-free.
-
-## 0.2.0
-
-### Added
-
-- `config.js` for editable business defaults.
-- Auto-rendered brand, organization, agenda, and status options.
-- Saved-record search and edit.
-- Draft auto-save and restore.
-- JSON import/export.
-- TXT and JSON record download.
-- Storage usage summary.
-- Legacy storage-key migration.
-- Architecture documentation.
-
-### Changed
-
-- Moved business defaults out of hardcoded HTML.
-- Improved mobile controls and saved-record cards.
-
-## 0.1.0
-
-### Added
-
-- Initial static meeting form.
-- Attendance sign-on.
-- Agenda checklist.
-- Notes, decisions, tasks, and summary fields.
-- Browser-local record save, view, and delete.
-- Print / save PDF.
-- TXT record download.
+- Ordered and idempotent schema migration registry.
+- Active-record, archived-record, revision, and draft migration.
+- Archive search, filters, selection, and bulk export.
+- Revision comparison.
+- Non-destructive workspace merge with recovery packages.
+- Optional PWA shell and hosted offline cache.
+- Playwright browser smoke tests.
