@@ -78,6 +78,7 @@ jobs:
           test -f tests/v14-smoke.spec.js
           test -f tests/v14-stability.spec.js
           test -f tests/v15-smoke.spec.js
+          test -f tests/v15-ledger.spec.js
 
       - name: Verify v1.5 assets are loaded
         shell: bash
