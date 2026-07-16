@@ -2,12 +2,13 @@ const { test, expect } = require("@playwright/test");
 
 const baseUrl = "http://127.0.0.1:4173";
 
-test("v1.5 cryptographic core signs, verifies, and detects package or metadata tampering", async ({ page }) => {
+test("v1.6 cryptographic core signs, verifies, and detects package or metadata tampering", async ({ page }) => {
   await page.goto(`${baseUrl}/meeting.html`);
   await expect(page.locator("#cryptoSigningPanelV15")).toBeVisible();
+  await expect(page.locator("#cryptoSigningPanelV15 .release-badge-v15")).toHaveText("v1.6");
 
   const result = await page.evaluate(async () => {
-    const core = window.MethodzCryptoPackageV15;
+    const core = window.MethodzCryptoPackageV16;
     const pair = await core.generateKeyPair();
     const privateJwk = await core.exportPrivateJwk(pair.privateKey);
     const normalizedPublic = core.normalizePublicJwk(privateJwk);
@@ -16,7 +17,7 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
     try {
       await core.signPackage({
         packageType: "methodz-private-signing-key-backup",
-        privateKeyJwk: privateJwk
+        privateKeyJwk
       }, privateJwk, { signerLabel: "CI Signer", keyLabel: "CI Key" });
     } catch (error) {
       privatePackageBlocked = /private key material/i.test(error.message);
@@ -40,6 +41,8 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
     const tamperedMetadataResult = await core.verifyPackage(metadataTampered);
 
     return {
+      schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
+      releaseVersion: core.releaseVersion,
       supported: core.isSupported(),
       verified,
       tamperedPackageResult,
@@ -51,6 +54,8 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
     };
   });
 
+  expect(result.schema).toBe("1.6.0");
+  expect(result.releaseVersion).toBe("1.6.0");
   expect(result.supported).toBe(true);
   expect(result.verified.valid).toBe(true);
   expect(result.verified.signatureValid).toBe(true);
@@ -71,16 +76,16 @@ test("public-key registry sanitizes private JWK imports", async ({ page }) => {
   await page.goto(`${baseUrl}/meeting.html`);
 
   const result = await page.evaluate(async () => {
-    const core = window.MethodzCryptoPackageV15;
+    const core = window.MethodzCryptoPackageV16;
     const pair = await core.generateKeyPair();
     const privateJwk = await core.exportPrivateJwk(pair.privateKey);
-    const entry = await window.MethodzCryptographicSigningV15.registerPublicKey(privateJwk, {
+    const entry = await window.MethodzCryptographicSigningV16.registerPublicKey(privateJwk, {
       signerLabel: "Registry Test",
       keyLabel: "Sanitized Registry Key",
       source: "test"
     });
     const stored = JSON.parse(localStorage.getItem("methodzSigningPublicKeys") || "[]");
-    const exported = window.MethodzKeySafetyV15.readSafeRegistry();
+    const exported = window.MethodzKeySafetyV16.readSafeRegistry();
     return {
       entryContainsPrivate: Boolean(entry.publicKeyJwk.d),
       storedContainsPrivate: stored.some((item) => Boolean(item.publicKeyJwk?.d)),
