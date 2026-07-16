@@ -7,6 +7,7 @@
   const SIGN_ALGORITHM = { name: "ECDSA", hash: "SHA-256" };
   const CANONICALIZATION = "methodz-canonical-json-v1";
   const NOTICE = "This signature proves possession of the matching private key at signing time. It does not prove the human identity behind the key unless that key is independently verified.";
+  const PRIVATE_CONTAINER_KEYS = new Set(["privatekeyjwk", "privatejwk", "privatekey"]);
   const encoder = new TextEncoder();
 
   function assertCrypto() {
@@ -36,6 +37,21 @@
       return `{${Object.keys(value).sort().filter((key) => value[key] !== undefined).map((key) => `${JSON.stringify(key)}:${canonicalize(value[key])}`).join(",")}}`;
     }
     return JSON.stringify(value);
+  }
+
+  function containsPrivateKeyMaterial(value, seen = new WeakSet()) {
+    if (!value || typeof value !== "object") return false;
+    if (seen.has(value)) return false;
+    seen.add(value);
+
+    if (!Array.isArray(value) && value.kty === "EC" && value.crv === "P-256" && typeof value.d === "string" && value.d) {
+      return true;
+    }
+
+    return Object.entries(value).some(([key, child]) => {
+      if (PRIVATE_CONTAINER_KEYS.has(String(key).toLowerCase()) && child && typeof child === "object") return true;
+      return containsPrivateKeyMaterial(child, seen);
+    });
   }
 
   function toHex(buffer) {
@@ -159,6 +175,13 @@
   }
 
   async function signPackage(packageValue, privateKeyOrJwk, metadata = {}) {
+    if (containsPrivateKeyMaterial(packageValue)) {
+      throw new Error("The package contains private key material and cannot be signed or exported as a signed package.");
+    }
+    if (metadata.signedAt && Number.isNaN(new Date(metadata.signedAt).getTime())) {
+      throw new Error("The requested signature timestamp is invalid.");
+    }
+
     const unsigned = unsignedPackage(packageValue);
     const isCryptoKey = Boolean(global.CryptoKey && privateKeyOrJwk instanceof global.CryptoKey);
     const privateJwk = isCryptoKey ? await exportPrivateJwk(privateKeyOrJwk) : cloneJson(privateKeyOrJwk);
@@ -227,6 +250,7 @@
       if (!keyIdMatches) errors.push("The embedded public key does not match the signature key ID.");
 
       const unsigned = unsignedPackage(packageValue);
+      if (containsPrivateKeyMaterial(unsigned)) errors.push("The signed package contains prohibited private key material.");
       const canonicalPackage = canonicalize(unsigned);
       digest = await sha256Text(canonicalPackage);
       digestMatches = digest === envelope.payloadDigest?.digest;
@@ -288,6 +312,8 @@
     isSupported: () => Boolean(global.crypto?.subtle),
     canonicalize,
     unsignedPackage,
+    containsPrivateKeyMaterial,
+    normalizePublicJwk: normalizedPublicJwk,
     metadataFromEnvelope,
     canonicalSigningPayload,
     validateEnvelopeDeclarations,
