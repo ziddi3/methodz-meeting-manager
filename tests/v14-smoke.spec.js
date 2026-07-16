@@ -27,7 +27,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.4 recipient policy panel, schema migration, and API load", async ({ page }) => {
+test("v1.4 recipient policy panel and migration load inside v1.5", async ({ page }) => {
   await expect(page.locator("#recipientPolicyPanelV14")).toBeVisible();
   const state = await page.evaluate(() => ({
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
@@ -38,7 +38,7 @@ test("v1.4 recipient policy panel, schema migration, and API load", async ({ pag
     stabilityPatched: window.__methodzV14PreviewStabilityHardened
   }));
   expect(state).toEqual({
-    schema: "1.4.0",
+    schema: "1.5.0",
     version: "1.4.0",
     migration: true,
     previewPatched: true,
