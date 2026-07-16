@@ -43,21 +43,23 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.5 policy operations panel, migration, and API load", async ({ page }) => {
+test("v1.5 policy operations panel, migration, API, and download routing load", async ({ page }) => {
   await expect(page.locator("#policyOperationsPanelV15")).toBeVisible();
   const state = await page.evaluate(() => ({
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
     version: window.MethodzPolicyOperationsV15.version,
     migration: window.MethodzMigrations.registry.some((entry) => entry.version === "1.5.0"),
     previewPatched: window.__methodzV15PreviewGovernancePatched,
-    downloadPatched: window.__methodzV15ApprovedDownloadPatched
+    downloadPatched: window.__methodzV15ApprovedDownloadPatched,
+    downloadRoutingPatched: window.__methodzV15DownloadRoutingPatched
   }));
   expect(state).toEqual({
     schema: "1.5.0",
     version: "1.5.0",
     migration: true,
     previewPatched: true,
-    downloadPatched: true
+    downloadPatched: true,
+    downloadRoutingPatched: true
   });
 });
 
@@ -118,7 +120,7 @@ test("recipient governance version is bound into the redacted preview fingerprin
     const payload = await window.previewExternalExportV11();
     return {
       version: payload.record.externalCopy.recipientGovernanceVersion,
-      riskTier: payload.record.externalCopy.recipientRiskTier,
+      riskTier: payload.record.externalRecipientControl?.recipientRiskTier || payload.record.externalCopy.recipientRiskTier,
       digest: payload.integrity.digest
     };
   });
@@ -142,14 +144,15 @@ test("approved external download records and verifies a chained release receipt"
   await page.locator("#summary").fill("Approved summary for receipt verification.");
   await page.locator("#approvalRequestedByV12").fill("Records Coordinator");
   await page.locator("#approvalPurposeV12").fill("Provide the approved summary to the named operations recipient.");
-  await page.getByRole("button", { name: "Request Approval" }).click();
+  const approvalPanel = page.locator("#externalApprovalPanelV12");
+  await approvalPanel.getByRole("button", { name: "Request Approval", exact: true }).click();
   await page.locator("#approvalReviewedByV12").fill("Compliance Reviewer");
   await page.locator("#approvalReviewNoteV12").fill("Approved for the recipient-specific operational purpose.");
-  await page.getByRole("button", { name: "Approve Selected" }).click();
+  await approvalPanel.getByRole("button", { name: "Approve Selected", exact: true }).click();
 
   const result = await page.evaluate(async () => {
     window.downloadBlob = () => {};
-    await window.downloadApprovedExternalV12("json");
+    await window.downloadExternalJsonV11();
     return {
       receipts: window.MethodzPolicyOperationsV15.readReceipts(),
       verification: window.MethodzPolicyOperationsV15.verifyReceiptLedger()
