@@ -43,7 +43,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.5 policy operations panel, migration, and API load", async ({ page }) => {
+test("v1.5 policy operations panel, migration, and API load inside v1.6", async ({ page }) => {
   await expect(page.locator("#policyOperationsPanelV15")).toBeVisible();
   const state = await page.evaluate(() => ({
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
@@ -53,7 +53,7 @@ test("v1.5 policy operations panel, migration, and API load", async ({ page }) =
     downloadPatched: window.__methodzV15ApprovedDownloadPatched
   }));
   expect(state).toEqual({
-    schema: "1.5.0",
+    schema: "1.6.0",
     version: "1.5.0",
     migration: true,
     previewPatched: true,
