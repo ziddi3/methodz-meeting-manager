@@ -36,6 +36,7 @@ jobs:
           set -euo pipefail
           test -f meeting.html
           test -f archive.html
+          test -f verify.html
           test -f style.css
           test -f config.js
           test -f config-v11.js
@@ -43,6 +44,7 @@ jobs:
           test -f config-v13.js
           test -f config-v14.js
           test -f config-v15.js
+          test -f config-v16.js
           test -f migrations.js
           test -f migrations-v10.js
           test -f migrations-v11.js
@@ -50,10 +52,13 @@ jobs:
           test -f migrations-v13.js
           test -f migrations-v14.js
           test -f migrations-v15.js
+          test -f migrations-v16.js
           test -f data-adapter.js
           test -f async-data-adapter.js
           test -f attachment-adapter.js
+          test -f crypto-package-core.js
           test -f app.js
+          test -f verify.js
           test -f features-v11-retention.js
           test -f features-v11-redaction.js
           test -f features-v11-redaction-policy.js
@@ -67,7 +72,13 @@ jobs:
           test -f features-v14-policy-hardening.js
           test -f features-v14.css
           test -f features-v15-policy-operations.js
+          test -f features-v15-download-routing.js
+          test -f features-v15-crypto.js
+          test -f features-v15-key-safety.js
           test -f features-v15.css
+          test -f features-v16-crypto-release.js
+          test -f features-v16-record-metadata.js
+          test -f features-v16.css
           test -f archive-v11.js
           test -f archive-v13.js
           test -f manifest.webmanifest
@@ -77,29 +88,102 @@ jobs:
           test -f tests/v14-smoke.spec.js
           test -f tests/v14-stability.spec.js
           test -f tests/v15-smoke.spec.js
+          test -f tests/v16-crypto.spec.js
 
-      - name: Verify v1.5 assets are loaded
+      - name: Verify v1.6 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'features-v15.css' meeting.html
-          grep -q 'config-v15.js' meeting.html
-          grep -q 'migrations-v15.js' meeting.html
+          grep -q 'features-v16.css' meeting.html
+          grep -q 'config-v16.js' meeting.html
+          grep -q 'migrations-v16.js' meeting.html
+          grep -q 'crypto-package-core.js' meeting.html
           grep -q 'features-v15-policy-operations.js' meeting.html
-          grep -q 'config-v15.js' archive.html
-          grep -q 'migrations-v15.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.5.0' service-worker.js
-          grep -q 'schemaVersion = "1.5.0"' config-v15.js
-          grep -q 'features-v15.css' service-worker.js
-          grep -q 'config-v15.js' service-worker.js
-          grep -q 'migrations-v15.js' service-worker.js
-          grep -q 'features-v15-policy-operations.js' service-worker.js
+          grep -q 'features-v15-crypto.js' meeting.html
+          grep -q 'features-v15-key-safety.js' meeting.html
+          grep -q 'features-v16-crypto-release.js' meeting.html
+          grep -q 'features-v16-record-metadata.js' meeting.html
+          grep -q 'config-v16.js' archive.html
+          grep -q 'migrations-v16.js' archive.html
+          grep -q 'crypto-package-core.js' verify.html
+          grep -q 'verify.js' verify.html
+          grep -q 'methodz-meeting-manager-v1.6.0' service-worker.js
+          grep -q 'schemaVersion = "1.6.0"' config-v16.js
+          grep -q 'privateKeyStorage: "memory-only"' config-v16.js
+          grep -q 'features-v16.css' service-worker.js
+          grep -q 'config-v16.js' service-worker.js
+          grep -q 'migrations-v16.js' service-worker.js
+          grep -q 'crypto-package-core.js' service-worker.js
+          grep -q 'features-v15-crypto.js' service-worker.js
+          grep -q 'features-v15-key-safety.js' service-worker.js
+          grep -q 'features-v16-crypto-release.js' service-worker.js
+          grep -q 'features-v16-record-metadata.js' service-worker.js
+          grep -q 'verify.html' service-worker.js
+          grep -q 'verify.js' service-worker.js
 
       - name: Validate JSON manifest
         shell: bash
         run: |
           set -euo pipefail
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
+
+      - name: Run cryptographic core self-test
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          global.window = globalThis;
+          global.crypto = require('crypto').webcrypto;
+          global.CryptoKey = global.crypto.CryptoKey;
+          global.btoa = (value) => Buffer.from(value, 'binary').toString('base64');
+          global.atob = (value) => Buffer.from(value, 'base64').toString('binary');
+          require('./crypto-package-core.js');
+
+          (async () => {
+            const core = global.MethodzCryptoPackageV15;
+            const pair = await core.generateKeyPair();
+            const privateJwk = await core.exportPrivateJwk(pair.privateKey);
+            const publicJwk = core.normalizePublicJwk(privateJwk);
+            if (publicJwk.d) throw new Error('Public-key normalization retained private key material.');
+
+            let privatePackageBlocked = false;
+            try {
+              await core.signPackage(
+                { packageType: 'methodz-private-signing-key-backup', privateKeyJwk: privateJwk },
+                privateJwk,
+                { signerLabel: 'CI', keyLabel: 'CI Key' }
+              );
+            } catch (error) {
+              privatePackageBlocked = /private key material/i.test(error.message);
+            }
+            if (!privatePackageBlocked) throw new Error('A package containing private key material was not blocked.');
+
+            const signed = await core.signPackage(
+              { packageType: 'ci-test', record: { title: 'Stable' } },
+              privateJwk,
+              { signerLabel: 'CI', keyLabel: 'CI Key' }
+            );
+            const verified = await core.verifyPackage(signed);
+            if (!verified.valid) throw new Error(JSON.stringify(verified));
+            if (signed.signatureEnvelope.publicKeyJwk.d) throw new Error('Private key material leaked into signature envelope.');
+
+            const packageTampered = JSON.parse(JSON.stringify(signed));
+            packageTampered.record.title = 'Tampered';
+            const packageResult = await core.verifyPackage(packageTampered);
+            if (packageResult.valid) throw new Error('Tampered package unexpectedly verified.');
+
+            const metadataTampered = JSON.parse(JSON.stringify(signed));
+            metadataTampered.signatureEnvelope.signerLabel = 'Altered Signer';
+            const metadataResult = await core.verifyPackage(metadataTampered);
+            if (metadataResult.valid || metadataResult.signatureValid) {
+              throw new Error('Tampered signature metadata unexpectedly verified.');
+            }
+            console.log('Cryptographic core self-test passed.');
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
 
   browser-smoke-tests:
     runs-on: ubuntu-latest
