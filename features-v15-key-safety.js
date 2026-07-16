@@ -78,6 +78,8 @@
     if (!api || global.__methodzV15KeySafetyPatched) return;
 
     const originalRegister = api.registerPublicKey;
+    const originalImportPrivate = global.importPrivateSigningKeyV15;
+
     if (typeof originalRegister === "function") {
       api.registerPublicKey = async function registerSafePublicKey(publicKeyJwk, metadata = {}) {
         const safePublicKeyJwk = core().normalizePublicJwk(publicKeyJwk);
@@ -91,11 +93,53 @@
     api.readPublicKeys = readSafeRegistry;
     api.sanitizePublicKeyRegistry = sanitizeStoredRegistry;
 
+    if (typeof originalImportPrivate === "function") {
+      global.importPrivateSigningKeyV15 = (event) => importPrivateKeySafely(event, originalImportPrivate);
+    }
     global.importPublicSigningKeyV15 = importPublicKeySafely;
     global.downloadPublicSigningKeyV15 = downloadPublicKeySafely;
     global.exportSigningKeyRegistryV15 = exportSafeRegistry;
 
     global.__methodzV15KeySafetyPatched = true;
+  }
+
+  async function importPrivateKeySafely(event, originalImportPrivate) {
+    const input = event?.target;
+    try {
+      const file = input?.files?.[0];
+      if (!file) throw new Error("Choose a private JWK JSON file first.");
+      const parsed = JSON.parse(await file.text());
+      const privateKeyJwk = parsed.privateKeyJwk || parsed.privateJwk || parsed.key || parsed;
+      await core().importPrivateJwk(privateKeyJwk);
+      const publicKeyJwk = core().normalizePublicJwk(
+        parsed.publicKeyJwk || parsed.publicJwk || core().publicJwkFromPrivate(privateKeyJwk)
+      );
+
+      const sanitizedPayload = {
+        packageType: parsed.packageType || "methodz-private-signing-key-backup",
+        packageVersion: Number(parsed.packageVersion || 1),
+        keyId: parsed.keyId || await core().deriveKeyId(publicKeyJwk),
+        keyLabel: String(parsed.keyLabel || "").trim(),
+        signerLabel: String(parsed.signerLabel || "").trim(),
+        privateKeyJwk,
+        publicKeyJwk,
+        exportedAt: parsed.exportedAt || "",
+        warning: parsed.warning || "Sensitive private key material. Protect this file and do not send it with signed packages."
+      };
+      const syntheticInput = {
+        files: [{ text: async () => JSON.stringify(sanitizedPayload) }],
+        value: ""
+      };
+      const result = await originalImportPrivate({ target: syntheticInput });
+      sanitizeStoredRegistry();
+      refreshRegistryView(result?.id || sanitizedPayload.keyId);
+      return result;
+    } catch (error) {
+      handleError(error);
+      return null;
+    } finally {
+      if (input) input.value = "";
+    }
   }
 
   async function importPublicKeySafely(event) {
