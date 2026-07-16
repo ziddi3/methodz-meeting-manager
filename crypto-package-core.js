@@ -120,8 +120,8 @@
 
   function metadataFromEnvelope(envelope) {
     return {
-      version: Number(envelope?.version || 1),
-      type: String(envelope?.type || TYPE),
+      version: Number(envelope?.version),
+      type: String(envelope?.type || ""),
       signedAt: String(envelope?.signedAt || ""),
       signerLabel: String(envelope?.signerLabel || ""),
       keyLabel: String(envelope?.keyLabel || ""),
@@ -129,7 +129,7 @@
       algorithm: cloneJson(envelope?.algorithm || {}),
       payloadDigest: cloneJson(envelope?.payloadDigest || {}),
       publicKeyJwk: normalizedPublicJwk(envelope?.publicKeyJwk),
-      notice: String(envelope?.notice || NOTICE)
+      notice: String(envelope?.notice || "")
     };
   }
 
@@ -138,6 +138,24 @@
       package: unsigned,
       signatureMetadata: metadata
     });
+  }
+
+  function validateEnvelopeDeclarations(envelope) {
+    const errors = [];
+    if (envelope?.version !== 1) errors.push("Unsupported signature-envelope version.");
+    if (envelope?.type !== TYPE) errors.push("Unsupported signature-envelope type.");
+    if (envelope?.algorithm?.name !== "ECDSA") errors.push("Signature algorithm declaration must be ECDSA.");
+    if (envelope?.algorithm?.namedCurve !== "P-256") errors.push("Signature curve declaration must be P-256.");
+    if (envelope?.algorithm?.hash !== "SHA-256") errors.push("Signature hash declaration must be SHA-256.");
+    if (envelope?.algorithm?.signatureEncoding !== "raw-base64") errors.push("Signature byte-format declaration must be raw-base64.");
+    if (envelope?.payloadDigest?.algorithm !== "SHA-256") errors.push("Payload digest declaration must be SHA-256.");
+    if (envelope?.payloadDigest?.canonicalization !== CANONICALIZATION) errors.push("Unsupported package canonicalization declaration.");
+    if (envelope?.signature?.encoding !== "base64") errors.push("Signature transport encoding must be base64.");
+    if (!envelope?.signature?.value) errors.push("Signature value is missing.");
+    if (!envelope?.keyId) errors.push("Signature key ID is missing.");
+    if (!envelope?.signedAt || Number.isNaN(new Date(envelope.signedAt).getTime())) errors.push("Signature timestamp is missing or invalid.");
+    if (envelope?.notice !== NOTICE) errors.push("Signature trust notice is missing or altered.");
+    return errors;
   }
 
   async function signPackage(packageValue, privateKeyOrJwk, metadata = {}) {
@@ -194,7 +212,7 @@
       return verificationResult(false, ["The package does not contain a supported Methodz signature envelope."]);
     }
 
-    const errors = [];
+    const errors = validateEnvelopeDeclarations(envelope);
     const publicKeyJwk = options.publicKeyJwk || envelope.publicKeyJwk;
     let derivedKeyId = "";
     let digest = "";
@@ -240,7 +258,7 @@
       payloadDigest: digest,
       expectedPayloadDigest: envelope.payloadDigest?.digest || "",
       packageType: packageValue?.packageType || "",
-      errors,
+      errors: [...new Set(errors)],
       notice: "Verification confirms package and signature-metadata integrity against the included public key. It does not independently authenticate the signer identity, recipient, approval, or delivery."
     };
   }
@@ -272,6 +290,7 @@
     unsignedPackage,
     metadataFromEnvelope,
     canonicalSigningPayload,
+    validateEnvelopeDeclarations,
     sha256Text,
     deriveKeyId,
     generateKeyPair,
