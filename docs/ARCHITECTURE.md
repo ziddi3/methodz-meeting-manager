@@ -1,24 +1,24 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, and future hosted providers.
+Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, policy operations, release receipts, and future hosted providers.
 
-## Entry Points
+## Entry points
 
 ```text
-meeting.html   Creation, editing, dashboards, settings, history, recovery, governance, retention, redaction, approvals, recipient policies, and exports
-archive.html   Dedicated record detail, governance, consent, retention, disposition audit, and print surface
+meeting.html   Creation, editing, dashboards, governance, approvals, policy operations, receipts, and exports
+archive.html   Dedicated record detail, audit metadata, and print surface
 ```
 
 No server, package manager, or build command is required. The core app must continue to work when `meeting.html` is opened directly.
 
-## Runtime Model
+## Runtime model
 
 ```text
 meeting.html
   ├─ config.js
-  ├─ config-v11.js through config-v14.js
+  ├─ config-v11.js through config-v15.js
   ├─ migrations.js
-  ├─ migrations-v10.js through migrations-v14.js
+  ├─ migrations-v10.js through migrations-v15.js
   ├─ data-adapter.js
   ├─ async-data-adapter.js
   ├─ attachment-adapter.js
@@ -33,13 +33,15 @@ meeting.html
   ├─ features-v12-compatibility.js
   ├─ features-v13-disposition.js
   ├─ features-v14-recipient-policy.js
-  └─ features-v14-policy-hardening.js
+  ├─ features-v14-policy-hardening.js
+  ├─ features-v15-policy-operations.js
+  └─ features-v15-download-routing.js
 
 archive.html
   ├─ config.js
-  ├─ config-v11.js through config-v14.js
+  ├─ config-v11.js through config-v15.js
   ├─ migrations.js
-  ├─ migrations-v10.js through migrations-v14.js
+  ├─ migrations-v10.js through migrations-v15.js
   ├─ data-adapter.js
   ├─ attachment-adapter.js
   ├─ archive.js
@@ -50,41 +52,25 @@ archive.html
 
 Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. Script order is part of the application contract because later layers intentionally wrap the final functions installed by earlier layers.
 
-Configuration extensions load before `migrations.js`. This allows the migration registry to capture schema `1.4.0` as the active schema.
+Configuration extensions load before the migration registry runs. This allows the registry to capture schema `1.5.0` as the active schema on both entry points.
 
 ## Configuration
 
-`config.js` owns stable editable defaults:
+`config.js` owns stable editable defaults including brand labels, logo paths, organizations, agenda groups, meeting options, numbering, base governance roles, consent text, and base storage keys.
 
-- brand labels and logo paths;
-- organizations and organization types;
-- agenda groups and templates;
-- meeting, attendance, task, and attachment options;
-- numbering defaults;
-- governance roles and policies;
-- signature-consent statement;
-- base storage keys.
-
-Versioned configuration extensions add release-specific settings:
+Versioned extensions add release-specific settings:
 
 ```text
-config-v11.js   retention presets, lifecycle statuses, redaction profiles
+config-v11.js   retention presets, lifecycle states, redaction profiles
 config-v12.js   external-export approval and destination policies
-config-v13.js   disposition approval roles and preservation-event limits
-config-v14.js   recipient-policy storage and field-group catalog
+config-v13.js   disposition roles and preservation-event limits
+config-v14.js   recipient-policy storage and field catalog
+config-v15.js   policy review operations and release receipt limits
 ```
 
 ## Migration
 
-`migrations.js` owns the ordered migration registry and workspace migration across:
-
-- active records;
-- archived records;
-- revision snapshots;
-- drafts;
-- the original `meetingRecords` key.
-
-Version extensions add fields without deleting unknown data:
+`migrations.js` owns the ordered migration registry and workspace migration across active records, archived records, revision snapshots, drafts, and the original `meetingRecords` key.
 
 ```text
 migrations-v10.js   governance, consent, provider, and release metadata
@@ -92,13 +78,14 @@ migrations-v11.js   retention, preservation hold, and redaction metadata
 migrations-v12.js   external release-control metadata
 migrations-v13.js   disposition-control and preservation-chain metadata
 migrations-v14.js   external recipient-control metadata
+migrations-v15.js   release receipt references and policy-operations metadata
 ```
 
-Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approval, hold, disposition, or recipient-policy audit events.
+Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approvals, reviews, releases, legal holds, disposition events, recipient policies, governance reviews, or receipt events.
 
-## Record Providers
+## Provider boundaries
 
-`data-adapter.js` owns the synchronous meeting-record interface:
+### Synchronous records
 
 ```text
 listRecords()
@@ -109,13 +96,11 @@ deleteRecord(recordId)
 healthCheck()
 ```
 
-`async-data-adapter.js` defines Promise-returning equivalents for future Firebase, Supabase, CRM, Drive, or Methodz API providers.
+### Asynchronous records
 
-The default providers remain browser-local and transmit nothing.
+`async-data-adapter.js` defines Promise-returning equivalents for future Firebase, Supabase, CRM, Drive, or Methodz API providers. The default provider wraps local storage and transmits nothing.
 
-## Attachment Provider
-
-`attachment-adapter.js` owns metadata-only attachment references:
+### Attachment references
 
 ```text
 listReferences(record)
@@ -126,342 +111,115 @@ validateReference(reference)
 healthCheck()
 ```
 
-The default provider stores references only. It rejects inline `data:` and base64 payloads and does not store binary files.
+The default attachment provider stores metadata references only and rejects inline binary payloads.
 
-## Stable Core
+## Stable core
 
-`app.js` owns:
+`app.js` owns startup rendering, base meeting collection, validation, save/edit flow, draft auto-save, saved-record search, basic import/export, printing, and direct downloads. Later modules add fields and policy gates without removing direct-file compatibility.
 
-- startup rendering;
-- basic meeting collection and validation;
-- save and edit flow;
-- draft auto-save;
-- saved-record search;
-- basic import and export;
-- print and download actions.
+## Feature layers
 
-Later modules add fields and policies without replacing direct-file compatibility.
+### v0.3 through v0.9
 
-## Feature Layers
-
-### v0.3 through v0.7
-
-- structured decisions and readiness review;
-- templates and custom agenda;
-- attachment references and attendee directory;
-- numbering, organization presets, duplicate review, and sync package export;
-- dedicated archive page and organization directory;
-- synchronous data adapter.
-
-### v0.8 through v0.9
-
-- revision history, preview, comparison, and restore;
-- non-destructive Archive Vault;
-- complete workspace backup, replacement restore, and merge recovery;
+- structured decisions, readiness review, templates, and custom agenda;
+- attachment references and reusable directories;
+- numbering, duplicate review, and export-only sync packages;
+- archive detail page and adapter boundary;
+- revision history and non-destructive Archive Vault;
+- workspace backup, restore, and merge recovery;
 - accessibility and keyboard navigation;
-- ordered migration registry;
-- archive search and bulk export;
-- optional installable app shell;
-- Playwright browser smoke testing.
+- migration registry, archive filters, installable shell, and browser tests.
 
-### v1.0
+### v1.0 through v1.2
 
-- record classification and role-aware governance;
-- explicit typed-signature consent;
-- signature verification metadata;
-- asynchronous record-provider contract;
-- attachment-reference provider contract;
-- consolidated active/archive workspace;
-- release validation.
-
-### v1.1
-
-- retention policy and review-date metadata;
-- preservation-hold placement, release, and history;
-- hold-protected archive disposition;
+- record classification and role-aware workflow controls;
+- explicit typed-signature consent and verification metadata;
+- async record and attachment-provider contracts;
+- retention and preservation holds;
 - Partner Safe, Public Summary, and Custom External Copy profiles;
-- redaction manifests and activity log;
-- SHA-256 package integrity with labeled compatibility fallback.
+- source-bound external approval fingerprints;
+- destination policies, approval expiry, revocation, and approved packages.
 
-### v1.2
+### v1.3 through v1.4
 
-- external-export approval requests;
-- separate requester and reviewer fields;
-- destination-policy validation;
-- source-bound redacted-content fingerprints;
-- approval expiry, rejection, revocation, and release logging;
-- approved JSON and HTML packages.
-
-### v1.3
-
-- archived-record disposition requests;
-- authorized reviewer-role gates;
-- requester/reviewer separation;
-- archived-record fingerprint binding;
-- approval consumption after permanent removal;
-- preservation-event chain verification and export.
-
-### v1.4
-
+- disposition request, independent review, and approval consumption;
+- preservation-event chain verification;
 - named recipient-specific export policies;
-- dynamic destination IDs in the form `recipient:<policy-id>`;
-- per-recipient allowed redaction profiles;
-- per-recipient maximum field groups;
-- policy status and review date;
-- sensitive discussion-note verification safeguard;
-- recipient-policy snapshots in manifests and approvals;
-- stable recipient-policy fingerprints.
+- recipient destination IDs, profile limits, field allow-lists, review dates, and policy snapshots;
+- stable recipient-policy fingerprinting and release metadata.
 
-## Current Record Shape
+### v1.5
 
-The schema is additive. Optional feature layers preserve older records and unknown fields.
+- recipient-policy stewardship and business-purpose records;
+- policy risk tiers and review cadence;
+- due-soon, overdue, current, undated, and inactive review queues;
+- governance-version binding in redacted-content fingerprints;
+- approved external release receipts;
+- locally chained receipt verification and export;
+- receipt references on active and archived source records;
+- routing of every external-download control through the approved receipt-producing path.
 
-```json
-{
-  "id": "meeting-1234567890",
-  "schemaVersion": "1.4.0",
-  "meetingNumber": "001",
-  "title": "Partnership Operations Meeting",
-  "status": "Completed",
-  "date": "2026-07-15",
-  "location": "Office",
-  "facilitator": "Name",
-  "organizations": ["Canadian Soft Water Corporation"],
-  "organizationDetails": [],
-  "attendees": [],
-  "agenda": [],
-  "notes": "",
-  "decisions": "",
-  "decisionsList": [],
-  "tasks": [],
-  "attachments": [],
-  "signatureAudit": {},
-  "directorySnapshot": [],
-  "summary": "",
-  "validation": [],
-  "governance": {},
-  "accessControl": {},
-  "retentionMetadata": {},
-  "redactionMetadata": {},
-  "externalReleaseControl": {},
-  "externalRecipientControl": {},
-  "dispositionControl": {},
-  "attachmentAdapterMetadata": {},
-  "schemaAudit": {},
-  "releaseMetadata": {},
-  "createdAt": "ISO timestamp",
-  "updatedAt": "ISO timestamp",
-  "savedAt": "ISO timestamp"
-}
-```
-
-## Revision and Archive Shapes
-
-Revision history is stored separately:
-
-```json
-{
-  "id": "revision-...",
-  "recordId": "meeting-...",
-  "revisionNumber": 1,
-  "capturedAt": "ISO timestamp",
-  "reason": "Record updated",
-  "contentHash": "fnv1a-...",
-  "snapshot": {}
-}
-```
-
-Archived records use:
-
-```json
-{
-  "archiveId": "archive-...",
-  "archivedAt": "ISO timestamp",
-  "originalRecordId": "meeting-...",
-  "record": {}
-}
-```
-
-Archive lifecycle is separate from the business-facing meeting `status`.
-
-## Workspace Recovery
-
-Complete workspace backup preserves raw localStorage values for all discovered Methodz keys.
-
-Replacement restore sequence:
+## External export pipeline
 
 ```text
-parse
-  -> validate package type
-  -> validate recognized entries
-  -> validate checksum
-  -> preview
-  -> confirm
-  -> create pre-restore recovery
-  -> replace Methodz storage keys
-  -> reload
+controlled source record
+  -> redaction profile
+  -> recipient field allow-list
+  -> policy governance version
+  -> content fingerprint
+  -> approval review
+  -> approved package
+  -> release receipt
 ```
 
-Workspace merge remains separate from replacement restore and creates its own recovery package.
+A later layer may only remove or bind metadata. It must never restore sensitive content removed by an earlier redaction layer.
 
-## Governance and Signature Consent
+## Policy governance storage
 
-`accessControl` records classification, policy, allowed roles, preparation, review, protected fields, and policy notes.
-
-Role controls are workflow safeguards, not authentication.
-
-Typed signatures require explicit consent. Name matching and verification metadata do not prove identity. External copies never include typed signatures, consent, or signature-verification data.
-
-## Retention, Preservation Hold, and Disposition
-
-The retention module appends `retentionMetadata` and chronological hold events.
+Recipient policy governance is separate from the v1.4 policy object and joins by `policyId`:
 
 ```text
-inactive -> active   hold placed event
-active -> inactive   hold released event
+methodzRecipientPolicyGovernance
 ```
 
-An active hold blocks permanent archive disposition even when an older disposition approval exists.
+This preserves v1.4 normalization while allowing the operational layer to evolve. A completed review updates the v1.4 `reviewDate`, so existing inactive and overdue enforcement remains authoritative.
 
-Disposition approval requires an authorized reviewer, requester/reviewer separation when configured, a matching archived-record fingerprint, and final confirmation. Successful permanent removal consumes the approval and appends a preservation-chain event.
-
-The local event chain is a tamper-evidence aid, not an immutable compliance ledger.
-
-## External-Copy Pipeline
-
-The complete v1.4 external-copy pipeline is:
+## Release receipt storage
 
 ```text
-resolve controlled source
-  -> enforce record export permission
-  -> apply v1.1 redaction profile
-  -> recursively strip unsafe keys
-  -> apply v1.4 recipient field allow-list when selected
-  -> append redaction and recipient-policy manifests
-  -> compute package integrity
-  -> compute v1.2 source-and-destination-bound approval fingerprint
-  -> request and review approval
-  -> verify approval still matches current content
-  -> download approved JSON or HTML
-  -> record release activity metadata
+methodzExternalReleaseReceipts
 ```
 
-The controlled source record is never modified.
+Receipts contain source, approval, destination, recipient policy, optional governance, profile, format, package integrity, release timestamp, and chain metadata. Canonical JSON and FNV-1a-32 provide direct-file-compatible local change detection.
 
-### Recipient Policy Boundary
+Receipt checksums are not digital signatures, identity authentication, proof of transmission, proof of delivery, or an immutable audit service.
 
-Recipient policies run after redaction and are subtractive only. They cannot restore fields removed by Partner Safe, Public Summary, or Custom External Copy.
+## Source record metadata
 
-Each active recipient policy becomes a runtime destination:
+The latest release receipt updates:
 
 ```text
-recipient:<policy-id>
+externalRecipientControl.lastReleaseReceiptId
+externalRecipientControl.lastReleaseReceiptAt
+externalRecipientControl.lastReleaseIntegrityAlgorithm
+externalRecipientControl.lastReleaseIntegrityDigest
 ```
 
-The unique destination ID is included in approval fingerprints. Policy snapshots are included in the manifest and approval record. Inactive or overdue policies cannot be used.
+Both active and archived records are supported.
 
-### Integrity
+## Data safety
 
-Hosted mode prefers SHA-256 through Web Crypto. Direct-file environments without Web Crypto use an explicitly labeled FNV-1a-32 compatibility checksum.
+- Workspace backup captures Methodz-prefixed storage keys, including v1.5 collections.
+- Unknown record fields survive migration.
+- Active preservation holds block permanent disposition.
+- Typed signatures and signature verification remain excluded from external copies.
+- Policy, governance, approval, and receipt records remain browser-local unless exported.
+- Service workers cache application assets only, never meeting records.
 
-Neither result is a digital signature, proof of identity, proof of approval, or proof of delivery.
+## Hosted-provider boundary
 
-## Storage Keys
+A future provider should replace local workflow assertions with authenticated identities, server-enforced permissions, organization-managed recipient policies, durable legal holds, append-only approval and release logs, trusted timestamps, and explicit key custody before cryptographic signing is introduced.
 
-```text
-methodzMeetingRecords
-methodzMeetingDraft
-methodzMeetingTemplates
-methodzMeetingDirectory
-methodzMeetingNumbering
-methodzOrganizationPresets
-methodzOrganizationDirectory
-methodzSyncQueue
-methodzSyncLastExport
-methodzMeetingRevisions
-methodzArchivedMeetingRecords
-methodzPreRestoreBackup
-methodzAccessibilityPreferences
-methodzMigrationState
-methodzWorkspaceMergeLog
-methodzMeetingRoleContext
-methodzMeetingReleaseState
-methodzRedactionExportLog
-methodzExternalExportApprovals
-methodzExternalExportApprovalLog
-methodzDispositionApprovals
-methodzDispositionAuditLog
-methodzPreservationEventChain
-methodzRecipientExportPolicies
-methodzRecipientPolicyAudit
-```
+## Validation
 
-The original prototype key `meetingRecords` is migrated when needed.
-
-## Print Strategy
-
-The archive page is the primary complete-record print surface.
-
-Print mode:
-
-- hides interactive controls;
-- keeps attendance, consent, decisions, tasks, attachments, governance, retention, and audit data visible;
-- displays active hold warnings;
-- avoids page breaks inside logical cards where possible;
-- hides operational dashboards and external-export controls.
-
-## Service Worker
-
-The optional service worker caches static application assets only. It does not intentionally cache meeting records, archive entries, revisions, signatures, attachment files, redacted packages, policies, approvals, or audit events.
-
-## Testing
-
-GitHub Actions runs:
-
-- `node --check` for every JavaScript file;
-- static file and script-wiring checks;
-- manifest JSON validation;
-- Playwright browser smoke tests.
-
-The v1.4 tests cover recipient destination generation, field filtering, approval binding, sensitive-note validation, overdue-policy blocking, and stable repeated-preview fingerprints. Earlier release suites remain active.
-
-## Future Provider Requirements
-
-A future hosted provider must independently enforce:
-
-- authentication and authorization;
-- organization tenancy;
-- secure transport and storage;
-- recipient policy administration;
-- server-side field allow-lists;
-- approval expiry, revocation, and consumption;
-- preservation holds and disposition;
-- retention policy;
-- append-only or immutable audit storage where required;
-- server-side redaction policy;
-- recipient verification and delivery logging.
-
-## Design Principles
-
-- Offline first.
-- Export before sync.
-- Configuration before hardcoding.
-- Simple files before frameworks.
-- Human-readable records.
-- Mobile-first and keyboard-usable interfaces.
-- Additive schema changes.
-- Meeting-specific signatures.
-- Attachment references before binary storage.
-- Historical snapshots for mutable directory data.
-- Non-destructive archive before permanent deletion.
-- Recovery snapshot before workspace replacement or merge.
-- Preservation hold before disposition.
-- Redaction before recipient allow-listing.
-- Recipient-specific approval before external release.
-- Accurate integrity labels without overstating trust.
-
-## Deployment
-
-Static deployment targets include GitHub Pages, Cloudflare Pages, Netlify, Vercel, Render static sites, ordinary web servers, localhost, and direct `file:` use.
-
-Keep both HTML entry points and all referenced JavaScript, CSS, and asset paths together.
+GitHub Actions checks JavaScript syntax, required files, HTML and service-worker wiring, manifest JSON, and Playwright browser workflows. Playwright is CI-only and is not a deployed dependency.
