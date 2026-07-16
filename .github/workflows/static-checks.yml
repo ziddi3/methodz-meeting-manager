@@ -135,9 +135,18 @@ jobs:
             const verified = await core.verifyPackage(signed);
             if (!verified.valid) throw new Error(JSON.stringify(verified));
             if (signed.signatureEnvelope.publicKeyJwk.d) throw new Error('Private key material leaked into signature envelope.');
-            signed.record.title = 'Tampered';
-            const tampered = await core.verifyPackage(signed);
-            if (tampered.valid) throw new Error('Tampered package unexpectedly verified.');
+
+            const packageTampered = JSON.parse(JSON.stringify(signed));
+            packageTampered.record.title = 'Tampered';
+            const packageResult = await core.verifyPackage(packageTampered);
+            if (packageResult.valid) throw new Error('Tampered package unexpectedly verified.');
+
+            const metadataTampered = JSON.parse(JSON.stringify(signed));
+            metadataTampered.signatureEnvelope.signerLabel = 'Altered Signer';
+            const metadataResult = await core.verifyPackage(metadataTampered);
+            if (metadataResult.valid || metadataResult.signatureValid) {
+              throw new Error('Tampered signature metadata unexpectedly verified.');
+            }
             console.log('Cryptographic core self-test passed.');
           })().catch((error) => {
             console.error(error);
