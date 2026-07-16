@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.2 approval layer and migration load inside v1.3", async ({ page }) => {
+test("v1.2 approval layer and migration load inside v1.6", async ({ page }) => {
   await expect(page.locator("#externalApprovalPanelV12")).toBeVisible();
 
   const state = await page.evaluate(() => ({
@@ -22,7 +22,7 @@ test("v1.2 approval layer and migration load inside v1.3", async ({ page }) => {
   }));
 
   expect(state).toEqual({
-    schema: "1.3.0",
+    schema: "1.6.0",
     approvalVersion: "1.2.0",
     migrationRegistered: true,
     downloadGatePatched: true,
@@ -66,10 +66,11 @@ test("archive page migrates v1.2 records forward without losing release controls
     record: JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]
   }));
 
-  expect(result.schema).toBe("1.3.0");
-  expect(result.record.schemaVersion).toBe("1.3.0");
+  expect(result.schema).toBe("1.6.0");
+  expect(result.record.schemaVersion).toBe("1.6.0");
   expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
   expect(result.record.dispositionControl.approvalRequired).toBe(true);
+  expect(result.record.externalSignatureControl.optional).toBe(true);
 });
 
 test("public destination blocks non-public profiles", async ({ page }) => {
@@ -129,7 +130,7 @@ test("approval fingerprint is stable across regenerated previews", async ({ page
 test("identical saved records receive different source-bound approval fingerprints", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const base = {
-      schemaVersion: "1.3.0",
+      schemaVersion: "1.6.0",
       meetingNumber: "777",
       title: "Identical Visible Record",
       date: "2026-07-14",
@@ -144,7 +145,8 @@ test("identical saved records receive different source-bound approval fingerprin
       summary: "Same public summary",
       retentionMetadata: {},
       externalReleaseControl: { approvalRequired: true },
-      dispositionControl: { approvalRequired: true }
+      dispositionControl: { approvalRequired: true },
+      externalSignatureControl: { optional: true }
     };
     localStorage.setItem("methodzMeetingRecords", JSON.stringify([
       { ...base, id: "source-record-a" },
