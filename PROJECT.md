@@ -1,73 +1,89 @@
-# Methodz Meeting Manager — Project Specification
+# Methodz Meeting Manager | Project Specification
 
 ## Purpose
 
-Methodz Meeting Manager is an offline-first meeting management app for Canadian Soft Water Corporation, Method HVAC Inc., and future partner organizations connected through the Methodz brand ecosystem.
+Methodz Meeting Manager is an offline-first meeting management and records-governance application for Canadian Soft Water Corporation, Method HVAC Inc., and future partner organizations connected through the Methodz brand ecosystem.
 
-Methodz is a brand identity and operating ecosystem, not a separate company. The app must make that clear in wording and data labels.
+Methodz is a brand identity and operating ecosystem, not a separate company. The application must preserve that distinction in wording, data labels, exports, and documentation.
 
-The app should capture meetings, attendance, digital sign-off, agenda items, discussion notes, decisions, follow-up tasks, meeting summaries, saved records, print exports, and future sync-ready data.
-
-## Product Goals
+## Product goals
 
 - Work offline first.
-- Be usable on phones, tablets, and desktops.
-- Store meeting records locally before cloud sync exists.
-- Keep meeting information organized and auditable.
-- Support CSW, Method HVAC, sole proprietors, guests, and future partner organizations.
-- Prepare for Firebase, Supabase, CRM sync, AI summaries, audio/video recording, and calendar integration.
+- Remain usable on phones, tablets, and desktops.
+- Store records locally before a hosted provider exists.
+- Keep meeting information organized, recoverable, exportable, and reviewable.
+- Support separate organizations, sole proprietors, partners, guests, and future recipient groups.
+- Preserve controlled source records separately from external copies.
+- Define provider boundaries for future Firebase, Supabase, CRM, Drive, or Methodz API integration.
+- Add governance controls without presenting browser-local workflow metadata as authenticated identity or legal proof.
 
-## Version 0.1 Scope
+## Deployment contract
 
-Version 0.1 must include:
+The current application uses plain HTML, CSS, and JavaScript.
 
-- `meeting.html` main app page.
-- `style.css` responsive styling.
-- `app.js` offline app logic.
-- Header logo placeholders using image paths.
-- Meeting information fields.
-- Organizations / representatives present.
-- Attendance sign-on with typed digital signatures.
-- Agenda checklist grouped by category.
-- Discussion notes.
-- Decisions made.
-- Follow-up tasks with clear labels.
-- Meeting summary.
-- Save record to localStorage.
-- View saved records.
-- Delete saved records.
-- Print / save PDF through browser print.
-- Download meeting record as TXT.
-- Clear form only after confirmation.
+```text
+meeting.html   Main workspace
+archive.html   Record detail and print surface
+```
 
-## Important Label Rules
+Core operation must require:
 
-Do not use the word "Owner" for tasks because it can confuse users into thinking company ownership. Use:
+- no runtime package installation;
+- no framework;
+- no build command;
+- no server;
+- no network connection.
 
-- Assigned To
-- Responsible Person
-- Person Handling This
+The optional service worker may cache static application assets on HTTPS or localhost. It must never cache meeting records or attachment payloads.
 
-Preferred label: **Assigned To**.
+## Current release: 1.5.0
 
-Use **Organizations / Representatives Present** instead of **Companies Present** because attendees may include sole proprietors, partners, guests, or non-company representatives.
+The application currently includes:
+
+- meeting information and status;
+- Organizations / Representatives Present;
+- meeting-specific attendance and typed-signature consent;
+- agenda, discussion notes, structured decisions, tasks, and summary;
+- templates, directories, attachment references, and task dashboards;
+- draft recovery, import/export, search, and print output;
+- revision history, comparison, and restore;
+- non-destructive Archive Vault;
+- workspace backup, replacement restore, and merge recovery;
+- ordered schema migration;
+- synchronous, asynchronous, and attachment-provider contracts;
+- classification, retention, preservation holds, and disposition approval;
+- Partner Safe, Public Summary, and Custom External Copy profiles;
+- destination-bound external release approval;
+- named recipient-specific export policies and field allow-lists;
+- policy stewardship, business purpose, risk tier, review cadence, and review queue;
+- release receipts for approved external downloads;
+- a locally chained receipt ledger with verification and export;
+- optional PWA shell and CI-only Playwright browser tests.
+
+## Important label rules
+
+Do not use **Owner** for task responsibility. Preferred label:
+
+- **Assigned To**
+
+Use **Organizations / Representatives Present** instead of **Companies Present**.
 
 Use **Methodz Brand Mark** instead of **Methodz Company Logo**.
 
-## Brand Context
+## Brand context
 
 Canadian Soft Water Corporation and Method HVAC Inc. are separate business entities.
 
-Methodz is the shared brand identity, operating ecosystem, design language, and future business platform layer. The app must avoid language implying Methodz is a registered company unless that changes in future business records.
+Methodz is the shared brand identity, design language, operating ecosystem, and future platform layer. Do not imply Methodz is a registered company unless future business records explicitly establish that status.
 
-## Default Organizations
+## Default organizations
 
 - Canadian Soft Water Corporation
 - Method HVAC Inc.
 - Sole Proprietor / Partner
 - Guest / Other
 
-## Default Agenda Categories
+## Default agenda categories
 
 ### Operations
 
@@ -96,142 +112,139 @@ Methodz is the shared brand identity, operating ecosystem, design language, and 
 - Installer scheduling workflow
 - Records, signatures, and meeting archive process
 
-## Data Model
+## Record architecture
 
-Meeting records should use a JSON-friendly structure:
-
-```json
-{
-  "id": "string",
-  "meetingNumber": "string",
-  "title": "string",
-  "status": "Scheduled | In Progress | Completed",
-  "date": "YYYY-MM-DD",
-  "location": "string",
-  "facilitator": "string",
-  "organizations": ["string"],
-  "attendees": [
-    {
-      "name": "string",
-      "organizationRole": "string",
-      "attendanceType": "In Person | Remote | Phone",
-      "signature": "string",
-      "signedAt": "ISO timestamp"
-    }
-  ],
-  "agenda": [
-    {
-      "item": "string",
-      "completed": true
-    }
-  ],
-  "notes": "string",
-  "decisions": "string",
-  "tasks": [
-    {
-      "task": "string",
-      "assignedTo": "string",
-      "priority": "Low | Normal | High | Critical",
-      "due": "YYYY-MM-DD",
-      "status": "Pending | In Progress | Completed"
-    }
-  ],
-  "summary": "string",
-  "savedAt": "ISO timestamp"
-}
-```
-
-## Architecture Standards
-
-For the first build, plain HTML/CSS/JavaScript is preferred. Do not add frameworks unless specifically requested.
-
-Keep the first version easy to open offline by loading `meeting.html` directly in a browser.
-
-Future modular structure should move toward:
+The schema is additive and JSON-friendly. Current records may include:
 
 ```text
-meeting-manager/
-├── meeting.html
-├── style.css
-├── app.js
-├── assets/
-│   └── logos/
-│       ├── csw-logo.png
-│       ├── method-hvac-logo.png
-│       └── methodz-brand.png
-├── css/
-└── js/
+identity and meeting metadata
+organizations and organization snapshots
+attendance, signature consent, and verification metadata
+agenda and discussion notes
+free-form and structured decisions
+follow-up tasks
+attachment references
+summary and validation
+revision and adapter metadata
+classification and access-control metadata
+retention and preservation-hold metadata
+external release-control metadata
+recipient-control and latest receipt references
+disposition-control metadata
+schema and release audit metadata
 ```
 
-## Coding Standards
+Unknown fields must survive migration, backup, merge, revision, archive, restore, and provider operations.
+
+## Architecture standards
 
 - Use semantic HTML.
-- Use clear labels.
-- Keep JavaScript readable.
-- Prefer simple functions.
-- Avoid hardcoding values that should later become configurable.
-- Keep app logic offline-first.
-- Confirm before deleting records.
-- Confirm before clearing current form.
-- Do not break existing functionality.
-- Do not remove features without replacing them.
-- Do not mix confusing business terminology into the UI.
+- Keep labels explicit and business-safe.
+- Keep JavaScript inspectable and dependency-free at runtime.
+- Avoid hardcoding values that belong in configuration.
+- Preserve direct-file operation.
+- Confirm before clearing or destructive actions.
+- Archive non-destructively by default.
+- Do not remove features without an intentional replacement.
+- Later feature modules may wrap stable functions, so script order is part of the runtime contract.
+- Keep migrations ordered, idempotent, additive, and safe to repeat.
 
-## Future Roadmap
+## Governance boundaries
 
-### Version 0.2
+Browser-local roles, requester names, reviewer names, policy stewards, recipient contacts, typed signatures, approvals, and release receipts are workflow metadata.
 
-- Better saved record viewer.
-- Search records.
-- Export all records as JSON.
-- Import records from JSON.
-- Better print stylesheet.
-- More professional logo handling.
+They do not independently prove:
 
-### Version 1.0
+- identity;
+- legal authority;
+- recipient identity;
+- transmission;
+- delivery;
+- non-repudiation;
+- regulatory compliance.
 
-- Full meeting archive.
-- Meeting number generation.
-- Editable agenda categories.
-- Structured decisions.
-- Digital signature improvements.
-- Attachment support.
-- Better mobile interface.
+A future hosted provider must enforce authenticated permissions and durable audit controls server-side.
 
-### Version 2.0
+## External copy pipeline
 
-- Firebase or Supabase live sync.
-- User accounts.
-- Role permissions.
-- AI meeting summaries.
-- Audio recording.
-- Video meeting links.
-- Calendar sync.
+```text
+controlled source record
+  -> redaction profile
+  -> recipient field allow-list
+  -> policy governance version
+  -> integrity calculation
+  -> destination-bound approval
+  -> approved external package
+  -> release receipt
+```
+
+A later layer may remove additional content or bind metadata. It must never restore sensitive content removed by an earlier layer.
+
+Typed signatures, consent records, signature-verification data, and signed timestamps must remain excluded from every external copy.
+
+## Integrity terminology
+
+Prefer SHA-256 through Web Crypto when available. Direct-file compatibility may use a clearly labeled checksum.
+
+Never call a checksum or digest:
+
+- a digital signature;
+- proof of identity;
+- proof of approval;
+- proof of delivery;
+- an immutable audit ledger.
+
+Public-key signing may be added only after explicit design for key generation, custody, rotation, revocation, and verification.
+
+## Testing standards
+
+CI may install testing dependencies that are not deployed with the application.
+
+Required automated gates:
+
+1. JavaScript syntax checks.
+2. Required-file checks.
+3. HTML and service-worker wiring checks.
+4. Manifest validation.
+5. Browser smoke tests for current and regression workflows.
+
+Manual release testing remains required for direct-file operation, mobile layout, printing, backup/restore, import safety, service-worker behavior, and destructive-action gates.
+
+## Roadmap
+
+### 1.x hardening
+
+- Complete browser and device regression coverage.
+- Add tamper and recovery simulations for receipt, approval, preservation, and disposition logs.
+- Strengthen import validation and conflict reporting.
+- Add provider conformance tests.
+- Consolidate older feature layers without breaking direct-file compatibility.
+- Improve large-workspace performance and bounded-storage reporting.
+- Add optional public-key signatures only with a complete key-management design.
+
+### 2.0 hosted provider
+
+- Firebase, Supabase, or Methodz API provider.
+- Authenticated user accounts.
+- Server-enforced role permissions.
+- Organization-managed recipient-policy administration.
+- Server-enforced retention, preservation, approval, and disposition.
+- Append-only remote audit and release receipt storage.
+- Calendar integration.
 - CRM integration.
+- AI-assisted summaries with explicit human review.
+- Audio and video workflows with consent controls.
 
-## Copilot Rules
+## Agent rules
 
-When GitHub Copilot or another AI agent works on this repository, it must:
+Any AI agent working on this repository must:
 
-- Preserve offline functionality.
-- Keep the UI simple and professional.
-- Use Methodz as a brand identity, not a company.
-- Avoid the word "Owner" for tasks.
-- Use "Assigned To" for responsibility fields.
-- Build incrementally.
-- Explain changes in commit messages.
-- Avoid unnecessary dependencies.
-- Keep files easy for a beginner to inspect and manually edit.
-
-## Build Priority
-
-The first complete deliverable should be a working offline app with:
-
-1. `meeting.html`
-2. `style.css`
-3. `app.js`
-4. logo image path placeholders
-5. localStorage save/load/delete
-6. print/download controls
-
-After that, improve architecture and polish.
+- preserve offline functionality;
+- keep the interface professional and mobile-friendly;
+- use Methodz as a brand identity, not a company;
+- use **Assigned To** for task responsibility;
+- build incrementally and document meaningful changes;
+- avoid unnecessary dependencies;
+- preserve migration order and data recovery;
+- avoid unsupported claims about identity, signatures, compliance, or delivery;
+- run or prepare regression checks for every release layer.
