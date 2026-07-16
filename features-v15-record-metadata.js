@@ -16,7 +16,7 @@
         : null;
       const previous = existing?.externalSignatureControl || record.externalSignatureControl || {};
 
-      return {
+      const finalRecord = {
         ...record,
         externalSignatureControl: {
           optional: previous.optional !== false,
@@ -26,6 +26,19 @@
           lastVerificationAt: previous.lastVerificationAt || ""
         }
       };
+
+      const finalAudit = global.MethodzReleaseV10?.validateRecord?.(finalRecord);
+      if (finalAudit) {
+        finalRecord.schemaAudit = finalAudit;
+        finalRecord.releaseMetadata = {
+          ...(finalRecord.releaseMetadata || {}),
+          release: "1.5.0",
+          appShellVersion: global.METHODZ_MEETING_CONFIG?.appShellVersion || "1.5.0",
+          auditedAt: finalAudit.checkedAt || new Date().toISOString()
+        };
+      }
+
+      return finalRecord;
     };
 
     global.__methodzV15CollectionPatched = true;
