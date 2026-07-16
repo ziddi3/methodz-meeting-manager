@@ -120,7 +120,7 @@ test("recipient governance version is bound into the redacted preview fingerprin
     const payload = await window.previewExternalExportV11();
     return {
       version: payload.record.externalCopy.recipientGovernanceVersion,
-      riskTier: payload.record.externalRecipientControl?.recipientRiskTier || payload.record.externalCopy.recipientRiskTier,
+      riskTier: payload.record.externalCopy.recipientRiskTier,
       digest: payload.integrity.digest
     };
   });
@@ -146,9 +146,18 @@ test("approved external download records and verifies a chained release receipt"
   await page.locator("#approvalPurposeV12").fill("Provide the approved summary to the named operations recipient.");
   const approvalPanel = page.locator("#externalApprovalPanelV12");
   await approvalPanel.getByRole("button", { name: "Request Approval", exact: true }).click();
+  await page.waitForFunction(() => {
+    const requests = JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]");
+    return requests.some((request) => request.status === "Pending");
+  });
+
   await page.locator("#approvalReviewedByV12").fill("Compliance Reviewer");
   await page.locator("#approvalReviewNoteV12").fill("Approved for the recipient-specific operational purpose.");
   await approvalPanel.getByRole("button", { name: "Approve Selected", exact: true }).click();
+  await page.waitForFunction(() => {
+    const requests = JSON.parse(localStorage.getItem("methodzExternalExportApprovals") || "[]");
+    return requests.some((request) => request.status === "Approved");
+  });
 
   const result = await page.evaluate(async () => {
     window.downloadBlob = () => {};
