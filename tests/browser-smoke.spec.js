@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test("creates and saves a schema 1.3 meeting record", async ({ page }) => {
+test("creates and saves a schema 1.6 meeting record", async ({ page }) => {
   page.on("dialog", (dialog) => dialog.accept());
   await page.goto("/meeting.html");
 
@@ -19,10 +19,11 @@ test("creates and saves a schema 1.3 meeting record", async ({ page }) => {
   await expect(page.locator("#savedRecords")).toContainText("Automated Browser Smoke Meeting");
   const records = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]"));
   expect(records).toHaveLength(1);
-  expect(records[0].schemaVersion).toBe("1.3.0");
+  expect(records[0].schemaVersion).toBe("1.6.0");
   expect(records[0].title).toBe("Automated Browser Smoke Meeting");
   expect(records[0].externalReleaseControl.approvalRequired).toBe(true);
   expect(records[0].dispositionControl.approvalRequired).toBe(true);
+  expect(records[0].externalSignatureControl.optional).toBe(true);
 });
 
 test("imports and migrates the original legacy storage key before workspace initialization", async ({ page }) => {
@@ -54,13 +55,14 @@ test("imports and migrates the original legacy storage key before workspace init
     };
   });
 
-  expect(result.record.schemaVersion).toBe("1.3.0");
+  expect(result.record.schemaVersion).toBe("1.6.0");
   expect(result.record.decisionsList).toEqual([]);
   expect(result.record.attachments).toEqual([]);
   expect(result.record.organizationDetails).toEqual([]);
   expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
   expect(result.record.dispositionControl.approvalRequired).toBe(true);
-  expect(result.state.currentVersion).toBe("1.3.0");
+  expect(result.record.externalSignatureControl.optional).toBe(true);
+  expect(result.state.currentVersion).toBe("1.6.0");
   expect(result.state.legacyRecordsImported).toBe(true);
   expect(result.legacyRemoved).toBe(true);
 });
@@ -124,8 +126,9 @@ test("publishes a valid app manifest and service worker entry point", async ({ r
   const manifest = await manifestResponse.json();
   expect(manifest.name).toBe("Methodz Meeting Manager");
   expect(manifest.start_url).toBe("./meeting.html");
+  expect(manifest.shortcuts.some((shortcut) => shortcut.url === "./verify.html")).toBe(true);
 
   const workerResponse = await request.get("/service-worker.js");
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.3.0");
+  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.6.0");
 });
