@@ -70,6 +70,7 @@ jobs:
           test -f features-v14-policy-hardening.js
           test -f features-v14.css
           test -f features-v15-crypto.js
+          test -f features-v15-key-safety.js
           test -f features-v15-record-metadata.js
           test -f features-v15.css
           test -f archive-v11.js
@@ -91,6 +92,7 @@ jobs:
           grep -q 'migrations-v15.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
           grep -q 'features-v15-crypto.js' meeting.html
+          grep -q 'features-v15-key-safety.js' meeting.html
           grep -q 'features-v15-record-metadata.js' meeting.html
           grep -q 'config-v15.js' archive.html
           grep -q 'migrations-v15.js' archive.html
@@ -104,6 +106,7 @@ jobs:
           grep -q 'migrations-v15.js' service-worker.js
           grep -q 'crypto-package-core.js' service-worker.js
           grep -q 'features-v15-crypto.js' service-worker.js
+          grep -q 'features-v15-key-safety.js' service-worker.js
           grep -q 'features-v15-record-metadata.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
@@ -130,6 +133,21 @@ jobs:
             const core = global.MethodzCryptoPackageV15;
             const pair = await core.generateKeyPair();
             const privateJwk = await core.exportPrivateJwk(pair.privateKey);
+            const publicJwk = core.normalizePublicJwk(privateJwk);
+            if (publicJwk.d) throw new Error('Public-key normalization retained private key material.');
+
+            let privatePackageBlocked = false;
+            try {
+              await core.signPackage(
+                { packageType: 'methodz-private-signing-key-backup', privateKeyJwk: privateJwk },
+                privateJwk,
+                { signerLabel: 'CI', keyLabel: 'CI Key' }
+              );
+            } catch (error) {
+              privatePackageBlocked = /private key material/i.test(error.message);
+            }
+            if (!privatePackageBlocked) throw new Error('A package containing private key material was not blocked.');
+
             const signed = await core.signPackage(
               { packageType: 'ci-test', record: { title: 'Stable' } },
               privateJwk,
