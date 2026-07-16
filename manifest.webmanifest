@@ -28,6 +28,11 @@
       "name": "Meeting Archive",
       "short_name": "Archive",
       "url": "./meeting.html#archiveVaultV08"
+    },
+    {
+      "name": "Verify Signed Package",
+      "short_name": "Verify Package",
+      "url": "./verify.html"
     }
   ]
 }
