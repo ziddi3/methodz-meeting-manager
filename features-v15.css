@@ -1,0 +1,169 @@
+/* Methodz Meeting Manager v1.5 policy operations and release receipt styles. */
+.v15-card {
+  border-top: 4px solid var(--accent, #d5a642);
+}
+
+.release-badge-v15 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 5px 9px;
+  border: 1px solid #b78b31;
+  border-radius: 999px;
+  background: #fff8e8;
+  color: #5d4517;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.policy-operations-status-v15,
+.receipt-ledger-status-v15 {
+  margin: 12px 0;
+  padding: 11px 12px;
+  border: 1px solid #d2d2d2;
+  border-radius: 8px;
+  background: #f7f7f7;
+}
+
+.policy-operations-status-v15[data-state="ready"],
+.receipt-ledger-status-v15[data-state="ready"] {
+  border-color: #6d8f70;
+  background: #f1f7f1;
+}
+
+.policy-operations-status-v15[data-state="warning"],
+.receipt-ledger-status-v15[data-state="warning"] {
+  border-color: #b78b31;
+  background: #fff8e8;
+}
+
+.policy-operations-status-v15[data-state="error"],
+.receipt-ledger-status-v15[data-state="error"] {
+  border-color: #9b3636;
+  background: #fff1f1;
+}
+
+.policy-metrics-v15 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 10px;
+  margin: 14px 0 18px;
+}
+
+.policy-metrics-v15 > div {
+  min-height: 84px;
+  padding: 13px;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  background: #fafafa;
+}
+
+.policy-metrics-v15 strong,
+.policy-metrics-v15 span {
+  display: block;
+}
+
+.policy-metrics-v15 strong {
+  font-size: 1.35rem;
+}
+
+.policy-metrics-v15 span {
+  margin-top: 3px;
+  color: var(--muted, #666666);
+  font-size: 0.86rem;
+}
+
+.policy-operations-v15 details {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 9px;
+}
+
+.policy-operations-v15 summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.compact-textarea-v15 {
+  min-height: 88px;
+}
+
+.policy-review-queue-v15,
+.release-receipt-list-v15 {
+  display: grid;
+  gap: 11px;
+  margin-top: 12px;
+}
+
+.policy-review-card-v15,
+.release-receipt-card-v15 {
+  padding: 13px;
+  border: 1px solid #d7d7d7;
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.policy-review-card-v15[data-review-state="overdue"] { border-left-color: #9b3636; }
+.policy-review-card-v15[data-review-state="due-soon"] { border-left-color: #b78b31; }
+.policy-review-card-v15[data-review-state="no-date"] { border-left-color: #6f6f6f; }
+.policy-review-card-v15[data-review-state="current"] { border-left-color: #5e8661; }
+.policy-review-card-v15[data-review-state="inactive"] { border-left-color: #9a9a9a; opacity: 0.85; }
+.release-receipt-card-v15 { border-left-color: #4d6f91; }
+
+.policy-review-heading-v15,
+.release-receipt-heading-v15 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.policy-review-heading-v15 span,
+.release-receipt-heading-v15 span {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #efefef;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.policy-review-card-v15 dl,
+.release-receipt-card-v15 dl {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) 1fr;
+  gap: 5px 12px;
+  margin: 10px 0;
+}
+
+.policy-review-card-v15 dt,
+.release-receipt-card-v15 dt {
+  color: var(--muted, #666666);
+  font-weight: 700;
+}
+
+.policy-review-card-v15 dd,
+.release-receipt-card-v15 dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.receipt-actions-v15 { align-items: end; }
+
+@media (max-width: 720px) {
+  .policy-review-heading-v15,
+  .release-receipt-heading-v15 { flex-direction: column; }
+
+  .policy-review-card-v15 dl,
+  .release-receipt-card-v15 dl { grid-template-columns: 1fr; }
+
+  .policy-review-card-v15 dd,
+  .release-receipt-card-v15 dd { margin-bottom: 7px; }
+}
+
+@media print {
+  #policyOperationsPanelV15 { display: none !important; }
+}
