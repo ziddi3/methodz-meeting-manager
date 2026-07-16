@@ -71,6 +71,7 @@ const APP_SHELL = [
   "./features-v14-recipient-policy.js",
   "./features-v14-policy-hardening.js",
   "./features-v15-policy-operations.js",
+  "./features-v15-download-routing.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
