@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 
 const baseUrl = "http://127.0.0.1:4173";
 
-test("v1.5 cryptographic core signs, verifies, and detects tampering", async ({ page }) => {
+test("v1.5 cryptographic core signs, verifies, and detects package or metadata tampering", async ({ page }) => {
   await page.goto(`${baseUrl}/meeting.html`);
   await expect(page.locator("#cryptoSigningPanelV15")).toBeVisible();
 
@@ -18,13 +18,20 @@ test("v1.5 cryptographic core signs, verifies, and detects tampering", async ({ 
 
     const verified = await core.verifyPackage(signed);
     const publicContainsPrivateMaterial = Boolean(signed.signatureEnvelope.publicKeyJwk.d);
-    signed.record.summary = "Tampered content";
-    const tampered = await core.verifyPackage(signed);
+
+    const packageTampered = JSON.parse(JSON.stringify(signed));
+    packageTampered.record.summary = "Tampered content";
+    const tamperedPackageResult = await core.verifyPackage(packageTampered);
+
+    const metadataTampered = JSON.parse(JSON.stringify(signed));
+    metadataTampered.signatureEnvelope.signerLabel = "Altered Signer";
+    const tamperedMetadataResult = await core.verifyPackage(metadataTampered);
 
     return {
       supported: core.isSupported(),
       verified,
-      tampered,
+      tamperedPackageResult,
+      tamperedMetadataResult,
       publicContainsPrivateMaterial,
       signatureType: signed.signatureEnvelope.type
     };
@@ -35,7 +42,11 @@ test("v1.5 cryptographic core signs, verifies, and detects tampering", async ({ 
   expect(result.verified.signatureValid).toBe(true);
   expect(result.verified.digestMatches).toBe(true);
   expect(result.verified.keyIdMatches).toBe(true);
-  expect(result.tampered.valid).toBe(false);
+  expect(result.tamperedPackageResult.valid).toBe(false);
+  expect(result.tamperedPackageResult.digestMatches).toBe(false);
+  expect(result.tamperedMetadataResult.valid).toBe(false);
+  expect(result.tamperedMetadataResult.digestMatches).toBe(true);
+  expect(result.tamperedMetadataResult.signatureValid).toBe(false);
   expect(result.publicContainsPrivateMaterial).toBe(false);
   expect(result.signatureType).toBe("methodz-ecdsa-p256-sha256");
 });
