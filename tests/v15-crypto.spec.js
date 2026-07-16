@@ -10,6 +10,18 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
     const core = window.MethodzCryptoPackageV15;
     const pair = await core.generateKeyPair();
     const privateJwk = await core.exportPrivateJwk(pair.privateKey);
+    const normalizedPublic = core.normalizePublicJwk(privateJwk);
+
+    let privatePackageBlocked = false;
+    try {
+      await core.signPackage({
+        packageType: "methodz-private-signing-key-backup",
+        privateKeyJwk: privateJwk
+      }, privateJwk, { signerLabel: "CI Signer", keyLabel: "CI Key" });
+    } catch (error) {
+      privatePackageBlocked = /private key material/i.test(error.message);
+    }
+
     const signed = await core.signPackage({
       packageType: "methodz-approved-external-meeting-copy",
       record: { title: "CI Test Meeting", summary: "Stable content" },
@@ -33,6 +45,8 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
       tamperedPackageResult,
       tamperedMetadataResult,
       publicContainsPrivateMaterial,
+      normalizedPublicContainsPrivateMaterial: Boolean(normalizedPublic.d),
+      privatePackageBlocked,
       signatureType: signed.signatureEnvelope.type
     };
   });
@@ -48,7 +62,37 @@ test("v1.5 cryptographic core signs, verifies, and detects package or metadata t
   expect(result.tamperedMetadataResult.digestMatches).toBe(true);
   expect(result.tamperedMetadataResult.signatureValid).toBe(false);
   expect(result.publicContainsPrivateMaterial).toBe(false);
+  expect(result.normalizedPublicContainsPrivateMaterial).toBe(false);
+  expect(result.privatePackageBlocked).toBe(true);
   expect(result.signatureType).toBe("methodz-ecdsa-p256-sha256");
+});
+
+test("public-key registry sanitizes private JWK imports", async ({ page }) => {
+  await page.goto(`${baseUrl}/meeting.html`);
+
+  const result = await page.evaluate(async () => {
+    const core = window.MethodzCryptoPackageV15;
+    const pair = await core.generateKeyPair();
+    const privateJwk = await core.exportPrivateJwk(pair.privateKey);
+    const entry = await window.MethodzCryptographicSigningV15.registerPublicKey(privateJwk, {
+      signerLabel: "Registry Test",
+      keyLabel: "Sanitized Registry Key",
+      source: "test"
+    });
+    const stored = JSON.parse(localStorage.getItem("methodzSigningPublicKeys") || "[]");
+    const exported = window.MethodzKeySafetyV15.readSafeRegistry();
+    return {
+      entryContainsPrivate: Boolean(entry.publicKeyJwk.d),
+      storedContainsPrivate: stored.some((item) => Boolean(item.publicKeyJwk?.d)),
+      exportedContainsPrivate: exported.some((item) => Boolean(item.publicKeyJwk?.d)),
+      safetyPatched: window.__methodzV15KeySafetyPatched
+    };
+  });
+
+  expect(result.safetyPatched).toBe(true);
+  expect(result.entryContainsPrivate).toBe(false);
+  expect(result.storedContainsPrivate).toBe(false);
+  expect(result.exportedContainsPrivate).toBe(false);
 });
 
 test("standalone verifier loads without the meeting workspace", async ({ page }) => {
