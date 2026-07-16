@@ -1,0 +1,137 @@
+.v15-card {
+  border-color: #b8c7b9;
+}
+
+.release-badge-v15 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #e7f2e8;
+  border: 1px solid #8ca78f;
+  font-weight: 700;
+}
+
+.crypto-status-v15,
+.crypto-package-summary-v15,
+.crypto-verification-v15,
+.crypto-private-warning-v15 {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid #c8c8c8;
+  border-radius: 8px;
+  background: #f7f7f7;
+}
+
+.crypto-status-v15[data-state="ready"],
+.crypto-verification-v15[data-state="valid"] {
+  background: #eef8ef;
+  border-color: #7da182;
+}
+
+.crypto-status-v15[data-state="warning"] {
+  background: #fff8e7;
+  border-color: #c5a75d;
+}
+
+.crypto-status-v15[data-state="error"],
+.crypto-verification-v15[data-state="invalid"] {
+  background: #fff0f0;
+  border-color: #b87373;
+}
+
+.crypto-private-warning-v15 {
+  background: #fff8e7;
+  border-color: #c5a75d;
+}
+
+.crypto-signing-v15 details {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.crypto-signing-v15 summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.crypto-key-card-v15 {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.crypto-key-card-v15[data-status="revoked"] {
+  border-color: #a66;
+  background: #fff3f3;
+}
+
+.crypto-key-card-v15 > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.crypto-key-card-v15 dl,
+.crypto-verification-v15 dl,
+.verify-result-v15 dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: 0.45rem 1rem;
+  margin-bottom: 0;
+}
+
+.crypto-key-card-v15 dt,
+.crypto-verification-v15 dt,
+.verify-result-v15 dt {
+  font-weight: 700;
+}
+
+.crypto-key-card-v15 dd,
+.crypto-verification-v15 dd,
+.verify-result-v15 dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.crypto-package-summary-v15 {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.verify-shell-v15 {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem 2rem;
+}
+
+.verify-result-v15[data-state="valid"] {
+  border-color: #7da182;
+  background: #eef8ef;
+}
+
+.verify-result-v15[data-state="invalid"] {
+  border-color: #b87373;
+  background: #fff0f0;
+}
+
+@media (max-width: 720px) {
+  .crypto-key-card-v15 dl,
+  .crypto-verification-v15 dl,
+  .verify-result-v15 dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .crypto-signing-v15 {
+    display: none !important;
+  }
+}
