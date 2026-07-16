@@ -5,6 +5,8 @@
   const TYPE = "methodz-ecdsa-p256-sha256";
   const ALGORITHM = { name: "ECDSA", namedCurve: "P-256" };
   const SIGN_ALGORITHM = { name: "ECDSA", hash: "SHA-256" };
+  const CANONICALIZATION = "methodz-canonical-json-v1";
+  const NOTICE = "This signature proves possession of the matching private key at signing time. It does not prove the human identity behind the key unless that key is independently verified.";
   const encoder = new TextEncoder();
 
   function assertCrypto() {
@@ -116,6 +118,28 @@
     return assertCrypto().importKey("jwk", normalizedPublicJwk(publicJwk), ALGORITHM, true, ["verify"]);
   }
 
+  function metadataFromEnvelope(envelope) {
+    return {
+      version: Number(envelope?.version || 1),
+      type: String(envelope?.type || TYPE),
+      signedAt: String(envelope?.signedAt || ""),
+      signerLabel: String(envelope?.signerLabel || ""),
+      keyLabel: String(envelope?.keyLabel || ""),
+      keyId: String(envelope?.keyId || ""),
+      algorithm: cloneJson(envelope?.algorithm || {}),
+      payloadDigest: cloneJson(envelope?.payloadDigest || {}),
+      publicKeyJwk: normalizedPublicJwk(envelope?.publicKeyJwk),
+      notice: String(envelope?.notice || NOTICE)
+    };
+  }
+
+  function canonicalSigningPayload(unsigned, metadata) {
+    return canonicalize({
+      package: unsigned,
+      signatureMetadata: metadata
+    });
+  }
+
   async function signPackage(packageValue, privateKeyOrJwk, metadata = {}) {
     const unsigned = unsignedPackage(packageValue);
     const isCryptoKey = Boolean(global.CryptoKey && privateKeyOrJwk instanceof global.CryptoKey);
@@ -123,37 +147,43 @@
     const privateKey = isCryptoKey ? privateKeyOrJwk : await importPrivateJwk(privateJwk);
     const publicKeyJwk = normalizedPublicJwk(metadata.publicKeyJwk || publicJwkFromPrivate(privateJwk));
     const keyId = await deriveKeyId(publicKeyJwk);
-    const canonicalPayload = canonicalize(unsigned);
-    const payloadBytes = encoder.encode(canonicalPayload);
-    const payloadDigest = await sha256Text(canonicalPayload);
-    const signatureBytes = await assertCrypto().sign(SIGN_ALGORITHM, privateKey, payloadBytes);
+    const canonicalPackage = canonicalize(unsigned);
+    const payloadDigest = await sha256Text(canonicalPackage);
+    const signedMetadata = {
+      version: 1,
+      type: TYPE,
+      signedAt: metadata.signedAt || new Date().toISOString(),
+      signerLabel: String(metadata.signerLabel || "").trim(),
+      keyLabel: String(metadata.keyLabel || "").trim(),
+      keyId,
+      algorithm: {
+        name: "ECDSA",
+        namedCurve: "P-256",
+        hash: "SHA-256",
+        signatureEncoding: "raw-base64"
+      },
+      payloadDigest: {
+        algorithm: "SHA-256",
+        canonicalization: CANONICALIZATION,
+        digest: payloadDigest
+      },
+      publicKeyJwk,
+      notice: NOTICE
+    };
+    const signatureBytes = await assertCrypto().sign(
+      SIGN_ALGORITHM,
+      privateKey,
+      encoder.encode(canonicalSigningPayload(unsigned, signedMetadata))
+    );
 
     return {
       ...unsigned,
       signatureEnvelope: {
-        version: 1,
-        type: TYPE,
-        signedAt: metadata.signedAt || new Date().toISOString(),
-        signerLabel: String(metadata.signerLabel || "").trim(),
-        keyLabel: String(metadata.keyLabel || "").trim(),
-        keyId,
-        algorithm: {
-          name: "ECDSA",
-          namedCurve: "P-256",
-          hash: "SHA-256",
-          signatureEncoding: "raw-base64"
-        },
-        payloadDigest: {
-          algorithm: "SHA-256",
-          canonicalization: "methodz-canonical-json-v1",
-          digest: payloadDigest
-        },
+        ...signedMetadata,
         signature: {
           encoding: "base64",
           value: toBase64(signatureBytes)
-        },
-        publicKeyJwk,
-        notice: "This signature proves possession of the matching private key at signing time. It does not prove the human identity behind the key unless that key is independently verified."
+        }
       }
     };
   }
@@ -179,19 +209,20 @@
       if (!keyIdMatches) errors.push("The embedded public key does not match the signature key ID.");
 
       const unsigned = unsignedPackage(packageValue);
-      const canonicalPayload = canonicalize(unsigned);
-      digest = await sha256Text(canonicalPayload);
+      const canonicalPackage = canonicalize(unsigned);
+      digest = await sha256Text(canonicalPackage);
       digestMatches = digest === envelope.payloadDigest?.digest;
       if (!digestMatches) errors.push("The package payload digest does not match the signed digest.");
 
+      const signedMetadata = metadataFromEnvelope({ ...envelope, publicKeyJwk: normalizedPublic });
       const publicKey = await importPublicJwk(normalizedPublic);
       signatureValid = await assertCrypto().verify(
         SIGN_ALGORITHM,
         publicKey,
         fromBase64(envelope.signature?.value),
-        encoder.encode(canonicalPayload)
+        encoder.encode(canonicalSigningPayload(unsigned, signedMetadata))
       );
-      if (!signatureValid) errors.push("The ECDSA signature is invalid for the current package content.");
+      if (!signatureValid) errors.push("The ECDSA signature is invalid for the current package content or signature metadata.");
     } catch (error) {
       errors.push(error?.message || String(error));
     }
@@ -210,7 +241,7 @@
       expectedPayloadDigest: envelope.payloadDigest?.digest || "",
       packageType: packageValue?.packageType || "",
       errors,
-      notice: "Verification confirms package integrity against the included public key. It does not independently authenticate the signer identity, recipient, approval, or delivery."
+      notice: "Verification confirms package and signature-metadata integrity against the included public key. It does not independently authenticate the signer identity, recipient, approval, or delivery."
     };
   }
 
@@ -239,6 +270,8 @@
     isSupported: () => Boolean(global.crypto?.subtle),
     canonicalize,
     unsignedPackage,
+    metadataFromEnvelope,
+    canonicalSigningPayload,
     sha256Text,
     deriveKeyId,
     generateKeyPair,
