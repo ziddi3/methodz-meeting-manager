@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.3 disposition panels, schema migration, and API load", async ({ page }) => {
+test("v1.3 disposition panels and migration load inside v1.6", async ({ page }) => {
   await expect(page.locator("#dispositionPanelV13")).toBeVisible();
   await expect(page.locator("#preservationAuditPanelV13")).toBeVisible();
   const state = await page.evaluate(() => ({
@@ -17,7 +17,7 @@ test("v1.3 disposition panels, schema migration, and API load", async ({ page })
     migration: window.MethodzMigrations.registry.some((entry) => entry.version === "1.3.0"),
     gate: window.__methodzV13ArchiveGatePatched
   }));
-  expect(state).toEqual({ schema: "1.3.0", version: "1.3.0", migration: true, gate: true });
+  expect(state).toEqual({ schema: "1.6.0", version: "1.3.0", migration: true, gate: true });
 });
 
 test("a separate authorized reviewer can approve fingerprint-bound disposition", async ({ page }) => {
