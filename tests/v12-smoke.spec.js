@@ -22,7 +22,7 @@ test("v1.2 approval layer and migration load under the current schema", async ({
   }));
 
   expect(state).toEqual({
-    schema: "1.5.0",
+    schema: "1.6.0",
     approvalVersion: "1.2.0",
     migrationRegistered: true,
     downloadGatePatched: true,
@@ -66,11 +66,12 @@ test("archive page migrates v1.2 records forward without losing release controls
     record: JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]
   }));
 
-  expect(result.schema).toBe("1.5.0");
-  expect(result.record.schemaVersion).toBe("1.5.0");
+  expect(result.schema).toBe("1.6.0");
+  expect(result.record.schemaVersion).toBe("1.6.0");
   expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
   expect(result.record.dispositionControl.approvalRequired).toBe(true);
   expect(result.record.externalRecipientControl).toBeTruthy();
+  expect(result.record.externalSignatureControl.optional).toBe(true);
 });
 
 test("public destination blocks non-public profiles", async ({ page }) => {
