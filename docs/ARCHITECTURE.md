@@ -1,27 +1,30 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, policy operations, release receipts, and future hosted providers.
+Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, policy operations, release receipts, cryptographic package signatures, and future hosted providers.
 
 ## Entry points
 
 ```text
-meeting.html   Creation, editing, dashboards, governance, approvals, policy operations, receipts, and exports
+meeting.html   Creation, editing, dashboards, governance, approvals,
+               receipts, signing, verification, and exports
 archive.html   Dedicated record detail, audit metadata, and print surface
+verify.html    Standalone signed-package verification surface
 ```
 
-No server, package manager, or build command is required. The core app must continue to work when `meeting.html` is opened directly.
+No server, package manager, runtime dependency, or build command is required. Core meeting workflows must continue to work when `meeting.html` is opened directly.
 
 ## Runtime model
 
 ```text
 meeting.html
   ├─ config.js
-  ├─ config-v11.js through config-v15.js
+  ├─ config-v11.js through config-v16.js
   ├─ migrations.js
-  ├─ migrations-v10.js through migrations-v15.js
+  ├─ migrations-v10.js through migrations-v16.js
   ├─ data-adapter.js
   ├─ async-data-adapter.js
   ├─ attachment-adapter.js
+  ├─ crypto-package-core.js
   ├─ app.js
   ├─ features-v03*.js through features-v10*.js
   ├─ features-v11-retention.js
@@ -35,24 +38,30 @@ meeting.html
   ├─ features-v14-recipient-policy.js
   ├─ features-v14-policy-hardening.js
   ├─ features-v15-policy-operations.js
-  └─ features-v15-download-routing.js
+  ├─ features-v15-download-routing.js
+  ├─ features-v16-crypto.js
+  └─ features-v16-record-metadata.js
 
 archive.html
   ├─ config.js
-  ├─ config-v11.js through config-v15.js
+  ├─ config-v11.js through config-v16.js
   ├─ migrations.js
-  ├─ migrations-v10.js through migrations-v15.js
+  ├─ migrations-v10.js through migrations-v16.js
   ├─ data-adapter.js
   ├─ attachment-adapter.js
   ├─ archive.js
   ├─ archive-v10.js
   ├─ archive-v11.js
   └─ archive-v13.js
+
+verify.html
+  ├─ crypto-package-core.js
+  └─ verify.js
 ```
 
-Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. Script order is part of the application contract because later layers intentionally wrap the final functions installed by earlier layers.
+Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. Script order is part of the application contract because later layers intentionally wrap functions installed by earlier layers.
 
-Configuration extensions load before the migration registry runs. This allows the registry to capture schema `1.5.0` as the active schema on both entry points.
+Configuration extensions load before the migration registry runs. This allows the registry to capture schema `1.6.0` as the active schema on the main and archive entry points.
 
 ## Configuration
 
@@ -66,6 +75,8 @@ config-v12.js   external-export approval and destination policies
 config-v13.js   disposition roles and preservation-event limits
 config-v14.js   recipient-policy storage and field catalog
 config-v15.js   policy review operations and release receipt limits
+config-v16.js   cryptographic protocol, key registry, audit limits,
+                and current schema/app-shell version
 ```
 
 ## Migration
@@ -79,9 +90,10 @@ migrations-v12.js   external release-control metadata
 migrations-v13.js   disposition-control and preservation-chain metadata
 migrations-v14.js   external recipient-control metadata
 migrations-v15.js   release receipt references and policy-operations metadata
+migrations-v16.js   optional external signature-control metadata
 ```
 
-Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approvals, reviews, releases, legal holds, disposition events, recipient policies, governance reviews, or receipt events.
+Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approvals, reviews, releases, preservation holds, disposition events, recipient policies, governance reviews, receipts, signatures, or key events.
 
 ## Provider boundaries
 
@@ -112,6 +124,28 @@ healthCheck()
 ```
 
 The default attachment provider stores metadata references only and rejects inline binary payloads.
+
+### Cryptographic package core
+
+`crypto-package-core.js` is deliberately independent from meeting storage and UI state. Its public boundary provides:
+
+```text
+canonicalize(value)
+unsignedPackage(packageValue)
+containsPrivateKeyMaterial(value)
+normalizePublicJwk(jwk)
+publicJwkFromPrivate(jwk)
+deriveKeyId(jwk)
+generateKeyPair()
+exportPrivateJwk(key)
+exportPublicJwk(key)
+importPrivateJwk(jwk)
+importPublicJwk(jwk)
+signPackage(packageValue, privateKey, metadata)
+verifyPackage(packageValue)
+```
+
+This separation allows the main workspace, standalone verifier, Node self-test, and future hosted provider to share one package protocol implementation.
 
 ## Stable core
 
@@ -159,7 +193,20 @@ The default attachment provider stores metadata references only and rejects inli
 - receipt references on active and archived source records;
 - routing of every external-download control through the approved receipt-producing path.
 
-## External export pipeline
+### v1.6
+
+- optional ECDSA P-256 / SHA-256 package signatures;
+- canonical binding of package content and displayed signature metadata;
+- explicit private and public JWK handling;
+- memory-only private-key custody;
+- public-key ID derivation and registry sanitation;
+- browser-local Active and Revoked key workflow states;
+- signing and verification audit exports;
+- standalone verification without meeting-record import;
+- saved-record signature metadata;
+- Node Web Crypto and Playwright cryptographic regression coverage.
+
+## External release and signing pipeline
 
 ```text
 controlled source record
@@ -170,9 +217,11 @@ controlled source record
   -> approval review
   -> approved package
   -> release receipt
+  -> optional package signature
+  -> independent verification
 ```
 
-A later layer may only remove or bind metadata. It must never restore sensitive content removed by an earlier redaction layer.
+A later layer may only remove content or bind additional metadata. It must never restore sensitive content removed by an earlier redaction layer. Signing does not bypass or replace any release control.
 
 ## Policy governance storage
 
@@ -194,6 +243,17 @@ Receipts contain source, approval, destination, recipient policy, optional gover
 
 Receipt checksums are not digital signatures, identity authentication, proof of transmission, proof of delivery, or an immutable audit service.
 
+## Cryptographic storage
+
+```text
+methodzSigningPublicKeys
+methodzSigningAudit
+```
+
+Only public JWK material may enter the key registry. The signing audit is browser-local workflow history. Neither collection is an authenticated organization-wide authority.
+
+Private JWK material remains in current page memory and is absent from browser storage, workspace backups, signed packages, public exports, verifier reports, and service-worker caches.
+
 ## Source record metadata
 
 The latest release receipt updates:
@@ -205,21 +265,32 @@ externalRecipientControl.lastReleaseIntegrityAlgorithm
 externalRecipientControl.lastReleaseIntegrityDigest
 ```
 
-Both active and archived records are supported.
+The latest successful package signing may update:
+
+```text
+externalSignatureControl.optional
+externalSignatureControl.lastSignedPackageAt
+externalSignatureControl.lastSigningKeyId
+externalSignatureControl.lastSignatureAlgorithm
+externalSignatureControl.lastVerificationAt
+```
+
+Both active and archived source records are supported when their IDs can be resolved.
 
 ## Data safety
 
-- Workspace backup captures Methodz-prefixed storage keys, including v1.5 collections.
+- Workspace backup captures Methodz-prefixed browser-storage keys, including public-key and signing-audit collections.
+- Private keys are deliberately absent from workspace backup.
 - Unknown record fields survive migration.
 - Active preservation holds block permanent disposition.
 - Typed signatures and signature verification remain excluded from external copies.
-- Policy, governance, approval, and receipt records remain browser-local unless exported.
-- Service workers cache application assets only, never meeting records.
+- Policy, governance, approval, receipt, public-key, and audit records remain browser-local unless exported.
+- Service workers cache application assets only, never meeting records or key material.
 
 ## Hosted-provider boundary
 
-A future provider should replace local workflow assertions with authenticated identities, server-enforced permissions, organization-managed recipient policies, durable legal holds, append-only approval and release logs, trusted timestamps, and explicit key custody before cryptographic signing is introduced.
+A future provider should replace local workflow assertions with authenticated identities, server-enforced permissions, organization-managed recipient policies, durable preservation holds, append-only approval and release logs, trusted timestamps, controlled key issuance and rotation, durable key revocation, independently distributed public keys, and hardware-backed or server-side signing where appropriate.
 
 ## Validation
 
-GitHub Actions checks JavaScript syntax, required files, HTML and service-worker wiring, manifest JSON, and Playwright browser workflows. Playwright is CI-only and is not a deployed dependency.
+GitHub Actions checks JavaScript syntax, required files, HTML and service-worker wiring, manifest JSON, a Node Web Crypto package self-test, and Playwright browser workflows. Playwright is CI-only and is not a deployed dependency.
