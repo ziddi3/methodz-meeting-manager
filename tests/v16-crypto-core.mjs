@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
 
 globalThis.window = globalThis;
-globalThis.crypto = webcrypto;
+if (!globalThis.crypto?.subtle) {
+  Object.defineProperty(globalThis, "crypto", {
+    value: webcrypto,
+    configurable: true
+  });
+}
 globalThis.btoa ||= (value) => Buffer.from(value, "binary").toString("base64");
 globalThis.atob ||= (value) => Buffer.from(value, "base64").toString("binary");
 
