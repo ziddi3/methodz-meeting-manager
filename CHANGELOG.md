@@ -2,6 +2,38 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.0
+
+### Added
+
+- Optional ECDSA P-256 / SHA-256 signatures for exported JSON packages.
+- Canonical package and displayed signature-metadata binding.
+- Explicit private and public JWK import and export.
+- Memory-only private-key handling with an explicit sensitive backup download.
+- Browser-local public-key registry with Active and Revoked workflow states.
+- Private-key-material rejection and registry sanitation.
+- Standalone `verify.html` signed-package verifier.
+- Signing, verification, key-lifecycle, and public-registry audit exports.
+- `externalSignatureControl` metadata on current-schema meeting records.
+- `config-v16.js`, `migrations-v16.js`, `crypto-package-core.js`, `features-v16-crypto.js`, `features-v16-record-metadata.js`, and `features-v16.css`.
+- Node Web Crypto self-test and Playwright payload-tamper, metadata-tamper, key-safety, migration, and verifier coverage.
+
+### Changed
+
+- Active schema and app-shell version are now `1.6.0`.
+- Main and archive entry points load the v1.6 configuration and migration layers.
+- The application manifest exposes the standalone verifier as an app shortcut.
+- Service-worker cache and CI validation include the complete v1.6 shell.
+- Core and v1.5 regression tests assert the current schema while preserving earlier feature APIs.
+- README and release documentation now define the cryptographic trust and key-custody boundaries.
+
+### Security notes
+
+- Private keys are never written to browser storage, signed packages, public-key exports, verification reports, or workspace backups.
+- A valid package signature proves integrity relative to a key. It does not independently prove human identity, authority, recipient identity, approval legitimacy, delivery, or legal compliance.
+- Browser-local key revocation is workflow metadata, not an organization-wide revocation service.
+- Existing redaction, recipient policy, approval, release receipt, retention, preservation, and disposition controls remain required.
+
 ## 1.5.0
 
 ### Added

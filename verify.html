@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Offline signature verifier for Methodz Meeting Manager JSON packages." />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Verify Signed Package | Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="features-v16.css" />
+</head>
+<body>
+  <header class="app-header">
+    <p class="eyebrow">Methodz Meeting Manager v1.6</p>
+    <h1>Verify a Signed Package</h1>
+    <p>Verify a signed JSON package without importing meeting records into the workspace.</p>
+  </header>
+
+  <main class="verify-shell-v16">
+    <nav class="card" aria-label="Verifier navigation">
+      <a class="button-like" href="meeting.html">Back to Meeting Manager</a>
+    </nav>
+
+    <section class="card">
+      <h2>Verify JSON Package</h2>
+      <p class="helper-text">Verification checks package and signature-metadata integrity against the embedded public key. Confirm the key ID through an independent trusted channel before relying on a signer label.</p>
+      <div class="button-row">
+        <label class="button-like" for="verifyPackageFileV16">Choose Signed JSON</label>
+        <button type="button" onclick="verifySelectedPackageV16()">Verify Signature</button>
+        <button type="button" onclick="downloadStandaloneVerificationV16()">Download Verification Report</button>
+      </div>
+      <input id="verifyPackageFileV16" class="import-control" type="file" accept="application/json,.json" onchange="loadStandalonePackageV16(event)" />
+      <div id="verifyPackageSummaryV16" class="crypto-package-summary-v16">No package loaded.</div>
+      <div id="verifyResultV16" class="card verify-result-v16" aria-live="polite">No verification has been run.</div>
+    </section>
+
+    <section class="card">
+      <h2>What Verification Means</h2>
+      <p>A valid result confirms that the JSON content and displayed signature metadata match the bytes signed by the private key corresponding to the embedded public key.</p>
+      <p>It does not independently prove signer identity, signer authority, recipient identity, approval legitimacy, delivery, or legal compliance.</p>
+    </section>
+  </main>
+
+  <script src="crypto-package-core.js"></script>
+  <script src="verify.js"></script>
+</body>
+</html>

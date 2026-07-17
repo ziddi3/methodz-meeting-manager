@@ -1,0 +1,55 @@
+.crypto-signing-v16 { border-color: #a9bdad; }
+.release-badge-v16 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  padding: .35rem .65rem;
+  border: 1px solid #7f9f86;
+  border-radius: 999px;
+  background: #e8f3ea;
+  font-weight: 700;
+}
+.crypto-status-v16,
+.crypto-warning-v16,
+.crypto-key-summary-v16,
+.crypto-package-summary-v16,
+.crypto-verification-v16 {
+  margin: 1rem 0;
+  padding: .9rem 1rem;
+  border: 1px solid #c8c8c8;
+  border-radius: 8px;
+  background: #f7f7f7;
+}
+.crypto-status-v16[data-state="ready"],
+.crypto-verification-v16[data-state="valid"] { background: #eef8ef; border-color: #7da182; }
+.crypto-status-v16[data-state="warning"],
+.crypto-warning-v16 { background: #fff8e7; border-color: #c5a75d; }
+.crypto-status-v16[data-state="error"],
+.crypto-verification-v16[data-state="invalid"] { background: #fff0f0; border-color: #b87373; }
+.crypto-signing-v16 details { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: .75rem; }
+.crypto-signing-v16 summary { cursor: pointer; font-size: 1.05rem; font-weight: 700; }
+.crypto-key-summary-v16 dl,
+.crypto-verification-v16 dl,
+.verify-result-v16 dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: .45rem 1rem;
+  margin-bottom: 0;
+}
+.crypto-key-summary-v16 dt,
+.crypto-verification-v16 dt,
+.verify-result-v16 dt { font-weight: 700; }
+.crypto-key-summary-v16 dd,
+.crypto-verification-v16 dd,
+.verify-result-v16 dd { margin: 0; overflow-wrap: anywhere; }
+.crypto-package-summary-v16 { display: grid; gap: .25rem; }
+.verify-shell-v16 { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem 2rem; }
+.verify-result-v16[data-state="valid"] { background: #eef8ef; border-color: #7da182; }
+.verify-result-v16[data-state="invalid"] { background: #fff0f0; border-color: #b87373; }
+@media (max-width: 720px) {
+  .crypto-key-summary-v16 dl,
+  .crypto-verification-v16 dl,
+  .verify-result-v16 dl { grid-template-columns: 1fr; }
+}
+@media print { .crypto-signing-v16 { display: none !important; } }

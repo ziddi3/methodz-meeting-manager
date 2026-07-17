@@ -22,7 +22,7 @@ test("v1.1 retention and partner-safe export panels load under the current schem
   }));
 
   expect(state).toEqual({
-    schema: "1.5.0",
+    schema: "1.6.0",
     retentionVersion: "1.1.0",
     redactionVersion: "1.1.0",
     publicSummaryPolicy: true,
@@ -43,7 +43,7 @@ test("saved records preserve retention and legal-hold metadata without duplicate
   await page.getByRole("button", { name: "Save Record" }).first().click();
 
   const record = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords"))[0]);
-  expect(record.schemaVersion).toBe("1.5.0");
+  expect(record.schemaVersion).toBe("1.6.0");
   expect(record.retentionMetadata.policyId).toBe("business-review-7y");
   expect(record.retentionMetadata.reviewDate).toBeTruthy();
   expect(record.retentionMetadata.legalHold.active).toBe(true);
@@ -52,6 +52,7 @@ test("saved records preserve retention and legal-hold metadata without duplicate
   expect(record.schemaAudit.valid).toBe(true);
   expect(record.externalReleaseControl.approvalRequired).toBe(true);
   expect(record.dispositionControl.approvalRequired).toBe(true);
+  expect(record.externalSignatureControl.optional).toBe(true);
 });
 
 test("active legal hold blocks permanent deletion in the Archive Vault", async ({ page }) => {

@@ -6,21 +6,22 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**Version 1.5.0**
+**Version 1.6.0**
 
 The application remains a static HTML, CSS, and JavaScript app with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
 
-Version 1.5 adds:
+Version 1.6 adds optional cryptographic signatures for exported JSON packages while preserving the v1.5 recipient-policy operations and release-receipt workflow:
 
-- recipient-policy stewardship and accountable roles;
-- approved business-purpose and information-risk metadata;
-- configurable policy review cadence;
-- a review queue for overdue, due-soon, current, undated, and inactive policies;
-- governance-version binding in external export fingerprints;
-- release receipts for approved external JSON and HTML downloads;
-- a locally chained receipt ledger with verification and export;
-- latest receipt references on active and archived source records;
-- browser smoke coverage for the new workflow.
+- ECDSA P-256 signatures with SHA-256 through Web Crypto;
+- canonical binding of package content and displayed signature metadata;
+- explicit private and public JWK import and export;
+- private keys kept in page memory only;
+- browser-local public-key registry with Active and Revoked states;
+- package, signature-metadata, and public-key-ID tamper detection;
+- standalone `verify.html` entry point;
+- signing, verification, key-lifecycle, and registry audit exports;
+- private-material rejection and public-key registry sanitation;
+- schema 1.6 migration and automated cryptographic coverage.
 
 All earlier archive, revision, recovery, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, and offline features remain available.
 
@@ -29,6 +30,7 @@ All earlier archive, revision, recovery, retention, preservation, redaction, exp
 ```text
 meeting.html   Main meeting workspace
 archive.html   Dedicated detail and print view
+verify.html    Standalone signed-package verifier
 ```
 
 ## Core principles
@@ -45,6 +47,8 @@ archive.html   Dedicated detail and print view
 - External copies remain separate from controlled source records
 - Recipient allow-lists apply only after redaction
 - Typed signatures require consent and remain excluded from external copies
+- Private signing keys never enter browser storage
+- Local key status, roles, approvals, and audits remain workflow metadata until backed by authenticated infrastructure
 - **Assigned To**, never “Owner,” for task responsibility
 - **Organizations / Representatives Present** for participating groups
 - Methodz described as a brand and operating ecosystem
@@ -54,11 +58,11 @@ archive.html   Dedicated detail and print view
 ```text
 Configuration
   config.js
-  config-v11.js through config-v15.js
+  config-v11.js through config-v16.js
 
 Schema and migration
   migrations.js
-  migrations-v10.js through migrations-v15.js
+  migrations-v10.js through migrations-v16.js
 
 Record providers
   data-adapter.js
@@ -67,11 +71,14 @@ Record providers
 Attachment provider
   attachment-adapter.js
 
+Cryptographic package boundary
+  crypto-package-core.js
+
 Core workspace
   app.js
 
 Feature layers
-  features-v03*.js through features-v15*.js
+  features-v03*.js through features-v16*.js
 
 Archive detail
   archive.js
@@ -79,12 +86,61 @@ Archive detail
   archive-v11.js
   archive-v13.js
 
+Standalone verification
+  verify.html
+  verify.js
+
 Static app shell
   manifest.webmanifest
   service-worker.js
 ```
 
 Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
+
+## v1.6 cryptographic package signatures
+
+### Recommended release flow
+
+```text
+controlled source record
+  -> redaction profile
+  -> recipient field allow-list
+  -> governance-version binding
+  -> content fingerprint
+  -> destination-bound approval
+  -> approved JSON download and release receipt
+  -> optional ECDSA package signature
+  -> independent verification
+```
+
+Signing is optional and package-level. It does not replace redaction, recipient policy, stewardship review, release approval, release receipts, retention, preservation holds, or disposition controls.
+
+### Private-key rule
+
+The application never writes private JWK material to `localStorage`. A generated or imported private key exists only in current page memory.
+
+Before refreshing or closing the page, explicitly download the private-key backup and protect it separately. Anyone who obtains that file can create signatures under the corresponding key ID.
+
+The cryptographic core rejects packages containing private JWK material. Public-key imports are normalized before storage and export. Existing malformed public-key registry entries are sanitized or removed when the workspace loads.
+
+### What verification proves
+
+A valid result confirms that:
+
+- the current JSON package matches the signed canonical package;
+- displayed signature metadata has not changed;
+- the signature was created by the private key corresponding to the included public key;
+- the included public key matches the recorded key ID.
+
+It does not independently prove:
+
+- the legal identity or authority of the signer;
+- recipient identity;
+- package delivery;
+- approval legitimacy;
+- compliance with a particular electronic-signature law.
+
+Confirm the public key ID through an independent trusted channel before relying on a signer label.
 
 ## v1.5 policy operations
 
@@ -122,9 +178,9 @@ Every successful approved external download creates a receipt containing:
 - release timestamp;
 - previous receipt digest and current receipt digest.
 
-The local ledger can be searched, verified, exported, or downloaded one receipt at a time. All legacy external-download controls are routed through the approved receipt-producing path.
+The local ledger can be searched, verified, exported, or downloaded one receipt at a time. All external-download controls route through the approved receipt-producing path.
 
-Receipt chaining uses canonical JSON and FNV-1a-32 for direct-file compatibility. This provides local change detection only. It is not a digital signature, identity proof, delivery receipt from another party, or immutable compliance ledger.
+Receipt chaining uses canonical JSON and FNV-1a-32 for direct-file compatibility. This provides local change detection only. It is not a digital signature, identity proof, delivery receipt from another party, or immutable compliance ledger. Version 1.6 package signatures are a separate optional cryptographic layer.
 
 ## Recipient-specific export policies
 
@@ -147,19 +203,6 @@ Every active policy becomes a unique runtime destination:
 
 ```text
 recipient:<policy-id>
-```
-
-The export pipeline is:
-
-```text
-controlled source record
-  -> redaction profile
-  -> recipient field allow-list
-  -> governance-version binding
-  -> integrity calculation
-  -> destination-bound approval
-  -> approved download
-  -> release receipt
 ```
 
 Recipient policies are subtractive. They can remove additional information but cannot restore anything removed by the selected redaction profile.
@@ -185,7 +228,7 @@ Permanent Archive Vault removal requires:
 5. a fingerprint matching the current archived record;
 6. final deletion confirmation.
 
-Browser-local requester, reviewer, steward, and recipient names are workflow metadata. They are not authenticated identities or legal signatures.
+Browser-local requester, reviewer, steward, recipient, signer, and key labels are workflow metadata. They are not authenticated identities or legal signatures.
 
 ## Retention and preservation
 
@@ -256,20 +299,23 @@ methodzRecipientExportPolicies
 methodzRecipientPolicyAudit
 methodzRecipientPolicyGovernance
 methodzExternalReleaseReceipts
+methodzSigningPublicKeys
+methodzSigningAudit
 ```
 
-Workspace backup captures Methodz-prefixed browser-storage entries, including the v1.5 collections.
+Workspace backup captures Methodz-prefixed browser-storage entries, including the v1.6 collections. Private key material is intentionally absent because it is never written to browser storage.
 
-Records and governance data live in the browser and device where they were created unless exported. Clearing browser data can remove them.
+Records, governance data, public keys, and audit events live in the browser and device where they were created unless exported. Clearing browser data can remove them.
 
 Recommended practice:
 
 1. Export a Workspace Backup after important meetings.
 2. Export before changing devices, browsers, or hosting origins.
 3. Keep backups in a separate protected folder or Drive location.
-4. Preserve controlled source records separately from external copies.
-5. Export approval, disposition, preservation, recipient-policy, governance, and receipt reports for important decisions.
-6. Do not treat browser-local logs or receipts as immutable remote audit records.
+4. Store private signing keys separately from signed packages and workspace backups.
+5. Preserve controlled source records separately from external copies.
+6. Export approval, disposition, preservation, recipient-policy, governance, receipt, key-registry, and signing reports for important decisions.
+7. Do not treat browser-local logs, receipts, or revocation states as immutable remote controls.
 
 ## Static deployment
 
@@ -277,7 +323,7 @@ No build step is required.
 
 Supported targets include:
 
-- direct `file:` use for the core app;
+- direct `file:` use for the core meeting workflow;
 - localhost;
 - GitHub Pages;
 - Cloudflare Pages;
@@ -286,7 +332,7 @@ Supported targets include:
 - Render static hosting;
 - any ordinary web server.
 
-Service workers and Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps the meeting workflow and uses compatibility checksums where required.
+Service workers and Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps the meeting workflow, but cryptographic availability may vary by browser context.
 
 ## Automated validation
 
@@ -294,9 +340,10 @@ GitHub Actions performs:
 
 1. JavaScript syntax checks;
 2. required static-file checks;
-3. v1.5 module-wiring and service-worker checks;
-4. manifest JSON validation;
-5. Playwright browser smoke tests.
+3. v1.6 module-wiring and service-worker checks;
+4. a Node Web Crypto signing, verification, metadata-tamper, payload-tamper, and private-material self-test;
+5. manifest JSON validation;
+6. Playwright browser smoke tests.
 
 Playwright is installed only in CI and is not a deployed dependency.
 
@@ -307,10 +354,10 @@ docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
 docs/SECURITY-AND-PRIVACY.md
 docs/RELEASE-CHECKLIST.md
-docs/V1.5-NOTES.md
-docs/V1.5-ARCHITECTURE.md
-docs/V1.5-TESTS.md
-docs/V1.5-CHANGELOG.md
+docs/V1.6-NOTES.md
+docs/V1.6-ARCHITECTURE.md
+docs/V1.6-TESTS.md
+docs/V1.6-CHANGELOG.md
 ```
 
 Earlier version-specific documents remain in `docs/` for historical context.
@@ -320,16 +367,18 @@ Earlier version-specific documents remain in `docs/` for historical context.
 ### 1.x hardening
 
 - complete browser and device regression testing;
+- strengthen key lifecycle documentation, custody procedures, rotation, and recovery drills;
 - consolidate older feature layers without breaking direct-file compatibility;
-- add optional public-key signatures only with explicit key custody and rotation design;
 - strengthen import validation and recovery simulations;
-- prepare hosted provider conformance tests.
+- prepare hosted provider conformance tests;
+- add signed example bundles without committing real private keys.
 
 ### 2.0 hosted provider
 
 - Firebase, Supabase, or Methodz API provider;
 - authenticated user accounts and server-enforced permissions;
-- organization-managed recipient policy administration;
+- organization-managed recipient policy and public-key administration;
+- durable key revocation and rotation records;
 - server-enforced retention, preservation, export approval, and disposition approval;
 - append-only remote audit and release receipt storage;
 - calendar and CRM integration;
