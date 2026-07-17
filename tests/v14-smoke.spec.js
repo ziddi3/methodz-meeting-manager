@@ -38,7 +38,7 @@ test("v1.4 recipient policy panel, migration, and API load under the current sch
     stabilityPatched: window.__methodzV14PreviewStabilityHardened
   }));
   expect(state).toEqual({
-    schema: "1.5.0",
+    schema: "1.6.0",
     version: "1.4.0",
     migration: true,
     previewPatched: true,
