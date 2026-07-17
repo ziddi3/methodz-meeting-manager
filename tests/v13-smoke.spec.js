@@ -17,7 +17,7 @@ test("v1.3 disposition panels, migration, and API load under the current schema"
     migration: window.MethodzMigrations.registry.some((entry) => entry.version === "1.3.0"),
     gate: window.__methodzV13ArchiveGatePatched
   }));
-  expect(state).toEqual({ schema: "1.5.0", version: "1.3.0", migration: true, gate: true });
+  expect(state).toEqual({ schema: "1.6.0", version: "1.3.0", migration: true, gate: true });
 });
 
 test("a separate authorized reviewer can approve fingerprint-bound disposition", async ({ page }) => {
