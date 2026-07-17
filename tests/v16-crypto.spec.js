@@ -110,7 +110,9 @@ test("private key material is removed from the browser public-key registry", asy
     audit: JSON.parse(localStorage.getItem("methodzSigningAudit") || "[]")
   }));
 
-  expect(state.registry).toEqual([]);
+  expect(state.registry).toHaveLength(1);
+  expect(state.registry[0].publicKeyJwk.d).toBeUndefined();
+  expect(state.registry[0].publicKeyJwk.key_ops).toEqual(["verify"]);
   expect(state.audit.some((event) => event.action === "public-key-registry-sanitized")).toBe(true);
   expect(JSON.stringify(state.registry)).not.toContain("private-material-must-not-remain");
 });
