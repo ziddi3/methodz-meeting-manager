@@ -62,6 +62,7 @@ jobs:
           test -f async-data-adapter.js
           test -f attachment-adapter.js
           test -f crypto-package-core.js
+          test -f workspace-package-core.js
           test -f app.js
           test -f features-v11-retention.js
           test -f features-v11-redaction.js
@@ -80,7 +81,10 @@ jobs:
           test -f features-v15.css
           test -f features-v16-crypto.js
           test -f features-v16-record-metadata.js
+          test -f features-v16-recovery.js
+          test -f features-v16-recovery-guards.js
           test -f features-v16.css
+          test -f features-v16-recovery.css
           test -f archive-v11.js
           test -f archive-v13.js
           test -f manifest.webmanifest
@@ -93,34 +97,41 @@ jobs:
           test -f tests/v15-ledger.spec.js
           test -f tests/v16-crypto.spec.js
           test -f tests/v16-crypto-core.mjs
+          test -f tests/v16-recovery-core.mjs
 
-      - name: Verify v1.6 assets are loaded
+      - name: Verify v1.6.1 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'features-v16.css' meeting.html
+          grep -q 'features-v16-recovery.css' meeting.html
           grep -q 'config-v16.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
+          grep -q 'workspace-package-core.js' meeting.html
           grep -q 'features-v16-crypto.js' meeting.html
           grep -q 'features-v16-record-metadata.js' meeting.html
+          grep -q 'features-v16-recovery.js' meeting.html
+          grep -q 'features-v16-recovery-guards.js' meeting.html
           grep -q 'config-v16.js' archive.html
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.0' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.1' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'features-v16.css' service-worker.js
-          grep -q 'config-v16.js' service-worker.js
-          grep -q 'migrations-v16.js' service-worker.js
-          grep -q 'crypto-package-core.js' service-worker.js
-          grep -q 'features-v16-crypto.js' service-worker.js
-          grep -q 'features-v16-record-metadata.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.1"' config-v16.js
+          grep -q 'features-v16-recovery.css' service-worker.js
+          grep -q 'workspace-package-core.js' service-worker.js
+          grep -q 'features-v16-recovery.js' service-worker.js
+          grep -q 'features-v16-recovery-guards.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
 
       - name: Run v1.6 Node Web Crypto self-test
         run: node tests/v16-crypto-core.mjs
+
+      - name: Run v1.6.1 recovery validation self-test
+        run: node tests/v16-recovery-core.mjs
 
       - name: Validate JSON manifest
         shell: bash
