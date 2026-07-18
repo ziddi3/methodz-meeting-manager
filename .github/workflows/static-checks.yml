@@ -96,6 +96,7 @@ jobs:
           test -f tests/v15-smoke.spec.js
           test -f tests/v15-ledger.spec.js
           test -f tests/v16-crypto.spec.js
+          test -f tests/v16-recovery.spec.js
           test -f tests/v16-crypto-core.mjs
           test -f tests/v16-recovery-core.mjs
 
@@ -140,8 +141,21 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
 
   browser-smoke-tests:
+    name: Browser checks (${{ matrix.suite }})
     runs-on: ubuntu-latest
     needs: validate-static-app
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: existing-regression
+            test_command: npx playwright test --grep-invert "recovery readiness panel|current workspace recovery drill|backup inspection blocks private JWK"
+          - suite: recovery-architecture
+            test_command: npx playwright test tests/v16-recovery.spec.js --grep "recovery readiness panel"
+          - suite: recovery-drill
+            test_command: npx playwright test tests/v16-recovery.spec.js --grep "current workspace recovery drill"
+          - suite: recovery-private-key
+            test_command: npx playwright test tests/v16-recovery.spec.js --grep "backup inspection blocks private JWK"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -171,13 +185,13 @@ jobs:
           cat /tmp/methodz-http.log
           exit 1
 
-      - name: Run browser smoke tests
-        run: npx playwright test
+      - name: Run ${{ matrix.suite }} browser tests
+        run: ${{ matrix.test_command }}
 
       - name: Upload browser traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-browser-test-results
+          name: methodz-browser-test-results-${{ matrix.suite }}
           path: test-results/
           if-no-files-found: ignore
