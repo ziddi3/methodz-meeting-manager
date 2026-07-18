@@ -2,6 +2,33 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.1
+
+### Added
+
+- Shared `workspace-package-core.js` validation and restore-planning boundary for browser and Node environments.
+- No-write Recovery Readiness panel for backup inspection and replacement-plan previews.
+- Current-workspace dry recovery drills with metadata-only browser-local history.
+- Downloadable readiness reports that exclude meeting and workspace values.
+- Final validation guards for the existing full-restore and workspace-merge apply paths.
+- Private JWK detection inside parsed workspace storage entries.
+- Entry-count, per-entry-size, and total-package-size limits.
+- Node and Playwright regression coverage for recovery planning, tampering, private-key rejection, guards, and drill logs.
+- `docs/V1.6.1-RECOVERY-HARDENING.md` operational and architectural guidance.
+
+### Changed
+
+- App-shell and service-worker cache version are now `1.6.1`; the meeting-record schema remains `1.6.0`.
+- Workspace imports are revalidated immediately before any local-storage mutation.
+- Recovery drills now provide repeatable evidence that the current workspace can be packaged, verified, and planned for restore.
+- CI validates the recovery core and complete recovery app-shell wiring.
+
+### Security notes
+
+- Workspace packages containing private JWK material are blocked from restore and merge.
+- The readiness report contains storage key names and validation metadata only, not record values.
+- Recovery drills do not replace protected off-device backups or separate private-key custody.
+
 ## 1.6.0
 
 ### Added
