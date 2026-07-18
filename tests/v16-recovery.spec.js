@@ -50,6 +50,10 @@ test("current workspace recovery drill records a passing metadata-only event", a
 });
 
 test("backup inspection blocks private JWK material without changing local data", async ({ page }) => {
+  const before = await page.evaluate(() => Object.fromEntries(
+    Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])
+  ));
+
   const packageText = await page.evaluate(() => {
     const core = window.MethodzWorkspacePackageCore;
     const entries = {
@@ -76,6 +80,9 @@ test("backup inspection blocks private JWK material without changing local data"
 
   await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Restore blocked");
   await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Private cryptographic key material");
-  const localRecords = await page.evaluate(() => localStorage.getItem("methodzMeetingRecords"));
-  expect(localRecords).toBeNull();
+
+  const after = await page.evaluate(() => Object.fromEntries(
+    Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])
+  ));
+  expect(after).toEqual(before);
 });
