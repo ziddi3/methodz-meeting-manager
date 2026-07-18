@@ -1,0 +1,80 @@
+/* Methodz Meeting Manager v1.6.1 recovery readiness presentation. */
+.workspace-recovery-v16 {
+  border-top: 4px solid #1f5f4a;
+}
+
+.recovery-badge-v16,
+.recovery-state-v16 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #e8f3ee;
+  color: #184b3b;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.recovery-result-v16 {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d6d6d6;
+  border-radius: 0.8rem;
+  background: #fafafa;
+}
+
+.recovery-result-v16.is-valid {
+  border-color: #68a58c;
+  background: #f2faf6;
+}
+
+.recovery-result-v16.has-error {
+  border-color: #b54b4b;
+  background: #fff5f5;
+}
+
+.recovery-result-v16.has-error .recovery-state-v16 {
+  background: #f7dddd;
+  color: #7e2020;
+}
+
+.recovery-issues-v16 {
+  margin: 0.8rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.recovery-issues-v16 li + li {
+  margin-top: 0.4rem;
+}
+
+.recovery-history-v16 {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.recovery-history-v16 > div {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #dddddd;
+  border-radius: 0.65rem;
+  background: #ffffff;
+}
+
+.recovery-history-v16 span,
+.recovery-history-v16 small {
+  color: #555555;
+}
+
+@media (max-width: 700px) {
+  .recovery-history-v16 > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
