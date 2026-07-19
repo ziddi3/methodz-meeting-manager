@@ -4,6 +4,7 @@
 
   const config = global.METHODZ_MEETING_CONFIG || {};
   const storageKeys = config.storageKeys || {};
+  const recoveryConfig = config.workspaceRecovery || {};
   const recoveryLogKey = storageKeys.recoveryDrillLog || "methodzRecoveryDrillLog";
   const preRestoreKey = storageKeys.preRestoreBackup || "methodzPreRestoreBackup";
   let latestReport = null;
@@ -54,11 +55,11 @@
 
     try {
       const payload = JSON.parse(await file.text());
-      const plan = getCoreV16().buildRestorePlan(payload, readCurrentWorkspaceEntriesV16(), {
-        mode: "replace",
-        preRestoreKey,
-        storageKeys
-      });
+      const plan = getCoreV16().buildRestorePlan(
+        payload,
+        readCurrentWorkspaceEntriesV16(),
+        recoveryOptionsV16("replace")
+      );
       latestReport = createDownloadableReportV16("backup-inspection", file.name, plan);
       renderRecoveryResultV16(plan, `Inspection: ${file.name}`);
       setReportButtonV16(true);
@@ -81,13 +82,12 @@
       }
 
       const payload = global.createWorkspacePackageV08();
-      const plan = getCoreV16().buildRestorePlan(payload, {}, {
-        mode: "replace",
-        preRestoreKey,
-        storageKeys
-      });
+      const plan = getCoreV16().buildRestorePlan(payload, {}, recoveryOptionsV16("replace"));
       const expected = plan.report.recognizedKeys.length;
-      const passed = plan.report.valid && plan.counts.add === expected && expected > 0;
+      const passed = plan.report.valid
+        && plan.report.checksumVerified
+        && plan.counts.add === expected
+        && expected > 0;
       const event = {
         id: uniqueIdV16("recovery-drill"),
         testedAt: new Date().toISOString(),
@@ -245,7 +245,25 @@
   function appendRecoveryEventV16(event) {
     const events = readRecoveryEventsV16();
     events.push(event);
-    global.localStorage.setItem(recoveryLogKey, JSON.stringify(events.slice(-100)));
+    global.localStorage.setItem(recoveryLogKey, JSON.stringify(events.slice(-recoveryEventLimitV16())));
+  }
+
+  function recoveryOptionsV16(mode = "merge") {
+    return {
+      mode: mode === "replace" ? "replace" : "merge",
+      preRestoreKey,
+      storageKeys,
+      limits: getCoreV16().normalizeLimits({
+        maxEntries: recoveryConfig.maximumEntries,
+        maxEntryBytes: recoveryConfig.maximumEntryBytes,
+        maxTotalBytes: recoveryConfig.maximumPackageBytes
+      })
+    };
+  }
+
+  function recoveryEventLimitV16() {
+    const configured = Number(recoveryConfig.maximumDrillEvents);
+    return Number.isFinite(configured) && configured > 0 ? Math.floor(configured) : 100;
   }
 
   function setReportButtonV16(enabled) {
@@ -282,8 +300,8 @@
   }
 
   global.MethodzRecoveryReadinessV16 = {
-    inspectWorkspacePackage: (payload) => getCoreV16().inspectWorkspacePackage(payload, { preRestoreKey, storageKeys }),
-    buildRestorePlan: (payload, currentEntries, mode = "replace") => getCoreV16().buildRestorePlan(payload, currentEntries, { mode, preRestoreKey, storageKeys }),
+    inspectWorkspacePackage: (payload) => getCoreV16().inspectWorkspacePackage(payload, recoveryOptionsV16()),
+    buildRestorePlan: (payload, currentEntries, mode = "replace") => getCoreV16().buildRestorePlan(payload, currentEntries, recoveryOptionsV16(mode)),
     readRecoveryEvents: readRecoveryEventsV16
   };
   global.runCurrentWorkspaceDrillV16 = runCurrentWorkspaceDrillV16;
