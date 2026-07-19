@@ -39,7 +39,32 @@ const tamperedPackage = structuredClone(validPackage);
 tamperedPackage.entries.methodzMeetingRecords = JSON.stringify([{ id: "meeting-1", title: "Changed" }]);
 const tamperedReport = core.inspectWorkspacePackage(tamperedPackage);
 assert.equal(tamperedReport.valid, false);
+assert.equal(tamperedReport.checksumVerified, false);
 assert.match(tamperedReport.errors.join("\n"), /checksum validation failed/i);
+
+const nonStringChecksumPackage = structuredClone(validPackage);
+nonStringChecksumPackage.checksum = { value: validPackage.checksum };
+const nonStringChecksumReport = core.inspectWorkspacePackage(nonStringChecksumPackage);
+assert.equal(nonStringChecksumReport.valid, false);
+assert.equal(nonStringChecksumReport.checksumVerified, false);
+assert.equal(nonStringChecksumReport.checksum, "");
+assert.match(nonStringChecksumReport.errors.join("\n"), /checksum must be a string/i);
+
+const skippedChecksumReport = core.inspectWorkspacePackage({
+  packageType: core.PACKAGE_TYPE,
+  packageVersion: 1,
+  entries: null,
+  checksum: validPackage.checksum
+});
+assert.equal(skippedChecksumReport.valid, false);
+assert.equal(skippedChecksumReport.checksumVerified, false);
+
+const checksumlessPackage = structuredClone(validPackage);
+delete checksumlessPackage.checksum;
+const checksumlessReport = core.inspectWorkspacePackage(checksumlessPackage);
+assert.equal(checksumlessReport.valid, true);
+assert.equal(checksumlessReport.checksumVerified, false);
+assert.match(checksumlessReport.warnings.join("\n"), /no checksum/i);
 
 const privateKeyPackage = createPackage({
   methodzSigningAudit: JSON.stringify([{ privateJwk: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "secret" } }])
@@ -55,6 +80,13 @@ const oversizedReport = core.inspectWorkspacePackage(oversizedPackage, {
 });
 assert.equal(oversizedReport.valid, false);
 assert.match(oversizedReport.errors.join("\n"), /per-entry limit|package limit/i);
+
+const normalizedLimits = core.normalizeLimits({
+  maxEntries: Number.NaN,
+  maxEntryBytes: Number.POSITIVE_INFINITY,
+  maxTotalBytes: 0
+});
+assert.deepEqual(normalizedLimits, core.DEFAULT_LIMITS);
 
 const plan = core.buildRestorePlan(validPackage, {
   methodzMeetingRecords: entries.methodzMeetingRecords,
