@@ -149,11 +149,11 @@ jobs:
       matrix:
         include:
           - suite: existing-regression
-            test_command: npx playwright test --grep-invert "recovery readiness panel|current workspace recovery drill|backup inspection blocks private JWK"
+            test_command: npx playwright test --grep-invert "^Recovery v1\\.6\\.1:"
           - suite: recovery-architecture
-            test_command: npx playwright test tests/v16-recovery.spec.js --grep "recovery readiness panel"
+            test_command: npx playwright test tests/v16-recovery.spec.js --grep "recovery readiness panel|configured package limits"
           - suite: recovery-drill
-            test_command: npx playwright test tests/v16-recovery.spec.js --grep "current workspace recovery drill"
+            test_command: npx playwright test tests/v16-recovery.spec.js --grep "current workspace recovery drill|configured drill history cap"
           - suite: recovery-private-key
             test_command: npx playwright test tests/v16-recovery.spec.js --grep "backup inspection blocks private JWK"
     steps:
