@@ -42,11 +42,11 @@
     return {
       preRestoreKey: config.storageKeys?.preRestoreBackup || "methodzPreRestoreBackup",
       storageKeys: config.storageKeys || {},
-      limits: {
-        maxEntries: Number(recovery.maximumEntries || 500),
-        maxEntryBytes: Number(recovery.maximumEntryBytes || 2 * 1024 * 1024),
-        maxTotalBytes: Number(recovery.maximumPackageBytes || 12 * 1024 * 1024)
-      }
+      limits: getCore().normalizeLimits({
+        maxEntries: recovery.maximumEntries,
+        maxEntryBytes: recovery.maximumEntryBytes,
+        maxTotalBytes: recovery.maximumPackageBytes
+      })
     };
   }
 
