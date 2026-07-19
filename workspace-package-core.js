@@ -17,10 +17,7 @@
   const PRIVATE_JWK_FIELDS = new Set(["d", "p", "q", "dp", "dq", "qi", "oth"]);
 
   function inspectWorkspacePackage(payload, options = {}) {
-    const limits = {
-      ...DEFAULT_LIMITS,
-      ...(isPlainObject(options.limits) ? options.limits : {})
-    };
+    const limits = normalizeLimits(options.limits);
     const preRestoreKey = String(options.preRestoreKey || "methodzPreRestoreBackup");
     const errors = [];
     const warnings = [];
@@ -30,6 +27,7 @@
     const privateMaterialPaths = [];
     const entrySizes = {};
     let totalBytes = 0;
+    let checksumVerified = false;
 
     if (!isPlainObject(payload)) {
       errors.push("The selected file is not a JSON object.");
@@ -113,6 +111,8 @@
       const actualChecksum = hashText(stableStringify(body));
       if (actualChecksum !== payload.checksum) {
         errors.push("Package checksum validation failed. The file may be incomplete or modified.");
+      } else {
+        checksumVerified = true;
       }
     }
 
@@ -139,8 +139,8 @@
         packageVersion: payload?.packageVersion ?? null,
         schemaVersion: String(payload?.schemaVersion || ""),
         exportedAt: String(payload?.exportedAt || ""),
-        checksum: String(payload?.checksum || ""),
-        checksumVerified: Boolean(payload?.checksum) && !errors.some((message) => message.startsWith("Package checksum validation failed")),
+        checksum: typeof payload?.checksum === "string" ? payload.checksum : "",
+        checksumVerified,
         errors,
         warnings,
         recognizedEntries: entries,
@@ -267,6 +267,20 @@
     return Boolean(value && typeof value === "object" && !Array.isArray(value));
   }
 
+  function normalizeLimits(value = {}) {
+    const source = isPlainObject(value) ? value : {};
+    return {
+      maxEntries: positiveInteger(source.maxEntries, DEFAULT_LIMITS.maxEntries),
+      maxEntryBytes: positiveInteger(source.maxEntryBytes, DEFAULT_LIMITS.maxEntryBytes),
+      maxTotalBytes: positiveInteger(source.maxTotalBytes, DEFAULT_LIMITS.maxTotalBytes)
+    };
+  }
+
+  function positiveInteger(value, fallback) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric > 0 ? Math.floor(numeric) : fallback;
+  }
+
   function parseJson(raw) {
     try {
       return { ok: true, value: JSON.parse(raw) };
@@ -313,6 +327,7 @@
     assertValidWorkspacePackage,
     buildRestorePlan,
     summarizeEntries,
+    normalizeLimits,
     hashText,
     stableStringify,
     byteLength,
