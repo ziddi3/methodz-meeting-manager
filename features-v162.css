@@ -1,0 +1,111 @@
+/* Methodz Meeting Manager v1.6.2 public-key custody workspace. */
+.key-custody-v162 {
+  border-top: 4px solid #315f86;
+}
+
+.release-badge-v162 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.6rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #315f86;
+  border-radius: 999px;
+  color: #244862;
+  background: #edf6fc;
+  font-weight: 700;
+}
+
+.key-custody-status-v162,
+.custody-manifest-result-v162,
+.custody-selected-summary-v162 {
+  margin: 0.9rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #c9d7e2;
+  border-radius: 0.65rem;
+  background: #f7fafc;
+}
+
+.key-custody-status-v162[data-state="ready"],
+.custody-manifest-result-v162[data-state="valid"] {
+  border-color: #4b8463;
+  background: #f1faf4;
+}
+
+.key-custody-status-v162[data-state="warning"] {
+  border-color: #b8842d;
+  background: #fff9ec;
+}
+
+.key-custody-status-v162[data-state="error"],
+.custody-manifest-result-v162[data-state="invalid"] {
+  border-color: #a94b4b;
+  background: #fff4f4;
+}
+
+.key-custody-v162 details {
+  margin-top: 1rem;
+  border: 1px solid #d6e0e7;
+  border-radius: 0.7rem;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.key-custody-v162 summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.key-custody-v162 .wide-field {
+  grid-column: 1 / -1;
+}
+
+.key-custody-v162 textarea {
+  min-height: 6rem;
+}
+
+.custody-selected-summary-v162 dl,
+.custody-manifest-result-v162 dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
+  gap: 0.45rem 1rem;
+  margin: 0;
+}
+
+.custody-selected-summary-v162 dt,
+.custody-manifest-result-v162 dt {
+  font-weight: 700;
+}
+
+.custody-selected-summary-v162 dd,
+.custody-manifest-result-v162 dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.danger-button-v162 {
+  background: #8c2f2f;
+  border-color: #8c2f2f;
+}
+
+.danger-button-v162:hover,
+.danger-button-v162:focus-visible {
+  background: #6f2020;
+}
+
+#cryptoSigningPanelV16 button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 720px) {
+  .custody-selected-summary-v162 dl,
+  .custody-manifest-result-v162 dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .key-custody-v162 {
+    display: none !important;
+  }
+}
