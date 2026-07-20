@@ -89,6 +89,7 @@ const APP_SHELL = [
   "./features-v16-recovery-guards.js",
   "./features-v162-key-custody.js",
   "./features-v162-startup.js",
+  "./features-v162-hardening.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
