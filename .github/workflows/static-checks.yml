@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   validate-static-app:
@@ -62,6 +64,7 @@ jobs:
           test -f async-data-adapter.js
           test -f attachment-adapter.js
           test -f crypto-package-core.js
+          test -f workspace-package-core.js
           test -f app.js
           test -f features-v11-retention.js
           test -f features-v11-redaction.js
@@ -80,7 +83,10 @@ jobs:
           test -f features-v15.css
           test -f features-v16-crypto.js
           test -f features-v16-record-metadata.js
+          test -f features-v16-recovery.js
+          test -f features-v16-recovery-guards.js
           test -f features-v16.css
+          test -f features-v16-recovery.css
           test -f archive-v11.js
           test -f archive-v13.js
           test -f manifest.webmanifest
@@ -92,35 +98,43 @@ jobs:
           test -f tests/v15-smoke.spec.js
           test -f tests/v15-ledger.spec.js
           test -f tests/v16-crypto.spec.js
+          test -f tests/v16-recovery.spec.js
           test -f tests/v16-crypto-core.mjs
+          test -f tests/v16-recovery-core.mjs
 
-      - name: Verify v1.6 assets are loaded
+      - name: Verify v1.6.1 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'features-v16.css' meeting.html
+          grep -q 'features-v16-recovery.css' meeting.html
           grep -q 'config-v16.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
+          grep -q 'workspace-package-core.js' meeting.html
           grep -q 'features-v16-crypto.js' meeting.html
           grep -q 'features-v16-record-metadata.js' meeting.html
+          grep -q 'features-v16-recovery.js' meeting.html
+          grep -q 'features-v16-recovery-guards.js' meeting.html
           grep -q 'config-v16.js' archive.html
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.0' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.1' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'features-v16.css' service-worker.js
-          grep -q 'config-v16.js' service-worker.js
-          grep -q 'migrations-v16.js' service-worker.js
-          grep -q 'crypto-package-core.js' service-worker.js
-          grep -q 'features-v16-crypto.js' service-worker.js
-          grep -q 'features-v16-record-metadata.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.1"' config-v16.js
+          grep -q 'features-v16-recovery.css' service-worker.js
+          grep -q 'workspace-package-core.js' service-worker.js
+          grep -q 'features-v16-recovery.js' service-worker.js
+          grep -q 'features-v16-recovery-guards.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
 
       - name: Run v1.6 Node Web Crypto self-test
         run: node tests/v16-crypto-core.mjs
+
+      - name: Run v1.6.1 recovery validation self-test
+        run: node tests/v16-recovery-core.mjs
 
       - name: Validate JSON manifest
         shell: bash
@@ -129,8 +143,21 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
 
   browser-smoke-tests:
+    name: Browser checks (${{ matrix.suite }})
     runs-on: ubuntu-latest
     needs: validate-static-app
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: existing-regression
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:"
+          - suite: recovery-architecture
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
+          - suite: recovery-drill
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "current workspace recovery drill|configured drill history cap"
+          - suite: recovery-private-key
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "backup inspection blocks private JWK"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -141,10 +168,22 @@ jobs:
           node-version: 22
 
       - name: Install browser test runner
-        run: npm install --no-save @playwright/test@1.53.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --silent @playwright/test@1.53.2 > /tmp/npm-install.log 2>&1 || {
+            tail -n 200 /tmp/npm-install.log
+            exit 1
+          }
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium > /tmp/playwright-install.log 2>&1 || {
+            tail -n 200 /tmp/playwright-install.log
+            exit 1
+          }
 
       - name: Start static server
         shell: bash
@@ -160,13 +199,45 @@ jobs:
           cat /tmp/methodz-http.log
           exit 1
 
-      - name: Run browser smoke tests
-        run: npx playwright test
+      - name: Run ${{ matrix.suite }} browser tests
+        shell: bash
+        run: |
+          set -o pipefail
+          ${{ matrix.test_command }} 2>&1 | tee /tmp/playwright-output.log
+
+      - name: Publish concise failure diagnostic
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          marker="<!-- methodz-ci-diagnostic:${SUITE} -->"
+          {
+            echo "$marker"
+            echo "### Browser checks failed: \`${SUITE}\`"
+            echo
+            echo "Commit: \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            tail -n 180 /tmp/playwright-output.log
+            echo '```'
+          } > /tmp/methodz-ci-comment.md
+
+          comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate --jq ".[] | select(.body | contains(\"${marker}\")) | .id" | tail -n 1)"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" --field body=@/tmp/methodz-ci-comment.md >/dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --field body=@/tmp/methodz-ci-comment.md >/dev/null
+          fi
 
       - name: Upload browser traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-browser-test-results
+          name: methodz-browser-test-results-${{ matrix.suite }}
           path: test-results/
           if-no-files-found: ignore
