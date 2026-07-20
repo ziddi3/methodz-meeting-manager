@@ -149,13 +149,13 @@ jobs:
       matrix:
         include:
           - suite: existing-regression
-            test_command: npx playwright test --grep-invert "^Recovery v1\\.6\\.1:"
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:"
           - suite: recovery-architecture
-            test_command: npx playwright test tests/v16-recovery.spec.js --grep "recovery readiness panel|configured package limits"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
           - suite: recovery-drill
-            test_command: npx playwright test tests/v16-recovery.spec.js --grep "current workspace recovery drill|configured drill history cap"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "current workspace recovery drill|configured drill history cap"
           - suite: recovery-private-key
-            test_command: npx playwright test tests/v16-recovery.spec.js --grep "backup inspection blocks private JWK"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "backup inspection blocks private JWK"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -166,10 +166,22 @@ jobs:
           node-version: 22
 
       - name: Install browser test runner
-        run: npm install --no-save @playwright/test@1.53.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --silent @playwright/test@1.53.2 > /tmp/npm-install.log 2>&1 || {
+            tail -n 200 /tmp/npm-install.log
+            exit 1
+          }
 
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium > /tmp/playwright-install.log 2>&1 || {
+            tail -n 200 /tmp/playwright-install.log
+            exit 1
+          }
 
       - name: Start static server
         shell: bash
