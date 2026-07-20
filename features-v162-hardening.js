@@ -59,12 +59,11 @@
 
     const current = readJson(custodyKey, {});
     const map = current && typeof current === "object" && !Array.isArray(current) ? current : {};
-    const stored = map[keyId] && typeof map[keyId] === "object" ? map[keyId] : {};
     const selected = {
       keyId,
-      custodian: fieldValue("custodyCustodianV162") || String(stored.custodian || ""),
-      custodyLocationReference: fieldValue("custodyLocationV162") || String(stored.custodyLocationReference || ""),
-      fingerprintVerifiedAt: localInputToIso(fieldValue("custodyVerifiedAtV162")) || String(stored.fingerprintVerifiedAt || ""),
+      custodian: fieldValue("custodyCustodianV162"),
+      custodyLocationReference: fieldValue("custodyLocationV162"),
+      fingerprintVerifiedAt: localInputToIso(fieldValue("custodyVerifiedAtV162")),
       fingerprintVerifiedBy: fieldValue("custodyVerifiedByV162"),
       fingerprintVerificationChannel: fieldValue("custodyChannelV162"),
       nextReviewDate: fieldValue("custodyNextReviewV162"),
