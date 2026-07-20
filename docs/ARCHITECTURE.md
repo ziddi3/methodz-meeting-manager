@@ -1,12 +1,12 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, policy operations, release receipts, cryptographic package signatures, and future hosted providers.
+Methodz Meeting Manager is a static, offline-first meeting-record application. Its design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, workspace recovery, governance, retention, redaction, approval, disposition, recipient policy, release receipts, cryptographic package signatures, public-key custody, and future hosted providers.
 
 ## Entry points
 
 ```text
-meeting.html   Creation, editing, dashboards, governance, approvals,
-               receipts, signing, verification, and exports
+meeting.html   Creation, editing, dashboards, governance, recovery,
+               approvals, receipts, signing, key custody, and exports
 archive.html   Dedicated record detail, audit metadata, and print surface
 verify.html    Standalone signed-package verification surface
 ```
@@ -19,32 +19,28 @@ No server, package manager, runtime dependency, or build command is required. Co
 meeting.html
   ├─ config.js
   ├─ config-v11.js through config-v16.js
+  ├─ config-v162.js
   ├─ migrations.js
   ├─ migrations-v10.js through migrations-v16.js
   ├─ data-adapter.js
   ├─ async-data-adapter.js
   ├─ attachment-adapter.js
   ├─ crypto-package-core.js
+  ├─ workspace-package-core.js
+  ├─ key-custody-core.js
   ├─ app.js
-  ├─ features-v03*.js through features-v10*.js
-  ├─ features-v11-retention.js
-  ├─ features-v11-redaction.js
-  ├─ features-v11-redaction-policy.js
-  ├─ features-v12-export-approval.js
-  ├─ features-v12-fingerprint-policy.js
-  ├─ features-v12-release-audit.js
-  ├─ features-v12-compatibility.js
-  ├─ features-v13-disposition.js
-  ├─ features-v14-recipient-policy.js
-  ├─ features-v14-policy-hardening.js
-  ├─ features-v15-policy-operations.js
-  ├─ features-v15-download-routing.js
+  ├─ features-v03*.js through features-v15*.js
   ├─ features-v16-crypto.js
-  └─ features-v16-record-metadata.js
+  ├─ features-v16-record-metadata.js
+  ├─ features-v16-recovery.js
+  ├─ features-v16-recovery-guards.js
+  ├─ features-v162-key-custody.js
+  └─ features-v162-startup.js
 
 archive.html
   ├─ config.js
   ├─ config-v11.js through config-v16.js
+  ├─ config-v162.js
   ├─ migrations.js
   ├─ migrations-v10.js through migrations-v16.js
   ├─ data-adapter.js
@@ -61,7 +57,7 @@ verify.html
 
 Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. Script order is part of the application contract because later layers intentionally wrap functions installed by earlier layers.
 
-Configuration extensions load before the migration registry runs. This allows the registry to capture schema `1.6.0` as the active schema on the main and archive entry points.
+Configuration extensions load before the migration registry. `config-v162.js` changes the app-shell version to `1.6.2` but deliberately leaves the active meeting-record schema at `1.6.0`.
 
 ## Configuration
 
@@ -70,13 +66,15 @@ Configuration extensions load before the migration registry runs. This allows th
 Versioned extensions add release-specific settings:
 
 ```text
-config-v11.js   retention presets, lifecycle states, redaction profiles
-config-v12.js   external-export approval and destination policies
-config-v13.js   disposition roles and preservation-event limits
-config-v14.js   recipient-policy storage and field catalog
-config-v15.js   policy review operations and release receipt limits
-config-v16.js   cryptographic protocol, key registry, audit limits,
-                and current schema/app-shell version
+config-v11.js    retention presets, lifecycle states, redaction profiles
+config-v12.js    external-export approval and destination policies
+config-v13.js    disposition roles and preservation-event limits
+config-v14.js    recipient-policy storage and field catalog
+config-v15.js    policy review operations and release receipt limits
+config-v16.js    cryptographic protocol, public-key registry, signing audit,
+                 recovery settings, and schema 1.6.0
+config-v162.js   key-custody storage, review cadence, verification channels,
+                 and app-shell version 1.6.2
 ```
 
 ## Migration
@@ -93,9 +91,9 @@ migrations-v15.js   release receipt references and policy-operations metadata
 migrations-v16.js   optional external signature-control metadata
 ```
 
-Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approvals, reviews, releases, preservation holds, disposition events, recipient policies, governance reviews, receipts, signatures, or key events.
+Version 1.6.2 adds no meeting-record migration because it stores public-key custody outside meeting records. Migration functions must remain ordered, idempotent, additive, and safe to run repeatedly. They must not invent approvals, reviews, releases, holds, disposition events, recipient policies, receipts, signatures, key rotations, revocations, or custody verification claims.
 
-## Provider boundaries
+## Provider and portable-core boundaries
 
 ### Synchronous records
 
@@ -127,25 +125,44 @@ The default attachment provider stores metadata references only and rejects inli
 
 ### Cryptographic package core
 
-`crypto-package-core.js` is deliberately independent from meeting storage and UI state. Its public boundary provides:
+`crypto-package-core.js` is independent from meeting storage and UI state. It provides canonical JSON, private-key-material detection, P-256 public-key normalization, key-ID derivation, key import/export, package signing, and package verification.
+
+This core is shared by the main workspace, standalone verifier, Node self-test, and future hosted provider.
+
+### Workspace package core
+
+`workspace-package-core.js` is independent from the visual recovery panel. It provides:
+
+- workspace-package parsing and type validation;
+- recognized-entry normalization;
+- checksum verification;
+- entry and package limits;
+- summary consistency checks;
+- recursive private-JWK detection;
+- no-write replacement and merge planning;
+- deterministic recovery-drill validation.
+
+The browser inspection panel and the final restore/merge guards use the same core as the Node tests.
+
+### Public-key custody core
+
+`key-custody-core.js` is independent from local storage and DOM state. It provides:
 
 ```text
 canonicalize(value)
-unsignedPackage(packageValue)
 containsPrivateKeyMaterial(value)
 normalizePublicJwk(jwk)
-publicJwkFromPrivate(jwk)
 deriveKeyId(jwk)
-generateKeyPair()
-exportPrivateJwk(key)
-exportPublicJwk(key)
-importPrivateJwk(jwk)
-importPublicJwk(jwk)
-signPackage(packageValue, privateKey, metadata)
-verifyPackage(packageValue)
+sanitizeRegistry(entries, maximumEntries)
+createManifest(registry, custodyRecords, options)
+verifyManifest(manifest, options)
+buildRotationPlan(registry, options)
+buildRevocationPlan(registry, options)
 ```
 
-This separation allows the main workspace, standalone verifier, Node self-test, and future hosted provider to share one package protocol implementation.
+The core enforces public-only P-256 JWKs, derived key-ID consistency, unique key IDs, bounded registry size, required revocation timestamps, documented operator and reason fields, and SHA-256 custody-manifest integrity.
+
+It returns plans instead of mutating browser storage. The UI layer obtains confirmation and applies plans to the browser-local registry.
 
 ## Stable core
 
@@ -174,37 +191,50 @@ This separation allows the main workspace, standalone verifier, Node self-test, 
 - source-bound external approval fingerprints;
 - destination policies, approval expiry, revocation, and approved packages.
 
-### v1.3 through v1.4
+### v1.3 through v1.5
 
 - disposition request, independent review, and approval consumption;
 - preservation-event chain verification;
 - named recipient-specific export policies;
-- recipient destination IDs, profile limits, field allow-lists, review dates, and policy snapshots;
-- stable recipient-policy fingerprinting and release metadata.
-
-### v1.5
-
-- recipient-policy stewardship and business-purpose records;
-- policy risk tiers and review cadence;
-- due-soon, overdue, current, undated, and inactive review queues;
-- governance-version binding in redacted-content fingerprints;
+- policy stewardship, risk tiers, business purpose, and review cadence;
+- governance-version binding;
 - approved external release receipts;
-- locally chained receipt verification and export;
-- receipt references on active and archived source records;
-- routing of every external-download control through the approved receipt-producing path.
+- local receipt-chain verification and export;
+- routing of every external download through an approved receipt-producing path.
 
-### v1.6
+### v1.6.0
 
 - optional ECDSA P-256 / SHA-256 package signatures;
 - canonical binding of package content and displayed signature metadata;
 - explicit private and public JWK handling;
 - memory-only private-key custody;
 - public-key ID derivation and registry sanitation;
-- browser-local Active and Revoked key workflow states;
+- browser-local Active and Revoked key states;
 - signing and verification audit exports;
-- standalone verification without meeting-record import;
-- saved-record signature metadata;
-- Node Web Crypto and Playwright cryptographic regression coverage.
+- standalone signed-package verification;
+- saved-record signature metadata.
+
+### v1.6.1
+
+- shared workspace-package validation core;
+- no-write recovery inspection and replacement plans;
+- metadata-only recovery readiness reports;
+- current-workspace dry recovery drills;
+- strict validation immediately before restore or merge;
+- private-JWK rejection in parsed workspace entries;
+- focused recovery Node and browser tests.
+
+### v1.6.2
+
+- public-key custody references and review dates;
+- independently recorded public-key fingerprint checks;
+- documented predecessor/successor rotation;
+- emergency public-key revocation;
+- bounded custody audit;
+- public custody-manifest export and verification;
+- verified public-key merge that preserves local revocations;
+- disablement of the old one-click revoke/restore lifecycle control;
+- portable Node and focused browser test coverage.
 
 ## External release and signing pipeline
 
@@ -223,7 +253,45 @@ controlled source record
 
 A later layer may only remove content or bind additional metadata. It must never restore sensitive content removed by an earlier redaction layer. Signing does not bypass or replace any release control.
 
-## Policy governance storage
+## Cryptographic and custody storage
+
+```text
+methodzSigningPublicKeys
+methodzSigningAudit
+methodzKeyCustodyMetadata
+methodzKeyCustodyAudit
+```
+
+Only public JWK material may enter these collections.
+
+`methodzSigningPublicKeys` contains public verification keys and browser-local lifecycle state. `methodzSigningAudit` contains browser-local signing and verification events. `methodzKeyCustodyMetadata` joins by derived key ID and stores non-secret custody references and fingerprint-check metadata. `methodzKeyCustodyAudit` contains browser-local custody, rotation, revocation, manifest, and merge events.
+
+Private JWK material remains in current page memory and is absent from browser storage, workspace backups, public custody manifests, signed packages, public exports, verifier reports, tests, and service-worker caches.
+
+## Rotation and manifest invariants
+
+- A predecessor and successor must be different registered public keys.
+- Both must be Active before a planned rotation.
+- Rotation revokes the predecessor and records a reason and timestamp.
+- Rotation links `replacedByKeyId` and `replacesKeyId`.
+- Emergency revocation requires operator and reason.
+- Revoked keys require a revocation timestamp.
+- The UI does not expose silent reactivation.
+- Custody-manifest verification fails on private material, key-ID mismatch, duplicate keys, malformed lifecycle data, or digest mismatch.
+- A verified manifest merge never downgrades an existing local Revoked state.
+- Browser-local lifecycle state is not organization-wide enforcement.
+
+## Recovery invariants
+
+- Inspection is no-write.
+- Import limits apply during preview and immediately before mutation.
+- Missing, malformed, skipped, or mismatched checksums do not report verified.
+- Recursive private-key material blocks restore and merge.
+- A valid recovery package is preserved before replacement or merge.
+- Recovery reports contain metadata and key names, not meeting values.
+- Dry drills write only bounded drill-result metadata.
+
+## Policy and release storage
 
 Recipient policy governance is separate from the v1.4 policy object and joins by `policyId`:
 
@@ -231,39 +299,15 @@ Recipient policy governance is separate from the v1.4 policy object and joins by
 methodzRecipientPolicyGovernance
 ```
 
-This preserves v1.4 normalization while allowing the operational layer to evolve. A completed review updates the v1.4 `reviewDate`, so existing inactive and overdue enforcement remains authoritative.
-
-## Release receipt storage
+Release receipts are stored in:
 
 ```text
 methodzExternalReleaseReceipts
 ```
 
-Receipts contain source, approval, destination, recipient policy, optional governance, profile, format, package integrity, release timestamp, and chain metadata. Canonical JSON and FNV-1a-32 provide direct-file-compatible local change detection.
+Receipts contain source, approval, destination, recipient policy, optional governance, profile, format, package integrity, release timestamp, and chain metadata. Canonical JSON and FNV-1a-32 provide direct-file-compatible local change detection, not digital signatures or delivery proof.
 
-Receipt checksums are not digital signatures, identity authentication, proof of transmission, proof of delivery, or an immutable audit service.
-
-## Cryptographic storage
-
-```text
-methodzSigningPublicKeys
-methodzSigningAudit
-```
-
-Only public JWK material may enter the key registry. The signing audit is browser-local workflow history. Neither collection is an authenticated organization-wide authority.
-
-Private JWK material remains in current page memory and is absent from browser storage, workspace backups, signed packages, public exports, verifier reports, and service-worker caches.
-
-## Source record metadata
-
-The latest release receipt updates:
-
-```text
-externalRecipientControl.lastReleaseReceiptId
-externalRecipientControl.lastReleaseReceiptAt
-externalRecipientControl.lastReleaseIntegrityAlgorithm
-externalRecipientControl.lastReleaseIntegrityDigest
-```
+## Source-record metadata
 
 The latest successful package signing may update:
 
@@ -275,22 +319,35 @@ externalSignatureControl.lastSignatureAlgorithm
 externalSignatureControl.lastVerificationAt
 ```
 
-Both active and archived source records are supported when their IDs can be resolved.
+The latest release receipt updates receipt pointers under `externalRecipientControl`. Both active and archived source records are supported when their IDs can be resolved.
+
+Public-key custody metadata deliberately remains outside meeting records so rotation and custody changes do not rewrite historical meeting content.
 
 ## Data safety
 
-- Workspace backup captures Methodz-prefixed browser-storage keys, including public-key and signing-audit collections.
+- Workspace backup captures Methodz-prefixed browser-storage keys, including public-key and custody collections.
 - Private keys are deliberately absent from workspace backup.
 - Unknown record fields survive migration.
 - Active preservation holds block permanent disposition.
-- Typed signatures and signature verification remain excluded from external copies.
-- Policy, governance, approval, receipt, public-key, and audit records remain browser-local unless exported.
-- Service workers cache application assets only, never meeting records or key material.
+- Typed signatures and verification remain excluded from external copies.
+- Policy, approval, receipt, public-key, custody, and audit records remain browser-local unless exported.
+- Service workers cache application assets only, never meeting records, workspace values, or key material.
 
 ## Hosted-provider boundary
 
-A future provider should replace local workflow assertions with authenticated identities, server-enforced permissions, organization-managed recipient policies, durable preservation holds, append-only approval and release logs, trusted timestamps, controlled key issuance and rotation, durable key revocation, independently distributed public keys, and hardware-backed or server-side signing where appropriate.
+A future provider should replace local workflow assertions with authenticated identities, server-enforced permissions, organization-managed recipient policy, durable preservation holds, append-only approval and release logs, trusted timestamps, controlled key issuance and rotation, organization-wide revocation distribution, independently distributed public keys, and hardware-backed or server-side signing where appropriate.
 
 ## Validation
 
-GitHub Actions checks JavaScript syntax, required files, HTML and service-worker wiring, manifest JSON, a Node Web Crypto package self-test, and Playwright browser workflows. Playwright is CI-only and is not a deployed dependency.
+GitHub Actions checks:
+
+- JavaScript syntax;
+- required static files and HTML/service-worker wiring;
+- manifest JSON;
+- Node Web Crypto signing and tamper tests;
+- Node workspace-package recovery tests;
+- Node public-key custody, manifest, rotation, and revocation tests;
+- focused recovery and key-custody Playwright suites;
+- complete browser regression coverage.
+
+Playwright is CI-only and is not a deployed dependency. Pull-request browser failures publish a concise diagnostic and retain full trace artifacts.
