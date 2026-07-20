@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   validate-static-app:
@@ -198,7 +200,39 @@ jobs:
           exit 1
 
       - name: Run ${{ matrix.suite }} browser tests
-        run: ${{ matrix.test_command }}
+        shell: bash
+        run: |
+          set -o pipefail
+          ${{ matrix.test_command }} 2>&1 | tee /tmp/playwright-output.log
+
+      - name: Publish concise failure diagnostic
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUITE: ${{ matrix.suite }}
+        run: |
+          set -euo pipefail
+          marker="<!-- methodz-ci-diagnostic:${SUITE} -->"
+          {
+            echo "$marker"
+            echo "### Browser checks failed: \`${SUITE}\`"
+            echo
+            echo "Commit: \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            tail -n 180 /tmp/playwright-output.log
+            echo '```'
+          } > /tmp/methodz-ci-comment.md
+
+          comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate --jq ".[] | select(.body | contains(\"${marker}\")) | .id" | tail -n 1)"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" --field body=@/tmp/methodz-ci-comment.md >/dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --field body=@/tmp/methodz-ci-comment.md >/dev/null
+          fi
 
       - name: Upload browser traces on failure
         if: failure()
