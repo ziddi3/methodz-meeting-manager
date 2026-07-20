@@ -6,19 +6,22 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**App shell 1.6.1 · Record schema 1.6.0**
+**App shell 1.6.2 · Record schema 1.6.0**
 
 The application is a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
 
-Version 1.6.1 hardens workspace recovery while preserving the v1.6 cryptographic-signature release:
+Version 1.6.2 adds documented public-key custody and lifecycle operations while preserving the v1.6 cryptographic package protocol and the v1.6.1 recovery controls:
 
-- centralized workspace-package validation shared by the browser and Node tests;
-- no-write backup inspection and restore-plan previews;
-- current-workspace dry recovery drills;
-- metadata-only readiness reports and drill history;
-- strict final guards before full restore or workspace merge;
-- checksum, size-limit, summary-consistency, and private-JWK checks;
-- automated Node and Playwright recovery regression coverage.
+- browser-local custody references for public verification keys;
+- independently recorded public-key fingerprint checks;
+- predecessor/successor key rotation with documented operator, reason, witness, and evidence reference;
+- emergency public-key revocation;
+- public custody manifests with canonical JSON and SHA-256 integrity;
+- verified public-key manifest merge that never downgrades an existing local revocation;
+- bounded custody audit export;
+- portable Node and browser test coverage;
+- memory-only private signing keys, unchanged from v1.6.0;
+- shared backup inspection, recovery drills, and strict restore/merge validation from v1.6.1.
 
 All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, and offline features remain available.
 
@@ -44,6 +47,8 @@ verify.html    Standalone signed-package verifier
 - Recipient allow-lists apply only after redaction
 - Typed signatures require consent and remain excluded from external copies
 - Private signing keys never enter browser storage
+- Public-key lifecycle changes use the documented custody workflow
+- A local Revoked key state is never downgraded by manifest import
 - Workspace imports are validated immediately before mutation
 - Recovery reports exclude meeting and workspace values
 - **Assigned To**, never “Owner,” for task responsibility
@@ -55,6 +60,7 @@ verify.html    Standalone signed-package verifier
 Configuration
   config.js
   config-v11.js through config-v16.js
+  config-v162.js
 
 Schema and migration
   migrations.js
@@ -67,9 +73,10 @@ Record providers
 Attachment provider
   attachment-adapter.js
 
-Package boundaries
+Portable package boundaries
   crypto-package-core.js
   workspace-package-core.js
+  key-custody-core.js
 
 Core workspace
   app.js
@@ -78,6 +85,8 @@ Feature layers
   features-v03*.js through features-v16*.js
   features-v16-recovery.js
   features-v16-recovery-guards.js
+  features-v162-key-custody.js
+  features-v162-startup.js
 
 Archive detail
   archive.js
@@ -96,6 +105,59 @@ Static app shell
 
 Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
 
+## Public-key custody and rotation
+
+The **Public-Key Custody & Rotation** panel appears after the cryptographic signing workspace.
+
+### Custody metadata
+
+For each registered public verification key, the app can record:
+
+- custodian or controlled role;
+- public-key custody reference;
+- fingerprint verifier label;
+- independent verification channel;
+- fingerprint verification time;
+- next review date;
+- non-secret notes.
+
+These values are browser-local operational metadata. The application cannot independently verify the human identity, role, or authority named in them.
+
+### Fingerprint verification
+
+A verification claim requires a verifier, an independent channel, and a timestamp. The actual key-ID comparison must occur through a separate trusted path such as an in-person comparison, voice call, trusted internal directory, or signed administrative record.
+
+### Rotation workflow
+
+```text
+registered active predecessor
+  -> generate or import active successor
+  -> independently verify successor public-key ID
+  -> record operator, reason, witness, and evidence reference
+  -> complete rotation
+  -> predecessor becomes Revoked
+  -> successor remains Active
+  -> predecessor and successor IDs are linked
+  -> custody and signing audit events are appended
+  -> export and distribute updated public custody manifest
+```
+
+The older one-click revoke/restore button is disabled. Revocation and rotation now require the documented v1.6.2 workflow. A revoked key is not silently restored.
+
+### Public custody manifest
+
+The exported package type is:
+
+```text
+methodz-public-key-custody-manifest
+```
+
+It includes public keys, lifecycle links, custody metadata, `privateKeysIncluded: false`, and a SHA-256 digest over canonical JSON.
+
+Verification checks public JWK structure, derived key IDs, duplicate IDs, lifecycle metadata, private-key exclusion, and package integrity. A verified manifest may be merged into the browser registry only after confirmation. Existing local revocation is preserved even if an incoming manifest says the same key is Active.
+
+See `docs/V1.6.2-KEY-CUSTODY.md` for scheduled rotation, emergency revocation, device migration, and trust-boundary procedures.
+
 ## Recovery readiness
 
 The **Recovery Readiness** panel appears after the workspace backup and merge controls.
@@ -105,7 +167,7 @@ The **Recovery Readiness** panel appears after the workspace backup and merge co
 Selecting a workspace package performs a no-write inspection that:
 
 - verifies package type and version;
-- verifies the package checksum when present;
+- verifies the package checksum;
 - checks entry count and byte limits;
 - excludes unsupported and recursive recovery keys;
 - scans parsed entries for private JWK material;
@@ -122,7 +184,7 @@ A drill packages the current workspace, validates it, and simulates restoring ev
 methodzRecoveryDrillLog
 ```
 
-The log is capped at 100 events. It does not store meeting records or workspace values.
+The default log cap is 100 events. It does not store meeting records or workspace values.
 
 ### Default import limits
 
@@ -132,7 +194,7 @@ The log is capped at 100 events. It does not store meeting records or workspace 
 12 MiB total recognized workspace data
 ```
 
-The existing v0.8 full-restore and v0.9 merge interfaces remain available. Version 1.6.1 wraps their apply functions and blocks mutation when the shared validation core rejects the selected package.
+The v0.8 full-restore and v0.9 merge interfaces remain available. Version 1.6.1 wraps their apply functions and blocks mutation when the shared validation core rejects the selected package.
 
 See `docs/V1.6.1-RECOVERY-HARDENING.md` for the threat model, drill procedure, and report format.
 
@@ -158,11 +220,21 @@ Signing is optional and package-level. It does not replace redaction, recipient 
 
 Generated or imported private JWK material exists only in current page memory. Before refreshing or closing the page, explicitly download the private-key backup and protect it separately.
 
-Workspace-package validation provides a second defense: a backup containing a private JWK is blocked from restore and merge.
+Private keys are prohibited from:
+
+- browser storage;
+- workspace backups;
+- public-key registries;
+- custody metadata;
+- custody manifests;
+- signed packages;
+- audit exports;
+- service-worker caches;
+- committed automated fixtures.
 
 ### What verification proves
 
-A valid result confirms that:
+A valid package result confirms that:
 
 - the current JSON package matches the signed canonical package;
 - displayed signature metadata has not changed;
@@ -200,7 +272,7 @@ Permanent Archive Vault removal requires:
 5. a fingerprint matching the current archived record;
 6. final deletion confirmation.
 
-Browser-local requester, reviewer, steward, recipient, signer, and key labels are workflow metadata. They are not authenticated identities or legal signatures.
+Browser-local requester, reviewer, steward, recipient, signer, custodian, operator, witness, and key labels are workflow metadata. They are not authenticated identities or legal signatures.
 
 ## Provider contracts
 
@@ -234,7 +306,7 @@ The default attachment provider stores metadata references only. It rejects base
 
 ## Browser storage and backup practice
 
-Primary v1.x collections include meeting records, drafts, templates, directories, numbering, revisions, archive records, migration state, role context, redaction logs, approvals, disposition audits, preservation events, recipient policies, release receipts, public signing keys, signing audits, and recovery drill metadata.
+Primary v1.x collections include meeting records, drafts, templates, directories, numbering, revisions, archive records, migration state, role context, redaction logs, approvals, disposition audits, preservation events, recipient policies, release receipts, public signing keys, signing audits, recovery drill metadata, public-key custody metadata, and custody audit events.
 
 Workspace backup captures Methodz-prefixed browser-storage entries. Private signing keys are intentionally absent because they are never written to browser storage.
 
@@ -245,8 +317,10 @@ Recommended practice:
 3. Export before changing devices, browsers, or hosting origins.
 4. Keep backups in a separate protected location.
 5. Store private signing keys separately from signed packages and workspace backups.
-6. Preserve controlled source records separately from external copies.
-7. Use a separate browser profile or device for full restore rehearsals.
+6. Export the public custody manifest after key lifecycle changes.
+7. Verify custody manifests on a separate browser or device before relying on them.
+8. Preserve controlled source records separately from external copies.
+9. Use a separate browser profile or device for full restore rehearsals.
 
 Clearing browser data can remove records and local governance metadata.
 
@@ -273,10 +347,12 @@ GitHub Actions performs:
 2. required static-file and app-shell wiring checks;
 3. Node Web Crypto signing and tamper tests;
 4. Node workspace-package validation and restore-plan tests;
-5. manifest JSON validation;
-6. Playwright browser regression tests.
+5. Node public-key custody, manifest, rotation, and revocation tests;
+6. manifest JSON validation;
+7. focused Playwright recovery and custody suites;
+8. complete Playwright browser regression tests.
 
-Playwright is installed only in CI and is not a deployed dependency.
+Playwright is installed only in CI and is not a deployed dependency. Pull-request browser failures publish a concise diagnostic while preserving full traces as workflow artifacts.
 
 ## Documentation
 
@@ -290,6 +366,7 @@ docs/V1.6-ARCHITECTURE.md
 docs/V1.6-TESTS.md
 docs/V1.6-CHANGELOG.md
 docs/V1.6.1-RECOVERY-HARDENING.md
+docs/V1.6.2-KEY-CUSTODY.md
 ```
 
 Earlier version-specific documents remain in `docs/` for historical context.
@@ -298,12 +375,13 @@ Earlier version-specific documents remain in `docs/` for historical context.
 
 ### 1.x hardening
 
-- complete browser and device regression testing;
-- strengthen key custody, rotation, and recovery procedures;
+- complete multi-browser and device regression testing;
+- add disposable signed example bundles without committing real private keys;
+- add hosted-provider conformance fixtures;
 - consolidate older feature layers without breaking direct-file compatibility;
-- add signed example bundles without committing real private keys;
-- prepare hosted-provider conformance tests;
-- run documented cross-device recovery rehearsals.
+- rehearse cross-device recovery and public-key rotation procedures;
+- define organization-managed public-key distribution and incident-response policy;
+- evaluate hardware-backed or OS-managed private-key options without weakening static deployment.
 
 ### 2.0 hosted provider
 
