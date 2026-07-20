@@ -82,6 +82,19 @@ const privateVerification = await custodyCore.verifyManifest(privateLeak, { maxi
 assert.equal(privateVerification.valid, false);
 assert.ok(privateVerification.errors.some((error) => error.includes("private key material")));
 
+const impossibleReviewDate = structuredClone(manifest);
+impossibleReviewDate.keys[0].custody.nextReviewDate = "2026-02-31";
+const impossibleDateVerification = await custodyCore.verifyManifest(impossibleReviewDate, { maximumEntries: 10 });
+assert.equal(impossibleDateVerification.valid, false);
+assert.ok(impossibleDateVerification.errors.some((error) => error.includes("real calendar date")));
+
+await assert.rejects(
+  () => custodyCore.createManifest([first], {
+    [first.id]: { nextReviewDate: "2026-02-31" }
+  }),
+  /real calendar date/
+);
+
 const rotation = await custodyCore.buildRotationPlan([first, second], {
   predecessorKeyId: first.id,
   successorKeyId: second.id,
