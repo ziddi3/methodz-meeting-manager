@@ -2,6 +2,35 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.2
+
+### Added
+
+- Browser-local public-key custody metadata with custodian, custody reference, fingerprint verification channel, review date, and non-secret notes.
+- Documented public-key rotation workflow linking predecessor and successor key IDs.
+- Emergency revocation workflow requiring operator and reason, with optional witness and evidence reference.
+- Portable `key-custody-core.js` shared by browser and Node environments.
+- Public custody-manifest export with canonical JSON and SHA-256 integrity.
+- Custody-manifest verification and public-key merge that preserves existing local revocations.
+- Bounded key-custody audit export.
+- `config-v162.js`, `features-v162-key-custody.js`, `features-v162-startup.js`, and `features-v162.css`.
+- Node and Playwright coverage for manifest integrity, private-key rejection, fingerprint metadata, rotation, revocation, and lifecycle links.
+- `docs/V1.6.2-KEY-CUSTODY.md` operational guidance.
+
+### Changed
+
+- App-shell and service-worker cache version are now `1.6.2`; the meeting-record schema remains `1.6.0`.
+- The previous one-click public-key revoke/restore control is disabled. Lifecycle changes now use the documented custody workflow.
+- Public custody manifests may add public keys, but an existing browser-local Revoked status is never downgraded to Active.
+- CI includes a focused key-custody browser suite and portable Node custody-core self-test.
+
+### Security notes
+
+- Private JWK material is prohibited from custody metadata, custody manifests, audit exports, and automated fixtures.
+- Fingerprint verification labels are browser-local workflow records. The independent key comparison must occur through a trusted channel outside the app.
+- Public custody manifests prove structural and digest integrity only. They do not authenticate custodians, operators, witnesses, organizations, authority, or delivery.
+- Browser-local revocation remains an operational aid until a hosted provider supplies organization-wide enforcement.
+
 ## 1.6.1
 
 ### Added
