@@ -1,16 +1,17 @@
-/* Methodz Meeting Manager v1.6 optional public-key package signing and recovery-hardening configuration. */
+/* Methodz Meeting Manager v1.6 optional public-key package signing, recovery, and custody configuration. */
 (function extendMethodzConfigurationV16(global) {
   "use strict";
 
   const config = global.METHODZ_MEETING_CONFIG || {};
 
   config.schemaVersion = "1.6.0";
-  config.appShellVersion = "1.6.1";
+  config.appShellVersion = "1.6.2";
   config.storageKeys = {
     ...(config.storageKeys || {}),
     signingPublicKeys: "methodzSigningPublicKeys",
     signingAudit: "methodzSigningAudit",
-    recoveryDrillLog: "methodzRecoveryDrillLog"
+    recoveryDrillLog: "methodzRecoveryDrillLog",
+    keyCustodyEvents: "methodzKeyCustodyEvents"
   };
 
   config.cryptographicSigning = {
@@ -27,7 +28,9 @@
       "methodz-redacted-meeting-copy",
       "methodz-workspace-backup",
       "methodz-record-export",
-      "methodz-recipient-export-policies"
+      "methodz-recipient-export-policies",
+      "methodz-public-key-custody-manifest",
+      "methodz-hosted-provider-conformance-contract"
     ]
   };
 
@@ -38,6 +41,21 @@
     maximumPackageBytes: 12582912,
     maximumDrillEvents: 100,
     restoreModes: ["replace", "merge"]
+  };
+
+  config.keyCustody = {
+    protocolVersion: "1.0.0",
+    publicManifestPackageType: "methodz-public-key-custody-manifest",
+    maximumEvents: 500,
+    requireIndependentFingerprintConfirmation: true,
+    requireEvidenceReference: true,
+    governedRevocationsRequireNewCeremony: true
+  };
+
+  config.hostedProviderConformance = {
+    contractVersion: "1.0.0",
+    implementationStatus: "contract-only",
+    remoteProviderEnabled: false
   };
 
   global.METHODZ_MEETING_CONFIG = config;
