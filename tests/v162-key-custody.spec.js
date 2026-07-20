@@ -41,6 +41,8 @@ test.describe("Key custody v1.6.2:", () => {
       shell: window.METHODZ_MEETING_CONFIG.appShellVersion,
       core: window.MethodzKeyCustodyCoreV162.version,
       workspace: window.MethodzKeyCustodyV162.version,
+      hardening: window.MethodzKeyCustodyHardeningV162.version,
+      lifecycleBlocked: window.MethodzKeyCustodyHardeningV162.isLegacyLifecycleBlocked(),
       privateStorage: window.METHODZ_MEETING_CONFIG.cryptographicSigning.privateKeyStorage
     }));
     expect(state).toEqual({
@@ -48,6 +50,8 @@ test.describe("Key custody v1.6.2:", () => {
       shell: "1.6.2",
       core: "1.6.2",
       workspace: "1.6.2",
+      hardening: "1.6.2",
+      lifecycleBlocked: true,
       privateStorage: "memory-only"
     });
 
@@ -148,5 +152,48 @@ test.describe("Key custody v1.6.2:", () => {
     expect(result.tamperedResult.digestMatches).toBe(false);
     expect(result.privateResult.valid).toBe(false);
     expect(result.privateResult.errors.some((error) => error.includes("private key material"))).toBe(true);
+  });
+
+  test("verified manifest merge preserves revocation and rotation links", async ({ page }) => {
+    page.on("dialog", (dialog) => dialog.accept());
+    const [predecessor, successor] = await seedPublicRegistry(page);
+    const packageText = await page.evaluate(async ({ predecessor, successor }) => {
+      const core = window.MethodzKeyCustodyCoreV162;
+      const local = JSON.parse(localStorage.getItem("methodzSigningPublicKeys") || "[]");
+      const rotation = await core.buildRotationPlan(local, {
+        predecessorKeyId: predecessor,
+        successorKeyId: successor,
+        operator: "Manifest rotation role",
+        reason: "Verified manifest merge test",
+        occurredAt: "2026-07-20T12:00:00.000Z"
+      });
+      const manifest = await core.createManifest(rotation.entries, {}, {
+        generatedAt: "2026-07-20T12:01:00.000Z",
+        generatedBy: "Manifest test role"
+      });
+      return JSON.stringify(manifest);
+    }, { predecessor, successor });
+
+    await page.locator("#custodyManifestFileV162").setInputFiles({
+      name: "verified-custody-manifest.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(packageText)
+    });
+    await page.getByRole("button", { name: "Verify Manifest" }).click();
+    await expect(page.locator("#custodyManifestResultV162")).toContainText("Valid Public Custody Manifest");
+    await page.getByRole("button", { name: "Merge Verified Public Keys" }).click();
+
+    const merged = await page.evaluate(({ predecessor, successor }) => {
+      const registry = JSON.parse(localStorage.getItem("methodzSigningPublicKeys") || "[]");
+      return {
+        predecessor: registry.find((entry) => entry.id === predecessor),
+        successor: registry.find((entry) => entry.id === successor)
+      };
+    }, { predecessor, successor });
+
+    expect(merged.predecessor.status).toBe("Revoked");
+    expect(merged.predecessor.replacedByKeyId).toBe(successor);
+    expect(merged.successor.status).toBe("Active");
+    expect(merged.successor.replacesKeyId).toBe(predecessor);
   });
 });
