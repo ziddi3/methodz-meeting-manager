@@ -6,6 +6,7 @@
 
   global.addEventListener("DOMContentLoaded", () => {
     blockLegacyLifecycleMutation();
+    wrapCustodyMetadataMutations();
     wrapManifestLoader();
     wrapManifestMerge();
   });
@@ -23,6 +24,63 @@
     };
     blocked.__methodzCustodyBlocked = true;
     global.togglePublicKeyStatusV16 = blocked;
+  }
+
+  function wrapCustodyMetadataMutations() {
+    [
+      "saveKeyCustodyV162",
+      "markFingerprintVerifiedV162",
+      "clearFingerprintVerificationV162"
+    ].forEach((name) => {
+      const original = global[name];
+      if (typeof original !== "function" || original.__methodzCustodyRetentionHardened) return;
+
+      const wrapped = async function custodyRetentionAwareMutation() {
+        const result = await original.apply(this, arguments);
+        const status = document.getElementById("keyCustodyStatusV162");
+        if (status?.dataset.state !== "error") preserveSelectedCustodyMetadata();
+        return result;
+      };
+      wrapped.__methodzCustodyRetentionHardened = true;
+      global[name] = wrapped;
+    });
+  }
+
+  function preserveSelectedCustodyMetadata() {
+    const config = global.METHODZ_MEETING_CONFIG || {};
+    const custodyKey = config.storageKeys?.keyCustodyMetadata || "methodzKeyCustodyMetadata";
+    const registryKey = config.storageKeys?.signingPublicKeys || "methodzSigningPublicKeys";
+    const maximumEntries = positiveNumber(config.keyCustody?.maximumCustodyEntries, 200);
+    const keyId = String(document.getElementById("custodyKeySelectV162")?.value || "").trim();
+    if (!keyId) return;
+
+    const registry = readJson(registryKey, []);
+    if (!Array.isArray(registry) || !registry.some((entry) => entry?.id === keyId)) return;
+
+    const current = readJson(custodyKey, {});
+    const map = current && typeof current === "object" && !Array.isArray(current) ? current : {};
+    const stored = map[keyId] && typeof map[keyId] === "object" ? map[keyId] : {};
+    const selected = {
+      keyId,
+      custodian: fieldValue("custodyCustodianV162") || String(stored.custodian || ""),
+      custodyLocationReference: fieldValue("custodyLocationV162") || String(stored.custodyLocationReference || ""),
+      fingerprintVerifiedAt: localInputToIso(fieldValue("custodyVerifiedAtV162")) || String(stored.fingerprintVerifiedAt || ""),
+      fingerprintVerifiedBy: fieldValue("custodyVerifiedByV162"),
+      fingerprintVerificationChannel: fieldValue("custodyChannelV162"),
+      nextReviewDate: fieldValue("custodyNextReviewV162"),
+      notes: fieldValue("custodyNotesV162"),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (global.MethodzCryptoPackageV16?.containsPrivateKeyMaterial(selected)) return;
+
+    const entries = Object.entries(map)
+      .filter(([entryKey]) => entryKey !== keyId)
+      .concat([[keyId, selected]])
+      .sort((left, right) => timestamp(right[1]?.updatedAt) - timestamp(left[1]?.updatedAt))
+      .slice(0, maximumEntries);
+
+    global.localStorage.setItem(custodyKey, JSON.stringify(Object.fromEntries(entries)));
   }
 
   function wrapManifestLoader() {
@@ -106,6 +164,30 @@
     global.mergeVerifiedCustodyManifestV162 = wrapped;
   }
 
+  function readJson(key, fallback) {
+    try {
+      const raw = global.localStorage.getItem(key);
+      return raw == null ? fallback : (JSON.parse(raw) ?? fallback);
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function fieldValue(id) {
+    return String(document.getElementById(id)?.value || "").trim();
+  }
+
+  function localInputToIso(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+  }
+
+  function timestamp(value) {
+    const time = new Date(value || 0).getTime();
+    return Number.isFinite(time) ? time : 0;
+  }
+
   function positiveNumber(value, fallback) {
     const number = Number(value);
     return Number.isFinite(number) && number > 0 ? Math.floor(number) : fallback;
@@ -114,6 +196,7 @@
   global.MethodzKeyCustodyHardeningV162 = {
     version: "1.6.2",
     isLegacyLifecycleBlocked: () => Boolean(global.togglePublicKeyStatusV16?.__methodzCustodyBlocked),
-    hasPendingManifest: () => Boolean(pendingManifest)
+    hasPendingManifest: () => Boolean(pendingManifest),
+    preserveSelectedCustodyMetadata
   };
 })(window);
