@@ -112,8 +112,17 @@
   function normalizeDateOnly(value, field) {
     const text = stringValue(value);
     if (!text) return "";
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(text) || Number.isNaN(new Date(`${text}T00:00:00.000Z`).getTime())) {
-      throw new Error(`${field} must use YYYY-MM-DD.`);
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+    if (!match) throw new Error(`${field} must use YYYY-MM-DD.`);
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    if (parsed.getUTCFullYear() !== year
+      || parsed.getUTCMonth() !== month - 1
+      || parsed.getUTCDate() !== day) {
+      throw new Error(`${field} is not a real calendar date.`);
     }
     return text;
   }
@@ -250,7 +259,7 @@
 
     try {
       normalizedKeys = await sanitizeRegistry(
-        Array.isArray(value.keys) ? value.keys.map((entry) => ({ ...entry, ...(entry.custody ? {} : {}) })) : [],
+        Array.isArray(value.keys) ? value.keys : [],
         options.maximumEntries || 200
       );
     } catch (error) {
