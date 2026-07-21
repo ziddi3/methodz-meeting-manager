@@ -6,19 +6,20 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**App shell 1.6.1 · Record schema 1.6.0**
+**App shell 1.6.2 · Record schema 1.6.0**
 
 The application is a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
 
-Version 1.6.1 hardens workspace recovery while preserving the v1.6 cryptographic-signature release:
+Version 1.6.2 adds public-key custody and rotation operations while preserving the v1.6.1 recovery-hardening layer:
 
-- centralized workspace-package validation shared by the browser and Node tests;
-- no-write backup inspection and restore-plan previews;
-- current-workspace dry recovery drills;
-- metadata-only readiness reports and drill history;
-- strict final guards before full restore or workspace merge;
-- checksum, size-limit, summary-consistency, and private-JWK checks;
-- automated Node and Playwright recovery regression coverage.
+- portable public custody-manifest construction and validation;
+- browser-local rotation, revocation, lost-key response, and recovery-rehearsal evidence;
+- public-key ID recalculation and event-reference validation;
+- completed-event operator, witness, effective-date, reason, and checklist controls;
+- fail-closed private-JWK exclusion from custody storage and exports;
+- public custody-manifest and custody-audit downloads;
+- automated Node and Playwright custody regression coverage;
+- centralized workspace-package validation, no-write inspection, dry recovery drills, and final restore or merge guards from v1.6.1.
 
 All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, and offline features remain available.
 
@@ -44,6 +45,7 @@ verify.html    Standalone signed-package verifier
 - Recipient allow-lists apply only after redaction
 - Typed signatures require consent and remain excluded from external copies
 - Private signing keys never enter browser storage
+- Public-key custody evidence never mutates registry status automatically
 - Workspace imports are validated immediately before mutation
 - Recovery reports exclude meeting and workspace values
 - **Assigned To**, never “Owner,” for task responsibility
@@ -55,6 +57,7 @@ verify.html    Standalone signed-package verifier
 Configuration
   config.js
   config-v11.js through config-v16.js
+  config-v162.js
 
 Schema and migration
   migrations.js
@@ -69,6 +72,7 @@ Attachment provider
 
 Package boundaries
   crypto-package-core.js
+  key-custody-core.js
   workspace-package-core.js
 
 Core workspace
@@ -78,6 +82,7 @@ Feature layers
   features-v03*.js through features-v16*.js
   features-v16-recovery.js
   features-v16-recovery-guards.js
+  features-v162-custody.js
 
 Archive detail
   archive.js
@@ -171,6 +176,27 @@ A valid result confirms that:
 
 It does not independently prove signer identity, authority, recipient identity, delivery, approval legitimacy, or legal compliance. Confirm public-key IDs through an independent trusted channel.
 
+## Public-key custody and rotation
+
+The v1.6.2 custody workspace records operational evidence for:
+
+- planned or completed key rotations;
+- revocation events;
+- lost-key response;
+- recovery rehearsals.
+
+The local collection is:
+
+```text
+methodzSigningCustodyEvents
+```
+
+A completed event requires an operator label, witness label, effective date, evidence note, and confirmation that private backups are separated, fingerprints were independently confirmed, registry status was reviewed, and recovery evidence was captured.
+
+Custody exports include public JWKs and lifecycle metadata only. The core recalculates each `p256:` key ID and blocks private `d` parameters. Recording a custody event does not automatically revoke or restore a key; registry status remains an explicit separate action.
+
+See `docs/KEY-CUSTODY-OPERATIONS.md` for the rotation, lost-key, and recovery-rehearsal procedures.
+
 ## External release controls
 
 External release approval is bound to:
@@ -232,9 +258,13 @@ healthCheck()
 
 The default attachment provider stores metadata references only. It rejects base64 and `data:` binary payloads.
 
+### Hosted custody provider invariants
+
+A future hosted provider may synchronize public keys and custody events only if it preserves derived key IDs, excludes private JWKs from every payload and log, keeps direct-file exports independently valid, and does not treat provider state as identity proof.
+
 ## Browser storage and backup practice
 
-Primary v1.x collections include meeting records, drafts, templates, directories, numbering, revisions, archive records, migration state, role context, redaction logs, approvals, disposition audits, preservation events, recipient policies, release receipts, public signing keys, signing audits, and recovery drill metadata.
+Primary v1.x collections include meeting records, drafts, templates, directories, numbering, revisions, archive records, migration state, role context, redaction logs, approvals, disposition audits, preservation events, recipient policies, release receipts, public signing keys, signing audits, public custody events, and recovery drill metadata.
 
 Workspace backup captures Methodz-prefixed browser-storage entries. Private signing keys are intentionally absent because they are never written to browser storage.
 
@@ -244,9 +274,10 @@ Recommended practice:
 2. Run a recovery drill after material workflow or browser changes.
 3. Export before changing devices, browsers, or hosting origins.
 4. Keep backups in a separate protected location.
-5. Store private signing keys separately from signed packages and workspace backups.
+5. Store private signing keys separately from signed packages, public custody manifests, and workspace backups.
 6. Preserve controlled source records separately from external copies.
 7. Use a separate browser profile or device for full restore rehearsals.
+8. Independently confirm public-key IDs after generation, import, or rotation.
 
 Clearing browser data can remove records and local governance metadata.
 
@@ -273,8 +304,9 @@ GitHub Actions performs:
 2. required static-file and app-shell wiring checks;
 3. Node Web Crypto signing and tamper tests;
 4. Node workspace-package validation and restore-plan tests;
-5. manifest JSON validation;
-6. Playwright browser regression tests.
+5. Node public-key custody manifest tests;
+6. manifest JSON validation;
+7. isolated Playwright browser regression suites, including custody operations.
 
 Playwright is installed only in CI and is not a deployed dependency.
 
@@ -290,6 +322,10 @@ docs/V1.6-ARCHITECTURE.md
 docs/V1.6-TESTS.md
 docs/V1.6-CHANGELOG.md
 docs/V1.6.1-RECOVERY-HARDENING.md
+docs/V1.6.2-NOTES.md
+docs/V1.6.2-ARCHITECTURE.md
+docs/V1.6.2-TESTS.md
+docs/KEY-CUSTODY-OPERATIONS.md
 ```
 
 Earlier version-specific documents remain in `docs/` for historical context.
@@ -298,12 +334,11 @@ Earlier version-specific documents remain in `docs/` for historical context.
 
 ### 1.x hardening
 
-- complete browser and device regression testing;
-- strengthen key custody, rotation, and recovery procedures;
+- complete Firefox, WebKit, mobile, and cross-device regression testing;
+- add repository fixtures signed only with disposable test keys;
 - consolidate older feature layers without breaking direct-file compatibility;
-- add signed example bundles without committing real private keys;
 - prepare hosted-provider conformance tests;
-- run documented cross-device recovery rehearsals.
+- run documented cross-device recovery and key-rotation rehearsals.
 
 ### 2.0 hosted provider
 
