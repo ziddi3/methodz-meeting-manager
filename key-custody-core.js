@@ -76,6 +76,9 @@
 
   async function sanitizeKey(entry, cryptoCore) {
     if (!cryptoCore) throw new Error("The Methodz cryptographic package core is required.");
+    if (containsPrivateKeyMaterial(entry)) {
+      throw new Error(`Private key material is prohibited in custody key entries${entry?.id ? ` (${entry.id})` : ""}.`);
+    }
     const publicKeyJwk = cryptoCore.normalizePublicJwk(entry?.publicKeyJwk);
     const derivedId = await cryptoCore.deriveKeyId(publicKeyJwk);
     if (entry?.id && entry.id !== derivedId) throw new Error(`Public key ID mismatch for ${entry.id}.`);
