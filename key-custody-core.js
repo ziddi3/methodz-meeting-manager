@@ -8,17 +8,11 @@
   const EVENT_STATUSES = new Set(["Planned", "Completed", "Cancelled"]);
   const PRIVATE_CONTAINER_KEYS = new Set(["privatekey", "privatekeyjwk", "privatejwk", "secretkey"]);
 
-  function clone(value) {
-    return value == null ? value : JSON.parse(JSON.stringify(value));
-  }
-
   function containsPrivateKeyMaterial(value, seen = new WeakSet()) {
     if (!value || typeof value !== "object") return false;
     if (seen.has(value)) return false;
     seen.add(value);
-
     if (!Array.isArray(value) && value.kty === "EC" && typeof value.d === "string" && value.d) return true;
-
     return Object.entries(value).some(([key, child]) => {
       if (PRIVATE_CONTAINER_KEYS.has(String(key).toLowerCase()) && child != null) return true;
       return containsPrivateKeyMaterial(child, seen);
@@ -39,7 +33,6 @@
     const status = String(value.status || "Planned").trim();
     if (!EVENT_TYPES.has(eventType)) throw new Error(`Unsupported custody event type: ${eventType || "missing"}.`);
     if (!EVENT_STATUSES.has(status)) throw new Error(`Unsupported custody event status: ${status || "missing"}.`);
-
     return {
       id: String(value.id || `custody-${Date.now()}-${Math.random().toString(16).slice(2)}`),
       eventType,
@@ -68,17 +61,13 @@
     if (!event.reason) errors.push(`${event.id}: reason or evidence note is required.`);
     if (event.status === "Completed" && !event.witnessLabel) errors.push(`${event.id}: completed events require a witness label.`);
     if (!event.effectiveAt || Number.isNaN(new Date(event.effectiveAt).getTime())) errors.push(`${event.id}: effective date is missing or invalid.`);
-    if (event.status === "Completed" && Object.values(event.checklist).some((item) => !item)) {
-      errors.push(`${event.id}: completed events require every custody checklist control.`);
-    }
+    if (event.status === "Completed" && Object.values(event.checklist).some((item) => !item)) errors.push(`${event.id}: completed events require every custody checklist control.`);
     return errors;
   }
 
   async function sanitizeKey(entry, cryptoCore) {
     if (!cryptoCore) throw new Error("The Methodz cryptographic package core is required.");
-    if (containsPrivateKeyMaterial(entry)) {
-      throw new Error(`Private key material is prohibited in custody key entries${entry?.id ? ` (${entry.id})` : ""}.`);
-    }
+    if (containsPrivateKeyMaterial(entry)) throw new Error(`Private key material is prohibited in custody key entries${entry?.id ? ` (${entry.id})` : ""}.`);
     const publicKeyJwk = cryptoCore.normalizePublicJwk(entry?.publicKeyJwk);
     const derivedId = await cryptoCore.deriveKeyId(publicKeyJwk);
     if (entry?.id && entry.id !== derivedId) throw new Error(`Public key ID mismatch for ${entry.id}.`);
@@ -102,7 +91,6 @@
     const events = (Array.isArray(input.events) ? input.events : []).map(normalizeEvent);
     const errors = events.flatMap((event) => validateEventReferences(event, knownKeyIds));
     if (errors.length) throw new Error(errors.join(" "));
-
     const manifest = {
       packageType: PACKAGE_TYPE,
       packageVersion: 1,
@@ -114,7 +102,6 @@
       events: events.sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
       notice: "Public verification keys and browser-local custody metadata only. No private signing material is included. Confirm key fingerprints through an independent trusted channel."
     };
-
     if (containsPrivateKeyMaterial(manifest)) throw new Error("Private key material was detected in the custody manifest.");
     return manifest;
   }
@@ -127,7 +114,6 @@
     if (value?.protocolVersion !== PROTOCOL_VERSION) errors.push("Unsupported custody protocol version.");
     if (value?.privateKeysIncluded !== false) errors.push("The manifest must explicitly declare that private keys are excluded.");
     if (containsPrivateKeyMaterial(value)) errors.push("Private key material is prohibited in custody manifests.");
-
     const keys = [];
     for (const entry of Array.isArray(value?.keys) ? value.keys : []) {
       try {
@@ -137,7 +123,6 @@
       }
     }
     if (!Array.isArray(value?.keys)) errors.push("The custody manifest keys collection is missing.");
-
     const knownKeyIds = new Set(keys.map((entry) => entry.id));
     for (const raw of Array.isArray(value?.events) ? value.events : []) {
       try {
@@ -147,7 +132,6 @@
       }
     }
     if (!Array.isArray(value?.events)) errors.push("The custody manifest events collection is missing.");
-
     return {
       valid: errors.length === 0,
       errors: [...new Set(errors)],
