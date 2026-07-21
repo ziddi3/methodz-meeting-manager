@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test("v1.6.2 key custody workspace loads without changing record schema", async ({ page }) => {
+test("Custody v1.6.2: workspace loads without changing record schema", async ({ page }) => {
   await expect(page.locator("#keyCustodyPanelV162")).toBeVisible();
   const state = await page.evaluate(() => ({
     schema: window.METHODZ_MEETING_CONFIG.schemaVersion,
@@ -19,7 +19,7 @@ test("v1.6.2 key custody workspace loads without changing record schema", async 
   expect(state).toEqual({ schema: "1.6.0", shell: "1.6.2", core: "1.6.2", workspace: "1.6.2" });
 });
 
-test("completed rotation ceremony produces a private-key-free public manifest", async ({ page }) => {
+test("Custody v1.6.2: completed rotation produces a private-key-free public manifest", async ({ page }) => {
   const keyIds = await page.evaluate(async () => {
     const core = window.MethodzCryptoPackageV16;
     const entries = [];
@@ -75,7 +75,7 @@ test("completed rotation ceremony produces a private-key-free public manifest", 
   expect(JSON.stringify(result.manifest)).not.toContain('"d"');
 });
 
-test("completed custody events fail closed when checklist evidence is incomplete", async ({ page }) => {
+test("Custody v1.6.2: completed events fail closed when checklist evidence is incomplete", async ({ page }) => {
   const keyId = await page.evaluate(async () => {
     const core = window.MethodzCryptoPackageV16;
     const pair = await core.generateKeyPair();
