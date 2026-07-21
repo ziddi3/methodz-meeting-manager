@@ -19,7 +19,7 @@ async function choosePackage(page, packageValue) {
   });
 }
 
-test.describe("Portable signed fixture v1.6.2", () => {
+test.describe("Portable signed fixture v1.6.2:", () => {
   test("standalone verifier accepts the disposable signed package", async ({ page, browserName }) => {
     await page.goto("/verify.html");
     await choosePackage(page, fixturePath);
