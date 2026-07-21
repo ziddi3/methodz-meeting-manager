@@ -86,6 +86,56 @@ test.describe("Key custody v1.6.2:", () => {
     expect(result.privatePresent).toBe(false);
   });
 
+  test("retention caps keep the selected update and allow verification clearing", async ({ page }) => {
+    page.on("dialog", (dialog) => dialog.accept());
+    const [predecessor, successor] = await seedPublicRegistry(page);
+    await page.reload();
+
+    await page.evaluate(({ predecessor, successor }) => {
+      window.METHODZ_MEETING_CONFIG.keyCustody.maximumCustodyEntries = 2;
+      localStorage.setItem("methodzKeyCustodyMetadata", JSON.stringify({
+        [predecessor]: {
+          keyId: predecessor,
+          custodian: "Older selected custodian",
+          fingerprintVerifiedAt: "2026-07-20T01:00:00.000Z",
+          fingerprintVerifiedBy: "Prior verifier",
+          fingerprintVerificationChannel: "Voice call comparison",
+          nextReviewDate: "2027-01-16",
+          updatedAt: "2026-07-20T01:00:00.000Z"
+        },
+        [successor]: {
+          keyId: successor,
+          custodian: "Successor custodian",
+          updatedAt: "2026-07-20T02:00:00.000Z"
+        },
+        "orphan-old-entry": {
+          keyId: "orphan-old-entry",
+          custodian: "Old orphan",
+          updatedAt: "2020-01-01T00:00:00.000Z"
+        }
+      }));
+    }, { predecessor, successor });
+
+    await page.locator("#custodyKeySelectV162").selectOption(predecessor);
+    await page.getByRole("button", { name: "Clear Verification Claim" }).click();
+
+    const result = await page.evaluate((predecessor) => {
+      const metadata = JSON.parse(localStorage.getItem("methodzKeyCustodyMetadata") || "{}");
+      return {
+        keys: Object.keys(metadata),
+        selected: metadata[predecessor]
+      };
+    }, predecessor);
+
+    expect(result.keys).toHaveLength(2);
+    expect(result.keys).toContain(predecessor);
+    expect(result.keys).not.toContain("orphan-old-entry");
+    expect(result.selected.custodian).toBe("Older selected custodian");
+    expect(result.selected.fingerprintVerifiedAt).toBe("");
+    expect(result.selected.fingerprintVerifiedBy).toBe("");
+    expect(result.selected.fingerprintVerificationChannel).toBe("");
+  });
+
   test("documented rotation revokes the predecessor and links the successor", async ({ page }) => {
     page.on("dialog", (dialog) => dialog.accept());
     const [predecessor, successor] = await seedPublicRegistry(page);
