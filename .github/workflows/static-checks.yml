@@ -107,6 +107,10 @@ jobs:
           test -f tests/v16-recovery-core.mjs
           test -f tests/v162-custody.spec.js
           test -f tests/v162-custody-core.mjs
+          test -f tests/generate-v162-disposable-fixture.mjs
+          test -f tests/v162-fixture-core.mjs
+          test -f tests/v162-fixture.spec.js
+          test -f docs/V1.6.2-VERIFICATION-CONFORMANCE.md
 
       - name: Verify v1.6.2 assets are loaded
         shell: bash
@@ -149,6 +153,20 @@ jobs:
       - name: Run v1.6.2 key custody self-test
         run: node tests/v162-custody-core.mjs
 
+      - name: Generate disposable public verification fixture
+        run: node tests/generate-v162-disposable-fixture.mjs
+
+      - name: Verify disposable fixture with the Node core
+        run: node tests/v162-fixture-core.mjs
+
+      - name: Upload disposable signed fixture
+        uses: actions/upload-artifact@v4
+        with:
+          name: methodz-v162-disposable-signed-fixture
+          path: .methodz-ci/fixtures/methodz-v162-disposable-signed-package.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Validate JSON manifest
         shell: bash
         run: |
@@ -156,7 +174,7 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
 
   browser-smoke-tests:
-    name: Browser checks (${{ matrix.suite }})
+    name: Browser checks (${{ matrix.suite }} / ${{ matrix.browser }})
     runs-on: ubuntu-latest
     needs: validate-static-app
     strategy:
@@ -164,15 +182,32 @@ jobs:
       matrix:
         include:
           - suite: existing-regression
-            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:|^Custody v1\\.6\\.2:"
+            browser: chromium
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:|^Custody v1\\.6\\.2:|^Portable signed fixture v1\\.6\\.2:"
           - suite: recovery-architecture
+            browser: chromium
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
           - suite: recovery-drill
+            browser: chromium
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "current workspace recovery drill|configured drill history cap"
           - suite: recovery-private-key
+            browser: chromium
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "backup inspection blocks private JWK"
           - suite: custody-operations
+            browser: chromium
             test_command: npx playwright test tests/v162-custody.spec.js --reporter=line
+          - suite: portable-fixture
+            browser: chromium
+            test_command: npx playwright test tests/v162-fixture.spec.js --reporter=line
+          - suite: portable-fixture
+            browser: firefox
+            test_command: npx playwright test tests/v162-fixture.spec.js --reporter=line
+          - suite: portable-fixture
+            browser: webkit
+            test_command: npx playwright test tests/v162-fixture.spec.js --reporter=line
+    env:
+      METHODZ_BROWSER: ${{ matrix.browser }}
+      METHODZ_FIXTURE_PATH: .methodz-ci/fixtures/methodz-v162-disposable-signed-package.json
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -191,14 +226,17 @@ jobs:
             exit 1
           }
 
-      - name: Install Chromium
+      - name: Install ${{ matrix.browser }}
         shell: bash
         run: |
           set -euo pipefail
-          npx playwright install --with-deps chromium > /tmp/playwright-install.log 2>&1 || {
+          npx playwright install --with-deps "${{ matrix.browser }}" > /tmp/playwright-install.log 2>&1 || {
             tail -n 200 /tmp/playwright-install.log
             exit 1
           }
+
+      - name: Generate disposable public verification fixture
+        run: node tests/generate-v162-disposable-fixture.mjs "$METHODZ_FIXTURE_PATH"
 
       - name: Start static server
         shell: bash
@@ -214,7 +252,7 @@ jobs:
           cat /tmp/methodz-http.log
           exit 1
 
-      - name: Run ${{ matrix.suite }} browser tests
+      - name: Run ${{ matrix.suite }} browser tests in ${{ matrix.browser }}
         shell: bash
         run: |
           set -o pipefail
@@ -228,12 +266,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           SUITE: ${{ matrix.suite }}
+          BROWSER: ${{ matrix.browser }}
         run: |
           set -euo pipefail
-          marker="<!-- methodz-ci-diagnostic:${SUITE} -->"
+          marker="<!-- methodz-ci-diagnostic:${SUITE}:${BROWSER} -->"
           {
             echo "$marker"
-            echo "### Browser checks failed: \`${SUITE}\`"
+            echo "### Browser checks failed: \`${SUITE}\` / \`${BROWSER}\`"
             echo
             echo "Commit: \`${GITHUB_SHA}\`"
             echo
@@ -253,6 +292,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-browser-test-results-${{ matrix.suite }}
+          name: methodz-browser-test-results-${{ matrix.suite }}-${{ matrix.browser }}
           path: test-results/
           if-no-files-found: ignore

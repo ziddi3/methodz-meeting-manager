@@ -8,7 +8,7 @@ module.exports = defineConfig({
   reporter: "line",
   use: {
     baseURL: "http://127.0.0.1:4173",
-    browserName: "chromium",
+    browserName: process.env.METHODZ_BROWSER || "chromium",
     headless: true,
     trace: "retain-on-failure"
   }
