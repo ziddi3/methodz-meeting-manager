@@ -163,7 +163,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: methodz-v162-disposable-signed-fixture
-          path: test-results/fixtures/methodz-v162-disposable-signed-package.json
+          path: .methodz-ci/fixtures/methodz-v162-disposable-signed-package.json
           if-no-files-found: error
           retention-days: 7
 
@@ -207,7 +207,7 @@ jobs:
             test_command: npx playwright test tests/v162-fixture.spec.js --reporter=line
     env:
       METHODZ_BROWSER: ${{ matrix.browser }}
-      METHODZ_FIXTURE_PATH: test-results/fixtures/methodz-v162-disposable-signed-package.json
+      METHODZ_FIXTURE_PATH: .methodz-ci/fixtures/methodz-v162-disposable-signed-package.json
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
