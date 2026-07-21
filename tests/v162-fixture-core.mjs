@@ -17,7 +17,7 @@ await import("../crypto-package-core.js");
 
 const core = globalThis.MethodzCryptoPackageV16;
 const fixturePath = path.resolve(
-  process.argv[2] || "test-results/fixtures/methodz-v162-disposable-signed-package.json"
+  process.argv[2] || ".methodz-ci/fixtures/methodz-v162-disposable-signed-package.json"
 );
 const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
