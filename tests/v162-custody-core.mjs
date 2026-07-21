@@ -85,6 +85,20 @@ const privateRejected = await custodyCore.validateManifest(prohibited, cryptoCor
 assert.equal(privateRejected.valid, false);
 assert.equal(privateRejected.privateMaterialPresent, true);
 
+const privatePair = await cryptoCore.generateKeyPair();
+const privateJwk = await cryptoCore.exportPrivateJwk(privatePair.privateKey);
+await assert.rejects(
+  custodyCore.buildManifest({
+    keys: [{
+      ...first,
+      id: await cryptoCore.deriveKeyId(privateJwk),
+      publicKeyJwk: privateJwk
+    }],
+    events: []
+  }, cryptoCore),
+  /Private key material is prohibited/i
+);
+
 await assert.rejects(
   custodyCore.buildManifest({ keys: [first], events: [{
     eventType: "rotation",
