@@ -3,7 +3,7 @@ const path = require("node:path");
 const { test, expect } = require("@playwright/test");
 
 const fixturePath = path.resolve(
-  process.env.METHODZ_FIXTURE_PATH || "test-results/fixtures/methodz-v162-disposable-signed-package.json"
+  process.env.METHODZ_FIXTURE_PATH || ".methodz-ci/fixtures/methodz-v162-disposable-signed-package.json"
 );
 
 async function choosePackage(page, packageValue) {
