@@ -2,6 +2,31 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.2
+
+### Added
+
+- Portable `key-custody-core.js` public custody-manifest boundary.
+- Browser workspace for rotation, revocation, lost-key response, and recovery-rehearsal evidence.
+- Public custody-manifest and custody-audit exports.
+- Operator, witness, effective-date, reason, and checklist controls for completed events.
+- Derived-key-ID, event-reference, same-key rotation, invalid-date, and private-JWK validation.
+- Node and Playwright custody regression coverage.
+- Key custody architecture, release, test, and operator documentation.
+
+### Changed
+
+- App-shell and service-worker cache version are now `1.6.2`; the meeting-record schema remains `1.6.0`.
+- Public key custody metadata is stored separately from the v1.6 public-key registry.
+- CI validates custody files, app-shell wiring, the portable core, and browser ceremonies.
+
+### Security notes
+
+- Custody storage and exports reject private JWK material.
+- Recording an event never silently changes registry revocation state.
+- Public-key IDs must be confirmed through an independent trusted channel.
+- Browser-local custody events are process evidence, not immutable proof of identity, authority, approval, or delivery.
+
 ## 1.6.1
 
 ### Added
