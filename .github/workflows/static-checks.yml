@@ -52,6 +52,7 @@ jobs:
           test -f config-v14.js
           test -f config-v15.js
           test -f config-v16.js
+          test -f config-v162.js
           test -f migrations.js
           test -f migrations-v10.js
           test -f migrations-v11.js
@@ -64,6 +65,7 @@ jobs:
           test -f async-data-adapter.js
           test -f attachment-adapter.js
           test -f crypto-package-core.js
+          test -f key-custody-core.js
           test -f workspace-package-core.js
           test -f app.js
           test -f features-v11-retention.js
@@ -87,6 +89,8 @@ jobs:
           test -f features-v16-recovery-guards.js
           test -f features-v16.css
           test -f features-v16-recovery.css
+          test -f features-v162-custody.js
+          test -f features-v162.css
           test -f archive-v11.js
           test -f archive-v13.js
           test -f manifest.webmanifest
@@ -101,32 +105,38 @@ jobs:
           test -f tests/v16-recovery.spec.js
           test -f tests/v16-crypto-core.mjs
           test -f tests/v16-recovery-core.mjs
+          test -f tests/v162-custody.spec.js
+          test -f tests/v162-custody-core.mjs
 
-      - name: Verify v1.6.1 assets are loaded
+      - name: Verify v1.6.2 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'features-v16.css' meeting.html
           grep -q 'features-v16-recovery.css' meeting.html
+          grep -q 'features-v162.css' meeting.html
           grep -q 'config-v16.js' meeting.html
+          grep -q 'config-v162.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
+          grep -q 'key-custody-core.js' meeting.html
           grep -q 'workspace-package-core.js' meeting.html
           grep -q 'features-v16-crypto.js' meeting.html
           grep -q 'features-v16-record-metadata.js' meeting.html
+          grep -q 'features-v162-custody.js' meeting.html
           grep -q 'features-v16-recovery.js' meeting.html
           grep -q 'features-v16-recovery-guards.js' meeting.html
           grep -q 'config-v16.js' archive.html
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.1' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.2' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'appShellVersion = "1.6.1"' config-v16.js
-          grep -q 'features-v16-recovery.css' service-worker.js
-          grep -q 'workspace-package-core.js' service-worker.js
-          grep -q 'features-v16-recovery.js' service-worker.js
-          grep -q 'features-v16-recovery-guards.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.2"' config-v162.js
+          grep -q 'features-v162.css' service-worker.js
+          grep -q 'config-v162.js' service-worker.js
+          grep -q 'key-custody-core.js' service-worker.js
+          grep -q 'features-v162-custody.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
 
@@ -135,6 +145,9 @@ jobs:
 
       - name: Run v1.6.1 recovery validation self-test
         run: node tests/v16-recovery-core.mjs
+
+      - name: Run v1.6.2 key custody self-test
+        run: node tests/v162-custody-core.mjs
 
       - name: Validate JSON manifest
         shell: bash
@@ -151,13 +164,15 @@ jobs:
       matrix:
         include:
           - suite: existing-regression
-            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:"
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:|^Custody v1\\.6\\.2:"
           - suite: recovery-architecture
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
           - suite: recovery-drill
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "current workspace recovery drill|configured drill history cap"
           - suite: recovery-private-key
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "backup inspection blocks private JWK"
+          - suite: custody-operations
+            test_command: npx playwright test tests/v162-custody.spec.js --reporter=line
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
