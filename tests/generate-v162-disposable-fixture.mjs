@@ -6,9 +6,11 @@ import { webcrypto } from "node:crypto";
 /*
  * Generates a synthetic signed package for verification tests.
  *
- * The P-256 private key exists only in this short-lived Node process. It is
- * never written to disk, printed, returned, or committed. The output contains
- * only synthetic meeting data, the public verification key, and the signature.
+ * The P-256 private key exists only in this short-lived Node process. Although
+ * it is exported to an in-memory JWK for the signing-core interface, it never
+ * leaves the process through disk, logs, artifacts, browser storage, or source
+ * control. The output contains only synthetic meeting data, the public
+ * verification key, and the signature.
  */
 
 globalThis.window = globalThis;
