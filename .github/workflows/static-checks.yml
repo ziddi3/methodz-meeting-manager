@@ -53,6 +53,7 @@ jobs:
           test -f config-v15.js
           test -f config-v16.js
           test -f config-v162.js
+          test -f config-v163.js
           test -f migrations.js
           test -f migrations-v10.js
           test -f migrations-v11.js
@@ -61,6 +62,9 @@ jobs:
           test -f migrations-v14.js
           test -f migrations-v15.js
           test -f migrations-v16.js
+          test -f provider-contract.js
+          test -f hosted-provider-adapters.js
+          test -f provider-conformance.js
           test -f data-adapter.js
           test -f async-data-adapter.js
           test -f attachment-adapter.js
@@ -110,9 +114,12 @@ jobs:
           test -f tests/generate-v162-disposable-fixture.mjs
           test -f tests/v162-fixture-core.mjs
           test -f tests/v162-fixture.spec.js
+          test -f tests/v163-provider-conformance.mjs
           test -f docs/V1.6.2-VERIFICATION-CONFORMANCE.md
+          test -f docs/V1.6.3-PROVIDER-CONTRACT.md
+          test -f docs/V1.6.3-TESTS.md
 
-      - name: Verify v1.6.2 assets are loaded
+      - name: Verify v1.6.3 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
@@ -121,7 +128,10 @@ jobs:
           grep -q 'features-v162.css' meeting.html
           grep -q 'config-v16.js' meeting.html
           grep -q 'config-v162.js' meeting.html
+          grep -q 'config-v163.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
+          grep -q 'provider-contract.js' meeting.html
+          grep -q 'hosted-provider-adapters.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
           grep -q 'key-custody-core.js' meeting.html
           grep -q 'workspace-package-core.js' meeting.html
@@ -134,11 +144,12 @@ jobs:
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.2' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.3' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'appShellVersion = "1.6.2"' config-v162.js
-          grep -q 'features-v162.css' service-worker.js
-          grep -q 'config-v162.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.3"' config-v163.js
+          grep -q 'config-v163.js' service-worker.js
+          grep -q 'provider-contract.js' service-worker.js
+          grep -q 'hosted-provider-adapters.js' service-worker.js
           grep -q 'key-custody-core.js' service-worker.js
           grep -q 'features-v162-custody.js' service-worker.js
           grep -q 'verify.html' service-worker.js
@@ -172,6 +183,21 @@ jobs:
         run: |
           set -euo pipefail
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
+
+  provider-conformance:
+    name: Hosted provider conformance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run disposable memory and local provider contract suite
+        run: node tests/v163-provider-conformance.mjs
 
   browser-smoke-tests:
     name: Browser checks (${{ matrix.suite }} / ${{ matrix.browser }})

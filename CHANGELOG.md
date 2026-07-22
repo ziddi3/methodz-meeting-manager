@@ -2,6 +2,34 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.3
+
+### Added
+
+- Portable `provider-contract.js` hosted-provider contract core.
+- Disposable in-memory and Storage-compatible local reference providers.
+- Deterministic conflict tokens and idempotent write replay.
+- Promise-based list, get, upsert, archive, restore, permanent-delete, export, and health operations.
+- Structured provider errors with explicit retryability metadata.
+- Provider exports that preserve active records, archives, revisions, unknown fields, and integrity metadata.
+- Private-JWK and private-key-field rejection from provider exports.
+- One reusable conformance suite executed against both reference providers.
+- Dedicated provider-conformance CI isolated from browser regression jobs.
+- v1.6.3 contract, architecture, test, and security-boundary documentation.
+
+### Changed
+
+- App-shell and service-worker cache version are now `1.6.3`; the meeting-record schema remains `1.6.0`.
+- The main entry point exposes the hosted-provider contract and reference adapters without changing the active browser-local workflow.
+- README and Copilot guidance distinguish client contract compatibility from server-side authentication, authorization, tenant isolation, encryption, durable audit, and legal compliance.
+
+### Security notes
+
+- Hosted-provider exports fail closed when private key material is detected.
+- Conflict tokens and compatibility checksums are not digital signatures or identity proof.
+- Passing provider conformance does not certify production security, durability, data residency, or legal compliance.
+- No backend, endpoint, token, credential, runtime dependency, or schema migration is introduced.
+
 ## 1.6.2
 
 ### Added

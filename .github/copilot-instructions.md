@@ -24,22 +24,25 @@ The core workflow must continue to run by opening `meeting.html` directly. Hoste
 
 - `meeting.html`: main meeting workspace.
 - `archive.html`: complete-record detail and print surface.
-- `config.js`, `config-v11.js` through `config-v15.js`: ordered configuration extensions.
-- `migrations.js`, `migrations-v10.js` through `migrations-v15.js`: ordered schema migration registry and extensions.
-- `data-adapter.js`: synchronous meeting-record provider contract.
-- `async-data-adapter.js`: Promise-based future remote-provider contract.
+- `verify.html`: standalone signed-package verifier.
+- `config.js`, `config-v11.js` through `config-v16.js`, `config-v162.js`, `config-v163.js`: ordered configuration extensions.
+- `migrations.js`, `migrations-v10.js` through `migrations-v16.js`: ordered schema migration registry and extensions.
+- `data-adapter.js`: synchronous browser-local meeting-record provider.
+- `async-data-adapter.js`: legacy Promise wrapper preserved for compatibility.
+- `provider-contract.js`: portable v1.6.3 hosted-provider contract core.
+- `hosted-provider-adapters.js`: disposable in-memory and localStorage reference providers.
+- `provider-conformance.js`: reusable provider test suite.
 - `attachment-adapter.js`: attachment-reference provider contract.
+- `crypto-package-core.js`, `key-custody-core.js`, `workspace-package-core.js`: portable integrity, custody, and recovery boundaries.
 - `app.js`: stable core form and local record workflow.
-- `features-v03*` through `features-v15*`: additive enhancement layers.
+- `features-v03*` through `features-v16*`, recovery guards, and v1.6.2 custody: additive enhancement layers.
 - `archive.js`, `archive-v10.js`, `archive-v11.js`, and `archive-v13.js`: archive rendering and governance detail.
 - `manifest.webmanifest` and `service-worker.js`: optional static app shell.
-- `tests/`: CI-only Playwright coverage.
+- `tests/`: CI-only Node and Playwright coverage.
 
 Preserve script order. Later feature layers intentionally wrap functions installed by earlier layers.
 
-`config-v15.js` must load after `config-v14.js` and before `migrations.js` so the migration registry captures schema `1.5.0`.
-
-`features-v15-policy-operations.js` must load after v1.4 policy hardening. `features-v15-download-routing.js` must load last so every legacy external-download control uses the receipt-producing approved path.
+`config-v163.js` must load after `config-v162.js`. `provider-contract.js` must load before `hosted-provider-adapters.js`. Neither module may require a network connection or mutate records during startup.
 
 ## Required product capabilities
 
@@ -62,7 +65,7 @@ Preserve:
 - workspace backup, replacement restore, and merge recovery;
 - ordered schema migration;
 - record classification and workflow policies;
-- provider health checks;
+- provider health checks and provider conformance boundaries;
 - retention policies and preservation holds;
 - partner-safe, public-summary, and custom external-copy profiles;
 - redaction manifests and integrity labeling;
@@ -72,6 +75,9 @@ Preserve:
 - recipient-specific destination policies and field allow-lists;
 - policy stewardship, review cadence, and review queue;
 - release receipt creation, verification, search, and export;
+- optional package signing and independent verification;
+- public-key custody, rotation, revocation, lost-key, and rehearsal evidence;
+- no-write backup inspection and dry recovery drills;
 - keyboard navigation and accessibility support;
 - optional hosted offline app shell.
 
@@ -93,38 +99,45 @@ Use:
 - Recipient-Specific Export Policy
 - Policy Steward
 - External Release Receipt
+- Hosted-Provider Contract
+- Conflict Token
+- Idempotency Key
 
 Avoid:
 
 - Owner for task responsibility;
 - Methodz company;
 - Company logo for Methodz;
-- calling a checksum or digest a digital signature;
+- calling a checksum or conflict token a digital signature;
 - claiming a local role proves identity;
 - claiming a recipient policy proves recipient identity;
 - claiming a release receipt proves delivery;
+- claiming a provider health check proves authentication or durability;
+- claiming provider conformance proves production security or legal compliance;
 - claiming a retention preset is legal advice.
 
 ## Governance rules
 
-Local role, approval, recipient-policy, policy-review, release-receipt, and disposition controls are workflow safeguards, not authentication.
+Local role, approval, recipient-policy, policy-review, release-receipt, custody, and disposition controls are workflow safeguards, not authentication.
 
-- Preserve `accessControl`, `retentionMetadata`, `externalReleaseControl`, `externalRecipientControl`, and `dispositionControl` metadata.
-- Do not bypass edit, export, hold, approval, review, receipt, or disposition gates without an explicit replacement policy.
+- Preserve access-control, retention, hold, redaction, approval, recipient, receipt, custody, recovery, and disposition metadata.
+- Do not bypass edit, export, hold, approval, review, receipt, signature, recovery, or disposition gates without an explicit replacement policy.
 - Keep archive records non-destructive by default.
 - External-copy generation must respect record export gates.
 - Permanent deletion must remain blocked by active preservation holds.
 - A future remote provider must enforce authenticated permissions server-side.
 
-## Signature rules
+## Signature and custody rules
 
 - A typed signature must not save without explicit recorded consent.
 - Preserve consent statement version and timestamp.
 - Do not infer consent for older signatures during migration.
-- “Name Match” means text equality only and must never be described as identity proof.
-- Never place signatures or consent records inside reusable attendee-directory presets.
-- Declined signatures must not remain as accepted signed rows.
-- Never include typed signatures, consent, verification, signed timestamps, or verifier details in any external copy.
+- “Name Match” means text equality only and is not identity proof.
+- Never place signatures or consent records in reusable directory presets.
+- Never include typed signatures, consent, verification, signed timestamps, or verifier details in external copies.
+- Private signing JWK material is memory-only and must never enter localStorage, provider state, logs, backups, fixtures, exports, or service-worker caches.
+- Public-key custody records do not automatically change registry status.
+- Recalculate and validate public key IDs before custody import or export.
 
 ## Retention, hold, and disposition rules
 
@@ -138,61 +151,64 @@ Local role, approval, recipient-policy, policy-review, release-receipt, and disp
 - Bind disposition approval to the current archived-record fingerprint.
 - Consume an approval after permanent removal.
 
-## Redaction and external-copy rules
+## Redaction, recipient, and release rules
 
 - External-copy generation must never mutate the controlled source record.
-- Prefer allow-listed output objects over copying an entire record and deleting a few fields.
+- Prefer allow-listed output objects over copy-and-delete redaction.
 - Apply a recursive unsafe-key filter after profile construction.
-- Every profile must exclude signatures and signature audit data.
-- Partner Safe must exclude internal notes, contact data, protected policy notes, file locations, and internal provider metadata.
-- Public Summary must expose only high-level approved content.
-- Custom External Copy may expose only explicitly selected sections.
-- Include a redaction manifest with profile, removed paths, warnings, and `signatureDataIncluded: false`.
-- Store external-export activity metadata only, not a duplicate package body.
-- Do not claim redaction alone authorizes disclosure.
+- Every profile must exclude signatures and signature-audit data.
+- Recipient policies are subtractive and run after redaction.
+- A recipient policy may remove more fields but must never restore removed fields.
+- Approval fingerprints remain bound to the recipient-specific destination and current governance version.
+- Inactive or overdue policies must not be used.
+- Create a release receipt only after a successful approved download.
+- Route every external JSON and HTML download through the same receipt-producing path.
+- Never call the browser-local receipt chain immutable, authenticated, cryptographically signed, or proof of delivery.
 
-## Recipient policy rules
-
-- Recipient policies are subtractive and run after the selected redaction profile.
-- A recipient policy may remove more fields but must never restore fields removed by redaction.
-- Active recipient destinations use `recipient:<policy-id>`.
-- Approval fingerprints must remain bound to the recipient-specific destination ID.
-- Preserve recipient-policy snapshots in the redaction manifest and approval record.
-- An inactive or overdue policy must not be applied, previewed, approved, or downloaded.
-- Core meeting information remains a required allow-list group.
-- Enabling free-form discussion notes requires a meaningful verification note.
-- Typed signatures remain excluded regardless of recipient policy.
-- Policy import must merge safely, remain bounded, and preserve the newest `updatedAt` value.
-- Do not claim a contact reference proves recipient identity or delivery.
-
-## Policy operations rules
-
-- Store v1.5 governance separately from the recipient policy and join by stable `policyId`.
-- Preserve steward, role, risk tier, business purpose, cadence, review actor, review note, and timestamps.
-- Completing a review may advance the v1.4 policy `reviewDate`; it must not silently activate an inactive policy.
-- Governance `updatedAt` must participate in the redacted-content fingerprint when governance is present.
-- Changing policy governance must invalidate approval for an older governance version.
-- Review queue calculations must distinguish overdue, due soon, no date, current, and inactive states.
-- Migration must not invent a policy review or reviewer identity.
-
-## Release receipt rules
-
-- Create a receipt only after a successful approved external download.
-- Route every external JSON and HTML download control through the same receipt-producing function.
-- Preserve approval, source, destination, recipient policy, optional governance, profile, format, package integrity, and release time.
-- Keep receipt sequence, previous digest, and current digest internally consistent.
-- Reverify the full retained ledger after writes.
-- Never call the local receipt chain immutable, cryptographically signed, authenticated, or proof of delivery.
-- Source-record receipt metadata is a pointer to the latest local release event, not a remote acknowledgment.
-- A future hosted provider should replace local receipt writes with an authenticated append-only service.
-
-## Integrity rules
+## Integrity and recovery rules
 
 - Prefer SHA-256 through Web Crypto when available.
-- Use compatibility checksums only when Web Crypto is unavailable or when a local deterministic chain explicitly requires them.
-- Label the exact algorithm.
-- A digest detects content changes but does not prove identity, approval, authorship, delivery, or non-repudiation.
-- Public-key signing may be added only with explicit key-generation, protection, rotation, revocation, and verification design.
+- Use compatibility checksums only where direct-file compatibility requires them and label the exact algorithm.
+- A digest detects changes but does not prove identity, approval, authorship, delivery, or non-repudiation.
+- Migration functions must be ordered, idempotent, additive, and safe to repeat.
+- Preserve unknown fields during migration and provider round trips.
+- Preserve a valid recovery package before replacement restore or merge.
+- Validate the selected package immediately before mutation.
+- Recovery inspection and drill reports must not include meeting or workspace values.
+- Preserve the current record version before restoring an older revision.
+
+## Hosted-provider contract rules
+
+A v1.6.3 provider implements Promise-returning methods:
+
+```text
+listRecords(options?)
+getRecord(recordId, options?)
+upsertRecord(record, options?)
+archiveRecord(recordId, options?)
+restoreRecord(recordId, options?)
+deleteRecord(recordId, options?)
+exportWorkspace(options?)
+healthCheck()
+```
+
+- Keep contract version `1.0.0` and record schema `1.6.0` unless a deliberate migration is approved.
+- Existing-record updates require the current expected conflict token.
+- Missing or stale conflict tokens must produce non-retryable `CONFLICT` errors.
+- Repeated idempotency keys with identical input replay the original result.
+- Reusing an idempotency key for different input must fail.
+- Do not allow simultaneous active and archived copies of the same record ID.
+- Preserve revisions and unknown fields.
+- Permanent deletion requires explicit intent and must not weaken disposition safeguards.
+- Provider exports must include active records, archives, revisions, and integrity metadata.
+- Reject private key material from provider exports.
+- Attachment references are supported; binary attachment transfer is outside this contract.
+- Retryable failures must use explicit retryability metadata. Partial success must not be hidden.
+- Never run conformance tests against active browser storage. Use fresh providers and isolated storage keys.
+- The same reusable conformance suite must pass for memory and localStorage reference providers.
+- Keep provider conformance CI separate from browser regression jobs.
+
+A real hosted provider must independently establish authentication, authorization, tenant isolation, encryption, credential lifecycle, durable audit, retention enforcement, backups, disaster recovery, observability, and incident response. Client conformance does not certify those controls.
 
 ## Attachment rules
 
@@ -200,46 +216,6 @@ Local role, approval, recipient-policy, policy-review, release-receipt, and disp
 - Reject `data:` and base64 content in attachment locations.
 - Do not cache meeting attachments or meeting records in the service worker.
 - External copies must remove file locations, added-by details, and private reference metadata unless a reviewed profile explicitly allows them.
-
-## Migration and recovery rules
-
-- Migration functions must be ordered, idempotent, additive, and safe to run repeatedly.
-- Preserve unknown fields during migration.
-- Preserve active records, archive entries, revisions, drafts, governance, retention, hold, redaction, approval, recipient policy, policy operations, receipts, and disposition metadata.
-- Preserve a valid recovery package before replacement restore or merge.
-- Keep recovery checksums valid.
-- Preserve the current version before restoring an older revision.
-- Migration must not invent hold, approval, review, receipt, or recipient-policy audit events.
-
-## Provider rules
-
-A synchronous meeting provider implements:
-
-```text
-listRecords()
-getRecord(recordId)
-replaceRecords(records)
-upsertRecord(record)
-deleteRecord(recordId)
-healthCheck()
-```
-
-An asynchronous provider implements Promise-returning equivalents.
-
-An attachment provider implements:
-
-```text
-listReferences(record)
-getReference(record, referenceId)
-upsertReference(record, reference)
-deleteReference(record, referenceId)
-validateReference(reference)
-healthCheck()
-```
-
-Do not run destructive tests against active user storage. Use isolated storage keys or test providers.
-
-A remote provider must independently enforce authentication, authorization, recipient policies, policy administration, legal holds, retention, disposition, approval, release receipts, audit integrity, and external-copy permissions.
 
 ## Accessibility and design
 

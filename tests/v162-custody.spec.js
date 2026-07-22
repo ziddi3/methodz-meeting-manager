@@ -16,7 +16,7 @@ test("Custody v1.6.2: workspace loads without changing record schema", async ({ 
     core: window.MethodzKeyCustodyCoreV162.version,
     workspace: window.MethodzKeyCustodyV162.version
   }));
-  expect(state).toEqual({ schema: "1.6.0", shell: "1.6.2", core: "1.6.2", workspace: "1.6.2" });
+  expect(state).toEqual({ schema: "1.6.0", shell: "1.6.3", core: "1.6.2", workspace: "1.6.2" });
 });
 
 test("Custody v1.6.2: completed rotation produces a private-key-free public manifest", async ({ page }) => {
