@@ -130,5 +130,5 @@ test("publishes a valid app manifest and service worker entry point", async ({ r
 
   const workerResponse = await request.get("/service-worker.js");
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.6.2");
+  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.6.3");
 });
