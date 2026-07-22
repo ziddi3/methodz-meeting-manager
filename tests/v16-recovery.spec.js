@@ -24,7 +24,7 @@ test(`${RECOVERY_PREFIX} recovery readiness panel and guarded import architectur
 
   expect(state).toEqual({
     schema: "1.6.0",
-    shell: "1.6.2",
+    shell: "1.6.3",
     core: "function",
     recovery: "function",
     restoreGuarded: true,
