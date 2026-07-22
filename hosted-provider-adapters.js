@@ -11,12 +11,27 @@
   const { ProviderError, errorCodes: Codes } = Contract;
   const emptyState = () => ({ activeRecords: [], archivedRecords: [], revisions: {}, idempotency: {} });
 
+  function assertRecordId(recordId, operation, providerId) {
+    if (typeof recordId !== "string" || !recordId) {
+      throw new ProviderError(`${operation} requires a non-empty record id.`, {
+        code: Codes.INVALID_ARGUMENT,
+        retryable: false,
+        operation,
+        providerId
+      });
+    }
+    return recordId;
+  }
+
   class InMemoryHostedProvider {
     constructor(options = {}) {
       this.id = options.id || "in-memory-hosted-provider";
       this.label = options.label || "Disposable In-Memory Hosted Provider";
       this.contractVersion = Contract.version;
-      this.state = Contract.clone(options.initialState || emptyState());
+      this.state = Contract.assertProviderState(options.initialState || emptyState(), {
+        operation: "initializeProvider",
+        providerId: this.id
+      });
       this.failures = new Map();
       this.capabilities = {
         asynchronous: true,
@@ -28,7 +43,8 @@
         revisions: true,
         attachmentReferences: true,
         binaryAttachments: false,
-        exportEnvelope: true
+        exportEnvelope: true,
+        providerType: "in-memory"
       };
     }
 
@@ -48,17 +64,31 @@
     }
 
     async readState() {
-      return Contract.clone(this.state);
+      return Contract.assertProviderState(this.state, {
+        operation: "readState",
+        providerId: this.id
+      });
     }
 
     async writeState(state) {
-      this.state = Contract.clone(state);
+      this.state = Contract.assertProviderState(state, {
+        operation: "writeState",
+        providerId: this.id
+      });
     }
 
     async transact(operation, callback) {
       this.maybeFail(operation);
       const state = await this.readState();
       const result = await callback(state);
+      if (!result || typeof result !== "object" || !Object.hasOwn(result, "value")) {
+        throw new ProviderError(`Provider transaction ${operation} returned an invalid result.`, {
+          code: Codes.PROVIDER_FAILURE,
+          retryable: false,
+          operation,
+          providerId: this.id
+        });
+      }
       if (result.write !== false) await this.writeState(state);
       return Contract.clone(result.value);
     }
@@ -71,14 +101,7 @@
     }
 
     async getRecord(recordId, options = {}) {
-      if (typeof recordId !== "string" || !recordId) {
-        throw new ProviderError("getRecord requires a record id.", {
-          code: Codes.INVALID_ARGUMENT,
-          retryable: false,
-          operation: "getRecord",
-          providerId: this.id
-        });
-      }
+      assertRecordId(recordId, "getRecord", this.id);
       return this.transact("getRecord", async (state) => {
         const active = state.activeRecords.find((record) => record.id === recordId);
         const archived = options.includeArchived === false ? null : state.archivedRecords.find((record) => record.id === recordId);
@@ -94,7 +117,7 @@
     }
 
     async upsertRecord(record, options = {}) {
-      const input = Contract.assertRecord(record);
+      const input = Contract.assertRecord(record, "upsertRecord", this.id);
       const idempotencyKey = Contract.normalizeIdempotencyKey(options.idempotencyKey);
       return this.transact("upsertRecord", async (state) => {
         const requestHash = Contract.fnv1a32(Contract.canonicalStringify({
@@ -158,11 +181,21 @@
     }
 
     async archiveRecord(recordId, options = {}) {
+      assertRecordId(recordId, "archiveRecord", this.id);
       return this.transact("archiveRecord", async (state) => {
         const index = state.activeRecords.findIndex((item) => item.id === recordId);
         if (index < 0) {
           throw new ProviderError("Active record not found.", {
             code: Codes.NOT_FOUND,
+            retryable: false,
+            operation: "archiveRecord",
+            providerId: this.id,
+            details: { recordId }
+          });
+        }
+        if (state.archivedRecords.some((item) => item.id === recordId)) {
+          throw new ProviderError("An archived copy with this record id already exists.", {
+            code: Codes.INTEGRITY_REJECTED,
             retryable: false,
             operation: "archiveRecord",
             providerId: this.id,
@@ -189,6 +222,7 @@
     }
 
     async restoreRecord(recordId) {
+      assertRecordId(recordId, "restoreRecord", this.id);
       return this.transact("restoreRecord", async (state) => {
         if (state.activeRecords.some((item) => item.id === recordId)) {
           throw new ProviderError("An active record with this id already exists.", {
@@ -209,16 +243,19 @@
           });
         }
         const record = Contract.clone(state.archivedRecords[index]);
+        record.providerMetadata = { ...(record.providerMetadata || {}) };
         delete record.providerMetadata.archivedAt;
         record.providerMetadata.restoredAt = new Date().toISOString();
-        record.providerMetadata.conflictToken = Contract.createConflictToken(record, record.providerMetadata.version);
+        const version = Number(record.providerMetadata.version || 1);
+        record.providerMetadata.conflictToken = Contract.createConflictToken(record, version);
         state.archivedRecords.splice(index, 1);
         state.activeRecords.push(record);
-        return { value: { record, restored: true } };
+        return { value: { record, restored: true, conflictToken: record.providerMetadata.conflictToken } };
       });
     }
 
     async deleteRecord(recordId, options = {}) {
+      assertRecordId(recordId, "deleteRecord", this.id);
       if (options.permanent !== true) {
         throw new ProviderError("Permanent deletion requires { permanent: true }.", {
           code: Codes.INVALID_ARGUMENT,
@@ -261,7 +298,7 @@
         ok: true,
         providerId: this.id,
         label: this.label,
-        providerType: "in-memory",
+        providerType: this.capabilities.providerType,
         contractVersion: Contract.version,
         records: state.activeRecords.length,
         archivedRecords: state.archivedRecords.length,
@@ -275,7 +312,6 @@
   class LocalStorageHostedProvider extends InMemoryHostedProvider {
     constructor(options = {}) {
       super({
-        ...options,
         id: options.id || "local-storage-hosted-provider",
         label: options.label || "Browser Local Storage (Hosted Contract)"
       });
@@ -290,7 +326,8 @@
       if (!this.storage) {
         throw new ProviderError("LocalStorageHostedProvider requires a Storage-compatible object.", {
           code: Codes.INVALID_ARGUMENT,
-          retryable: false
+          retryable: false,
+          providerId: this.id
         });
       }
     }
@@ -304,6 +341,7 @@
         throw new ProviderError(`Unable to parse provider storage key ${key}.`, {
           code: Codes.INTEGRITY_REJECTED,
           retryable: false,
+          operation: "readState",
           providerId: this.id,
           details: { key, error: error.message }
         });
@@ -311,23 +349,43 @@
     }
 
     async readState() {
-      const activeRecords = this.readJson(this.keys.activeRecords, []);
-      const archivedRecords = this.readJson(this.keys.archivedRecords, []);
-      const revisions = this.readJson(this.keys.revisions, {});
-      const idempotency = this.readJson(this.keys.idempotency, {});
-      return {
-        activeRecords: Array.isArray(activeRecords) ? activeRecords : [],
-        archivedRecords: Array.isArray(archivedRecords) ? archivedRecords : [],
-        revisions: Contract.isObject(revisions) ? revisions : {},
-        idempotency: Contract.isObject(idempotency) ? idempotency : {}
-      };
+      return Contract.assertProviderState({
+        activeRecords: this.readJson(this.keys.activeRecords, []),
+        archivedRecords: this.readJson(this.keys.archivedRecords, []),
+        revisions: this.readJson(this.keys.revisions, {}),
+        idempotency: this.readJson(this.keys.idempotency, {})
+      }, {
+        operation: "readState",
+        providerId: this.id
+      });
     }
 
     async writeState(state) {
-      this.storage.setItem(this.keys.activeRecords, JSON.stringify(state.activeRecords));
-      this.storage.setItem(this.keys.archivedRecords, JSON.stringify(state.archivedRecords));
-      this.storage.setItem(this.keys.revisions, JSON.stringify(state.revisions));
-      this.storage.setItem(this.keys.idempotency, JSON.stringify(state.idempotency));
+      const validated = Contract.assertProviderState(state, {
+        operation: "writeState",
+        providerId: this.id
+      });
+      const writes = [
+        [this.keys.activeRecords, validated.activeRecords],
+        [this.keys.archivedRecords, validated.archivedRecords],
+        [this.keys.revisions, validated.revisions],
+        [this.keys.idempotency, validated.idempotency]
+      ];
+      let completed = 0;
+      try {
+        for (const [key, value] of writes) {
+          this.storage.setItem(key, JSON.stringify(value));
+          completed += 1;
+        }
+      } catch (error) {
+        throw new ProviderError("Local provider state write was only partially completed.", {
+          code: Codes.PARTIAL_FAILURE,
+          retryable: true,
+          operation: "writeState",
+          providerId: this.id,
+          details: { completed, failed: writes.length - completed, error: error.message }
+        });
+      }
     }
 
     async healthCheck() {
