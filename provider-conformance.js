@@ -27,7 +27,7 @@
 
   async function runProviderConformance(providerFactory, options = {}) {
     const provider = await providerFactory();
-    const prefix = options.recordPrefix || `conformance-${Date.now()}`;
+    const prefix = options.recordPrefix || `conformance-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const recordId = `${prefix}-record`;
     const checks = [];
     const check = async (name, callback) => {
@@ -45,12 +45,19 @@
       const health = await provider.healthCheck();
       ensure(health.ok === true, "Provider health check did not report ok.");
       ensure(health.providerId === provider.id, "Health check provider id mismatch.");
+      ensure(health.contractVersion === Contract.version, "Health check contract version mismatch.");
     });
 
-    await check("empty list", async () => {
+    await check("empty list and missing record behavior", async () => {
       const records = await provider.listRecords();
       ensure(Array.isArray(records), "listRecords must return an array.");
       ensure(records.length === 0, "Disposable provider must begin empty.");
+      ensure(await provider.getRecord(`${prefix}-missing`) === null, "Missing records must return null.");
+      await expectProviderError(
+        () => provider.archiveRecord(`${prefix}-missing`),
+        Contract.errorCodes.NOT_FOUND,
+        false
+      );
     });
 
     let firstWrite;
@@ -59,17 +66,29 @@
         id: recordId,
         title: "Hosted provider conformance record",
         schemaVersion: "1.6.0",
+        attachments: [{ id: "ref-1", name: "Reference only", location: "https://example.invalid/reference" }],
         extensionData: { futureField: "preserve-me", nested: { enabled: true } },
-        integrity: { sourceChecksum: "synthetic-checksum" }
+        integrity: { sourceChecksum: "synthetic-checksum" },
+        recoveryMetadata: { packageChecksum: "synthetic-recovery-checksum" }
       };
       firstWrite = await provider.upsertRecord(input, { idempotencyKey: `${prefix}-create` });
       ensure(firstWrite.created === true, "Initial write must report created=true.");
       ensure(firstWrite.record.extensionData.futureField === "preserve-me", "Unknown fields were not preserved.");
+      ensure(firstWrite.record.attachments[0].location.includes("https://"), "Attachment reference was not preserved.");
       ensure(typeof firstWrite.conflictToken === "string", "Write must return a conflict token.");
 
       const replay = await provider.upsertRecord(input, { idempotencyKey: `${prefix}-create` });
       ensure(replay.idempotentReplay === true, "Repeated idempotency key must replay the original result.");
       ensure(replay.conflictToken === firstWrite.conflictToken, "Idempotent replay changed the conflict token.");
+    });
+
+    await check("returned values are isolated from provider state", async () => {
+      const listed = await provider.listRecords();
+      listed[0].title = "Caller-side mutation";
+      listed[0].extensionData.nested.enabled = false;
+      const loaded = await provider.getRecord(recordId);
+      ensure(loaded.record.title === "Hosted provider conformance record", "Caller mutated the stored title through a returned value.");
+      ensure(loaded.record.extensionData.nested.enabled === true, "Caller mutated nested provider state through a returned value.");
     });
 
     await check("idempotency-key conflict", async () => {
@@ -95,6 +114,7 @@
       ensure(updated.providerVersion === 2, "Update must advance provider version.");
       ensure(updated.record.extensionData.futureField === "preserve-me", "Update discarded an unknown existing field.");
       ensure(updated.record.newUnknownField.length === 2, "Update discarded an unknown new field.");
+      ensure(updated.record.recoveryMetadata.packageChecksum === "synthetic-recovery-checksum", "Update discarded recovery metadata.");
       firstWrite = updated;
     });
 
@@ -102,6 +122,25 @@
       const result = await provider.getRecord(recordId);
       ensure(result && result.revisions.length === 1, "Updating a record must preserve one prior revision.");
       ensure(result.revisions[0].title === "Hosted provider conformance record", "Revision content is incorrect.");
+      ensure(result.revisions[0].extensionData.futureField === "preserve-me", "Revision discarded unknown fields.");
+    });
+
+    await check("unsafe provider payload rejection", async () => {
+      await expectProviderError(
+        () => provider.upsertRecord({ id: `${prefix}-private-write`, signingKey: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "private" } }),
+        Contract.errorCodes.PRIVATE_KEY_REJECTED,
+        false
+      );
+      await expectProviderError(
+        () => provider.upsertRecord({ id: `${prefix}-binary-write`, attachments: [{ contentBase64: "c3ludGhldGlj" }] }),
+        Contract.errorCodes.BINARY_PAYLOAD_REJECTED,
+        false
+      );
+      await expectProviderError(
+        () => provider.upsertRecord({ id: `${prefix}-credential-write`, integration: { accessToken: "synthetic-token" } }),
+        Contract.errorCodes.CREDENTIAL_REJECTED,
+        false
+      );
     });
 
     await check("archive and archived-update conflict", async () => {
@@ -111,6 +150,7 @@
       ensure((await provider.listRecords({ includeArchived: true })).length === 1, "Archived record was not returned when requested.");
       const loaded = await provider.getRecord(recordId);
       ensure(loaded.archived === true, "getRecord did not mark the archived record.");
+      ensure(loaded.revisions.length === 1, "Archive operation discarded revision history.");
       await expectProviderError(
         () => provider.upsertRecord({ id: recordId, title: "Cannot update archived" }),
         Contract.errorCodes.CONFLICT,
@@ -121,6 +161,7 @@
     await check("restore", async () => {
       const restored = await provider.restoreRecord(recordId);
       ensure(restored.restored === true, "restoreRecord did not report restored=true.");
+      ensure(typeof restored.conflictToken === "string", "Restore did not return a conflict token.");
       ensure((await provider.listRecords()).length === 1, "Restored record did not return to active list.");
     });
 
@@ -138,6 +179,19 @@
       ensure((await provider.listRecords()).length === 1, "Provider did not recover after disposable failure.");
     });
 
+    await check("duplicate state rejection", async () => {
+      const duplicated = {
+        activeRecords: [{ id: `${prefix}-duplicate`, title: "active" }],
+        archivedRecords: [{ id: `${prefix}-duplicate`, title: "archived" }],
+        revisions: {},
+        idempotency: {}
+      };
+      await expectProviderError(async () => {
+        const duplicateProvider = await providerFactory({ initialState: duplicated, suffix: "duplicate" });
+        await duplicateProvider.listRecords({ includeArchived: true });
+      }, Contract.errorCodes.INTEGRITY_REJECTED, false);
+    });
+
     await check("export integrity and metadata preservation", async () => {
       const exported = await provider.exportWorkspace({ metadata: { recoveryPackage: { checksum: "preserve-this" } } });
       ensure(exported.activeRecords.length === 1, "Export omitted the active record.");
@@ -151,21 +205,23 @@
       ensure(Contract.verifyExportEnvelope(tampered).ok === false, "Tampered provider export verified successfully.");
     });
 
-    await check("private-key export rejection", async () => {
-      const privateProvider = await providerFactory({
-        initialState: {
-          activeRecords: [{ id: `${prefix}-private`, signingKey: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "synthetic-private-material" } }],
-          archivedRecords: [],
-          revisions: {},
-          idempotency: {}
-        },
-        suffix: "private"
-      });
-      await expectProviderError(
-        () => privateProvider.exportWorkspace(),
-        Contract.errorCodes.PRIVATE_KEY_REJECTED,
-        false
-      );
+    await check("unsafe export rejection", async () => {
+      for (const [suffix, record, code] of [
+        ["private", { id: `${prefix}-private`, signingKey: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "synthetic-private-material" } }, Contract.errorCodes.PRIVATE_KEY_REJECTED],
+        ["binary", { id: `${prefix}-binary`, attachment: { location: "data:application/pdf;base64,c3ludGhldGlj" } }, Contract.errorCodes.BINARY_PAYLOAD_REJECTED],
+        ["credential", { id: `${prefix}-credential`, provider: { apiKey: "synthetic-api-key" } }, Contract.errorCodes.CREDENTIAL_REJECTED]
+      ]) {
+        const unsafeProvider = await providerFactory({
+          initialState: {
+            activeRecords: [record],
+            archivedRecords: [],
+            revisions: {},
+            idempotency: {}
+          },
+          suffix
+        });
+        await expectProviderError(() => unsafeProvider.exportWorkspace(), code, false);
+      }
     });
 
     await check("permanent-delete guard and cleanup", async () => {
