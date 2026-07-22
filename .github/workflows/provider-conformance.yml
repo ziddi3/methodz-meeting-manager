@@ -1,0 +1,51 @@
+name: Hosted Provider Conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-contract:
+    name: Provider contract and reference adapters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify provider contract assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f config-v163.js
+          test -f provider-contract.js
+          test -f hosted-provider-adapters.js
+          test -f provider-conformance.js
+          test -f tests/v163-provider-core.mjs
+          test -f docs/V1.6.3-PROVIDER-CONTRACT.md
+          grep -q 'appShellVersion = "1.6.3"' config-v163.js
+          grep -q 'schemaVersion = "1.6.0"' config-v163.js
+          grep -q 'provider-contract.js' meeting.html
+          grep -q 'hosted-provider-adapters.js' meeting.html
+          grep -q 'methodz-meeting-manager-v1.6.3' service-worker.js
+          grep -q 'provider-contract.js' service-worker.js
+          grep -q 'hosted-provider-adapters.js' service-worker.js
+
+      - name: Check provider JavaScript syntax
+        run: |
+          node --check provider-contract.js
+          node --check hosted-provider-adapters.js
+          node --check provider-conformance.js
+          node --check tests/v163-provider-core.mjs
+
+      - name: Run reusable provider conformance suite
+        run: node tests/v163-provider-core.mjs
