@@ -6,23 +6,25 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**App shell 1.6.3 · Record schema 1.6.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.4 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Pilot transport 1.0.0**
 
 The application is a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
 
-Version 1.6.3 adds a hosted-provider conformance boundary without connecting a backend:
+Version 1.6.4 adds a disposable, CI-only hosted-provider pilot without connecting production infrastructure:
 
-- portable provider contract, error taxonomy, conflict tokens, and export integrity helpers;
-- Promise-based list, get, upsert, archive, restore, permanent delete, export, and health operations;
-- deterministic expected-token conflicts and idempotent write replay;
-- revision, Archive Vault, unknown-field, and recovery-metadata preservation requirements;
-- private-key rejection from provider exports;
-- disposable in-memory and localStorage reference providers;
-- one reusable conformance suite executed against both providers;
-- a dedicated CI job isolated from Playwright browser regressions;
-- no schema migration, credential, endpoint, backend, framework, or runtime dependency.
+- JSON-serialized HTTP-style request and response envelopes;
+- a Promise-based client adapter that implements the complete provider contract;
+- disposable tenant-isolated in-memory provider instances;
+- bounded retries for retryable provider errors;
+- rate-limit, timeout, unavailable, dropped-response, and partial-success fault injection;
+- tenant-scoped idempotency and deterministic conflict behavior;
+- uncertain-write recovery through idempotent replay;
+- preservation tests for revisions, attachments, unknown fields, governance metadata, receipts, signatures, custody, and recovery metadata;
+- diagnostics that exclude meeting content, record IDs, credentials, tokens, signatures, private JWK material, request bodies, and response bodies;
+- a production-provider evidence gate covering authentication, authorization, tenant isolation, encryption, durable audit, recovery, residency, and incident response;
+- no schema migration, production endpoint, credential, backend, framework, or deployed runtime dependency.
 
-All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, custody, recovery, and offline features remain available.
+All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, custody, recovery, offline, and provider-conformance features remain available.
 
 ## Entry points
 
@@ -50,6 +52,7 @@ verify.html    Standalone signed-package verifier
 - Workspace imports are validated immediately before mutation
 - Recovery reports exclude meeting and workspace values
 - Hosted-provider compatibility never substitutes for authentication or authority
+- Pilot transport logs never contain meeting payloads or credentials
 - **Assigned To**, never “Owner,” for task responsibility
 - **Organizations / Representatives Present** for participating groups
 
@@ -61,6 +64,7 @@ Configuration
   config-v11.js through config-v16.js
   config-v162.js
   config-v163.js
+  config-v164.js
 
 Schema and migration
   migrations.js
@@ -72,6 +76,11 @@ Record providers
   provider-contract.js
   hosted-provider-adapters.js
   provider-conformance.js
+
+CI-only provider pilot
+  http-provider-pilot.js
+  tests/v164-provider-pilot.mjs
+  .github/workflows/provider-pilot.yml
 
 Attachment provider
   attachment-adapter.js
@@ -159,6 +168,20 @@ The compatibility integrity value detects changes. It is not a digital signature
 Passing the conformance suite proves client-contract compatibility only. A production provider still needs server-side authentication, authorization, tenant isolation, encryption, credential handling, durable audit, retention enforcement, backup, recovery, and incident response.
 
 See `docs/V1.6.3-PROVIDER-CONTRACT.md`.
+
+## Hosted-provider pilot
+
+`http-provider-pilot.js` places the provider contract behind a disposable serialized transport. It simulates uncertainty that does not appear in direct in-process adapters, including response loss after commit, rate limiting, timeouts, and partial success.
+
+The pilot is deliberately excluded from all application entry points and the service-worker cache. It is executed only by Node-based CI tests. No production URL or credential is accepted or stored.
+
+A production provider must pass both the v1.6.3 direct conformance suite and the v1.6.4 serialized transport suite, then satisfy the operational evidence gate.
+
+See:
+
+- `docs/V1.6.4-PROVIDER-PILOT.md`
+- `docs/V1.6.4-TESTS.md`
+- `docs/PRODUCTION-PROVIDER-EVIDENCE.md`
 
 ## Attachment boundary
 
@@ -278,10 +301,11 @@ GitHub Actions performs:
 4. Node workspace-package validation and restore-plan tests;
 5. Node public-key custody manifest tests;
 6. isolated hosted-provider conformance for disposable memory and localStorage providers;
-7. manifest JSON validation;
-8. isolated Playwright browser regression suites across supported engines.
+7. serialized HTTP-style pilot conformance and network-fault scenarios;
+8. manifest JSON validation;
+9. isolated Playwright browser regression suites across supported engines.
 
-Provider conformance is a separate job, so its failures are not blended with browser-engine failures. Playwright is installed only in CI and is not a deployed dependency.
+Provider conformance and provider-pilot tests are separate jobs, so their failures are not blended with browser-engine failures. Playwright is installed only in CI and is not a deployed dependency.
 
 ## Documentation
 
@@ -300,6 +324,9 @@ docs/V1.6.2-TESTS.md
 docs/V1.6.2-VERIFICATION-CONFORMANCE.md
 docs/V1.6.3-PROVIDER-CONTRACT.md
 docs/V1.6.3-TESTS.md
+docs/V1.6.4-PROVIDER-PILOT.md
+docs/V1.6.4-TESTS.md
+docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
 
@@ -312,8 +339,9 @@ Earlier version-specific documents remain in `docs/` for historical context.
 - complete mobile and cross-device regression testing;
 - consolidate older feature layers without breaking direct-file compatibility;
 - run documented cross-device recovery and key-rotation rehearsals;
-- design a disposable hosted-provider pilot against the v1.6.3 contract;
-- add server-side conformance evidence requirements before accepting a production provider.
+- evaluate production-provider candidates against the evidence gate;
+- add a disposable synchronization coordinator for offline queue, conflict review, and explicit user-controlled push/pull rehearsals;
+- preserve localStorage as the default until a hosted provider is explicitly approved.
 
 ### 2.0 hosted provider
 
