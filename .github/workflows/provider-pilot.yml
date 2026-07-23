@@ -1,0 +1,53 @@
+name: Hosted Provider Pilot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "provider-contract.js"
+      - "hosted-provider-adapters.js"
+      - "provider-conformance.js"
+      - "http-provider-pilot.js"
+      - "tests/v164-provider-pilot.mjs"
+      - ".github/workflows/provider-pilot.yml"
+  pull_request:
+    paths:
+      - "provider-contract.js"
+      - "hosted-provider-adapters.js"
+      - "provider-conformance.js"
+      - "http-provider-pilot.js"
+      - "tests/v164-provider-pilot.mjs"
+      - ".github/workflows/provider-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  serialized-provider-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check pilot JavaScript syntax
+        run: |
+          set -euo pipefail
+          node --check http-provider-pilot.js
+          node --check tests/v164-provider-pilot.mjs
+
+      - name: Run disposable HTTP-style provider pilot
+        run: node tests/v164-provider-pilot.mjs
+
+      - name: Verify production boundary
+        run: |
+          set -euo pipefail
+          ! grep -Eiq '(firebase|supabase|authorization|bearer|client_secret|api[_-]?key)[[:space:]]*[:=][[:space:]]*["'"'][^"'"']+' http-provider-pilot.js tests/v164-provider-pilot.mjs
+          ! grep -Eq 'http-provider-pilot\.js' meeting.html archive.html verify.html service-worker.js
+          grep -q 'no backend' docs/V1.6.4-PROVIDER-PILOT.md
