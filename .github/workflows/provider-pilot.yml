@@ -1,0 +1,73 @@
+name: Hosted Provider Pilot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "provider-contract.js"
+      - "hosted-provider-adapters.js"
+      - "provider-conformance.js"
+      - "http-provider-pilot.js"
+      - "config-v164.js"
+      - "meeting.html"
+      - "archive.html"
+      - "service-worker.js"
+      - "tests/v164-provider-pilot.mjs"
+      - "docs/V1.6.4-PROVIDER-PILOT.md"
+      - "docs/PRODUCTION-PROVIDER-EVIDENCE.md"
+      - ".github/workflows/provider-pilot.yml"
+  pull_request:
+    paths:
+      - "provider-contract.js"
+      - "hosted-provider-adapters.js"
+      - "provider-conformance.js"
+      - "http-provider-pilot.js"
+      - "config-v164.js"
+      - "meeting.html"
+      - "archive.html"
+      - "service-worker.js"
+      - "tests/v164-provider-pilot.mjs"
+      - "docs/V1.6.4-PROVIDER-PILOT.md"
+      - "docs/PRODUCTION-PROVIDER-EVIDENCE.md"
+      - ".github/workflows/provider-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  serialized-provider-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check pilot JavaScript syntax
+        run: |
+          set -euo pipefail
+          node --check http-provider-pilot.js
+          node --check config-v164.js
+          node --check tests/v164-provider-pilot.mjs
+
+      - name: Run disposable HTTP-style provider pilot
+        run: node tests/v164-provider-pilot.mjs
+
+      - name: Verify production boundary and release wiring
+        run: |
+          set -euo pipefail
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" http-provider-pilot.js tests/v164-provider-pilot.mjs config-v164.js
+          ! grep -Eq 'http-provider-pilot\.js' meeting.html archive.html verify.html service-worker.js
+          grep -q 'config-v164.js' meeting.html
+          grep -q 'config-v164.js' archive.html
+          grep -q 'config-v164.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.4"' config-v164.js
+          grep -q 'enabledInApplication: false' config-v164.js
+          grep -q 'methodz-meeting-manager-v1.6.4' service-worker.js
+          grep -q 'no backend' docs/V1.6.4-PROVIDER-PILOT.md
+          grep -q 'Authentication' docs/PRODUCTION-PROVIDER-EVIDENCE.md
