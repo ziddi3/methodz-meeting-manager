@@ -2,6 +2,33 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.4
+
+### Added
+
+- Disposable `http-provider-pilot.js` serialized HTTP-style simulator and client adapter.
+- Complete v1.6.3 provider conformance execution across a JSON request/response boundary.
+- One-shot rate-limit, unavailable, delay, dropped-response, and partial-success fault injection.
+- Retry and uncertain-write tests using tenant-scoped idempotent replay.
+- Serialized preservation tests for revisions, attachment references, unknown fields, governance metadata, release receipts, signatures, custody, and recovery metadata.
+- Sanitized process-local diagnostics that omit meeting content, record IDs, credentials, tokens, signatures, private JWK material, request bodies, and response bodies.
+- Independent Hosted Provider Pilot GitHub Actions workflow.
+- Production hosted-provider evidence checklist for authentication, authorization, tenant isolation, encryption, audit, backup, recovery, residency, and incident response.
+- v1.6.4 architecture and test documentation.
+
+### Changed
+
+- App-shell and service-worker cache version are now `1.6.4`; the meeting-record schema remains `1.6.0`.
+- `meeting.html` and `archive.html` load `config-v164.js` after the v1.6.3 configuration layer.
+- The roadmap now advances from direct provider conformance to explicit hosted-provider evidence and synchronization rehearsals.
+
+### Security notes
+
+- The pilot is CI-only and is not loaded or cached by the deployed application.
+- No production endpoint, credential, backend, framework, runtime package, or schema migration is introduced.
+- Passing transport tests does not certify authentication, authorization, durable audit, data residency, incident response, or legal compliance.
+- The offline localStorage provider remains the default application provider.
+
 ## 1.6.3
 
 ### Added
