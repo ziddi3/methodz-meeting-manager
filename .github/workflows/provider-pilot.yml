@@ -61,7 +61,7 @@ jobs:
       - name: Verify production boundary and release wiring
         run: |
           set -euo pipefail
-          ! grep -Eiq 'https://[^[:space:]"'"']*(firebase|supabase)' http-provider-pilot.js tests/v164-provider-pilot.mjs config-v164.js
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" http-provider-pilot.js tests/v164-provider-pilot.mjs config-v164.js
           ! grep -Eq 'http-provider-pilot\.js' meeting.html archive.html verify.html service-worker.js
           grep -q 'config-v164.js' meeting.html
           grep -q 'config-v164.js' archive.html
