@@ -40,86 +40,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f meeting.html
-          test -f archive.html
-          test -f verify.html
-          test -f verify.js
-          test -f style.css
-          test -f config.js
-          test -f config-v11.js
-          test -f config-v12.js
-          test -f config-v13.js
-          test -f config-v14.js
-          test -f config-v15.js
-          test -f config-v16.js
-          test -f config-v162.js
-          test -f config-v163.js
-          test -f migrations.js
-          test -f migrations-v10.js
-          test -f migrations-v11.js
-          test -f migrations-v12.js
-          test -f migrations-v13.js
-          test -f migrations-v14.js
-          test -f migrations-v15.js
-          test -f migrations-v16.js
-          test -f provider-contract.js
-          test -f hosted-provider-adapters.js
-          test -f provider-conformance.js
-          test -f data-adapter.js
-          test -f async-data-adapter.js
-          test -f attachment-adapter.js
-          test -f crypto-package-core.js
-          test -f key-custody-core.js
-          test -f workspace-package-core.js
-          test -f app.js
-          test -f features-v11-retention.js
-          test -f features-v11-redaction.js
-          test -f features-v11-redaction-policy.js
-          test -f features-v12-export-approval.js
-          test -f features-v12-fingerprint-policy.js
-          test -f features-v12-release-audit.js
-          test -f features-v12-compatibility.js
-          test -f features-v13-disposition.js
-          test -f features-v13.css
-          test -f features-v14-recipient-policy.js
-          test -f features-v14-policy-hardening.js
-          test -f features-v14.css
-          test -f features-v15-policy-operations.js
-          test -f features-v15-download-routing.js
-          test -f features-v15.css
-          test -f features-v16-crypto.js
-          test -f features-v16-record-metadata.js
-          test -f features-v16-recovery.js
-          test -f features-v16-recovery-guards.js
-          test -f features-v16.css
-          test -f features-v16-recovery.css
-          test -f features-v162-custody.js
-          test -f features-v162.css
-          test -f archive-v11.js
-          test -f archive-v13.js
-          test -f manifest.webmanifest
-          test -f service-worker.js
-          test -f tests/v12-smoke.spec.js
-          test -f tests/v13-smoke.spec.js
-          test -f tests/v14-smoke.spec.js
-          test -f tests/v14-stability.spec.js
-          test -f tests/v15-smoke.spec.js
-          test -f tests/v15-ledger.spec.js
-          test -f tests/v16-crypto.spec.js
-          test -f tests/v16-recovery.spec.js
-          test -f tests/v16-crypto-core.mjs
-          test -f tests/v16-recovery-core.mjs
-          test -f tests/v162-custody.spec.js
-          test -f tests/v162-custody-core.mjs
-          test -f tests/generate-v162-disposable-fixture.mjs
-          test -f tests/v162-fixture-core.mjs
-          test -f tests/v162-fixture.spec.js
-          test -f tests/v163-provider-conformance.mjs
-          test -f docs/V1.6.2-VERIFICATION-CONFORMANCE.md
-          test -f docs/V1.6.3-PROVIDER-CONTRACT.md
-          test -f docs/V1.6.3-TESTS.md
+          required_files=(
+            meeting.html archive.html verify.html verify.js style.css
+            config.js config-v11.js config-v12.js config-v13.js config-v14.js config-v15.js
+            config-v16.js config-v162.js config-v163.js config-v164.js
+            migrations.js migrations-v10.js migrations-v11.js migrations-v12.js migrations-v13.js
+            migrations-v14.js migrations-v15.js migrations-v16.js
+            provider-contract.js hosted-provider-adapters.js provider-conformance.js http-provider-pilot.js
+            data-adapter.js async-data-adapter.js attachment-adapter.js
+            crypto-package-core.js key-custody-core.js workspace-package-core.js app.js
+            features-v11-retention.js features-v11-redaction.js features-v11-redaction-policy.js
+            features-v12-export-approval.js features-v12-fingerprint-policy.js features-v12-release-audit.js
+            features-v12-compatibility.js features-v13-disposition.js features-v13.css
+            features-v14-recipient-policy.js features-v14-policy-hardening.js features-v14.css
+            features-v15-policy-operations.js features-v15-download-routing.js features-v15.css
+            features-v16-crypto.js features-v16-record-metadata.js features-v16-recovery.js
+            features-v16-recovery-guards.js features-v16.css features-v16-recovery.css
+            features-v162-custody.js features-v162.css archive-v11.js archive-v13.js
+            manifest.webmanifest service-worker.js
+            tests/v12-smoke.spec.js tests/v13-smoke.spec.js tests/v14-smoke.spec.js
+            tests/v14-stability.spec.js tests/v15-smoke.spec.js tests/v15-ledger.spec.js
+            tests/v16-crypto.spec.js tests/v16-recovery.spec.js tests/v16-crypto-core.mjs
+            tests/v16-recovery-core.mjs tests/v162-custody.spec.js tests/v162-custody-core.mjs
+            tests/generate-v162-disposable-fixture.mjs tests/v162-fixture-core.mjs
+            tests/v162-fixture.spec.js tests/v163-provider-conformance.mjs tests/v164-provider-pilot.mjs
+            docs/V1.6.2-VERIFICATION-CONFORMANCE.md docs/V1.6.3-PROVIDER-CONTRACT.md
+            docs/V1.6.3-TESTS.md docs/V1.6.4-PROVIDER-PILOT.md docs/V1.6.4-TESTS.md
+            docs/PRODUCTION-PROVIDER-EVIDENCE.md
+          )
+          for file in "${required_files[@]}"; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
 
-      - name: Verify v1.6.3 assets are loaded
+      - name: Verify v1.6.4 assets are loaded
         shell: bash
         run: |
           set -euo pipefail
@@ -129,6 +82,7 @@ jobs:
           grep -q 'config-v16.js' meeting.html
           grep -q 'config-v162.js' meeting.html
           grep -q 'config-v163.js' meeting.html
+          grep -q 'config-v164.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
           grep -q 'provider-contract.js' meeting.html
           grep -q 'hosted-provider-adapters.js' meeting.html
@@ -141,19 +95,21 @@ jobs:
           grep -q 'features-v16-recovery.js' meeting.html
           grep -q 'features-v16-recovery-guards.js' meeting.html
           grep -q 'config-v16.js' archive.html
+          grep -q 'config-v164.js' archive.html
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.3' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.4' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'appShellVersion = "1.6.3"' config-v163.js
-          grep -q 'config-v163.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.4"' config-v164.js
+          grep -q 'config-v164.js' service-worker.js
           grep -q 'provider-contract.js' service-worker.js
           grep -q 'hosted-provider-adapters.js' service-worker.js
           grep -q 'key-custody-core.js' service-worker.js
           grep -q 'features-v162-custody.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
+          ! grep -Eq 'http-provider-pilot\.js' meeting.html archive.html verify.html service-worker.js
 
       - name: Run v1.6 Node Web Crypto self-test
         run: node tests/v16-crypto-core.mjs
@@ -209,7 +165,7 @@ jobs:
         include:
           - suite: existing-regression
             browser: chromium
-            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\\.6\\.1:|^Custody v1\\.6\\.2:|^Portable signed fixture v1\\.6\\.2:"
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\.6\.1:|^Custody v1\.6\.2:|^Portable signed fixture v1\.6\.2:"
           - suite: recovery-architecture
             browser: chromium
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
