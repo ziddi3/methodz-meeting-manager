@@ -366,7 +366,19 @@
     restoreRecord(recordId, options = {}) { return this.request("restoreRecord", { recordId, options }); }
     deleteRecord(recordId, options = {}) { return this.request("deleteRecord", { recordId, options }); }
     exportWorkspace(options = {}) { return this.request("exportWorkspace", { options }); }
-    healthCheck() { return this.request("healthCheck"); }
+
+    async healthCheck() {
+      const health = await this.request("healthCheck");
+      return {
+        ...health,
+        providerId: this.id,
+        label: this.label,
+        providerType: this.capabilities.providerType,
+        contractVersion: this.contractVersion,
+        transportProviderId: health?.providerId || null,
+        capabilities: clone(this.capabilities)
+      };
+    }
   }
 
   function createPilotProvider(options = {}) {
