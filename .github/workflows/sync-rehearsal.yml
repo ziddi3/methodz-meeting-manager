@@ -1,0 +1,49 @@
+name: Offline Synchronization Rehearsal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-rehearsal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check synchronization JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check config-v165.js
+          node --check sync-rehearsal-core.js
+          node --check features-v165-sync-rehearsal.js
+          node --check tests/v165-sync-rehearsal.mjs
+
+      - name: Verify v1.6.5 static wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f features-v165.css
+          grep -q 'features-v165.css' meeting.html
+          grep -q 'config-v165.js' meeting.html
+          grep -q 'http-provider-pilot.js' meeting.html
+          grep -q 'sync-rehearsal-core.js' meeting.html
+          grep -q 'features-v165-sync-rehearsal.js' meeting.html
+          grep -q 'methodz-meeting-manager-v1.6.5' service-worker.js
+          grep -q 'appShellVersion = "1.6.5"' config-v165.js
+          grep -q 'automaticBackgroundSync: false' config-v165.js
+          grep -q 'productionCredentialsAllowed: false' config-v165.js
+
+      - name: Run synchronization rehearsal contract
+        run: node tests/v165-sync-rehearsal.mjs
