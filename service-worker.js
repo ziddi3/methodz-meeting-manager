@@ -45,6 +45,7 @@ const APP_SHELL = [
   "./hosted-provider-adapters.js",
   "./http-provider-pilot.js",
   "./sync-rehearsal-core.js",
+  "./sync-rehearsal-hardening.js",
   "./data-adapter.js",
   "./async-data-adapter.js",
   "./attachment-adapter.js",
