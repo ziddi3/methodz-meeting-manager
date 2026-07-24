@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 const Contract = require("../provider-contract.js");
 const Adapters = require("../hosted-provider-adapters.js");
 const Pilot = require("../http-provider-pilot.js");
-const Sync = require("../sync-rehearsal-core.js");
+const Sync = require("../sync-rehearsal-hardening.js");
 
 class MemoryStorage {
   constructor() { this.values = new Map(); }
