@@ -129,7 +129,7 @@
       localRepository: createLocalRepository(),
       queueStore: new Api.StorageQueueStore({
         storage: global.localStorage,
-        key: config.storageKeys?.syncRehearsalQueue,
+        key: `${config.storageKeys?.syncRehearsalQueue || "methodzSyncRehearsalQueueV165"}:${tenantHash}`,
         maximumEntries: settings.maximumQueueEntries
       })
     });
@@ -154,20 +154,36 @@
       }
     };
     const write = (key, value) => global.localStorage.setItem(key, JSON.stringify(value));
+    const archiveRecordId = (entry) => entry?.record?.id || entry?.originalRecordId || entry?.id || null;
+    const unwrapArchivedRecord = (entry) => entry?.record || entry || null;
+
     return {
       async getRecord(recordId) {
-        return read(activeKey, []).find((record) => record.id === recordId)
-          || read(archivedKey, []).find((record) => record.id === recordId)
-          || null;
+        const activeRecord = read(activeKey, []).find((record) => record.id === recordId);
+        if (activeRecord) return activeRecord;
+        const archivedEntry = read(archivedKey, []).find((entry) => archiveRecordId(entry) === recordId);
+        return unwrapArchivedRecord(archivedEntry);
       },
       async upsertRecord(record, options = {}) {
         const validated = global.MethodzHostedProviderContract.assertRecord(record, "localRehearsalUpsert", "browser-local-workspace");
         let active = read(activeKey, []);
         let archived = read(archivedKey, []);
+        const existingArchive = archived.find((entry) => archiveRecordId(entry) === validated.id) || null;
         active = active.filter((item) => item.id !== validated.id);
-        archived = archived.filter((item) => item.id !== validated.id);
-        if (options.archived || validated.providerMetadata?.archivedAt) archived.push(validated);
-        else active.push(validated);
+        archived = archived.filter((entry) => archiveRecordId(entry) !== validated.id);
+
+        if (options.archived || validated.providerMetadata?.archivedAt) {
+          const archivedAt = validated.providerMetadata?.archivedAt || existingArchive?.archivedAt || new Date().toISOString();
+          archived.push({
+            archiveId: existingArchive?.archiveId || `archive-${Date.now()}-${global.MethodzHostedProviderContract.fnv1a32(validated.id)}`,
+            archivedAt,
+            originalRecordId: validated.id,
+            record: validated
+          });
+        } else {
+          active.push(validated);
+        }
+
         write(activeKey, active);
         write(archivedKey, archived);
         if (typeof global.loadSavedRecords === "function") global.loadSavedRecords();
