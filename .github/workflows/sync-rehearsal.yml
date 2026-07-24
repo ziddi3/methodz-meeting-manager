@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           node --check config-v165.js
           node --check sync-rehearsal-core.js
+          node --check sync-rehearsal-hardening.js
           node --check features-v165-sync-rehearsal.js
           node --check tests/v165-sync-rehearsal.mjs
 
@@ -39,6 +40,7 @@ jobs:
           grep -q 'config-v165.js' meeting.html
           grep -q 'http-provider-pilot.js' meeting.html
           grep -q 'sync-rehearsal-core.js' meeting.html
+          grep -q 'sync-rehearsal-hardening.js' meeting.html
           grep -q 'features-v165-sync-rehearsal.js' meeting.html
           grep -q 'methodz-meeting-manager-v1.6.5' service-worker.js
           grep -q 'appShellVersion = "1.6.5"' config-v165.js
