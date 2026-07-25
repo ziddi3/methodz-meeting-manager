@@ -108,8 +108,20 @@ jobs:
           cat /tmp/methodz-http.log
           exit 1
 
-      - name: Run synchronization portability browser tests
-        run: npx playwright test tests/v166-sync-portability.spec.js --reporter=line
+      - name: Test queue import preview and no automatic processing
+        run: npx playwright test tests/v166-sync-portability.spec.js --grep "queue import requires preview and approval and never auto-processes" --retries=0 --workers=1 --reporter=line
+
+      - name: Test tenant isolation and reload recovery
+        run: npx playwright test tests/v166-sync-portability.spec.js --grep "tenant queues remain isolated and recover after reload" --retries=0 --workers=1 --reporter=line
+
+      - name: Test instrumentation after remote reset
+        run: npx playwright test tests/v166-sync-portability.spec.js --grep "operator event instrumentation survives remote reset and classifies failures" --retries=0 --workers=1 --reporter=line
+
+      - name: Test uncertain-write replay and conflict metadata
+        run: npx playwright test tests/v166-sync-portability.spec.js --grep "response-loss retry preserves returned conflict metadata" --retries=0 --workers=1 --reporter=line
+
+      - name: Test archived remote pull envelope
+        run: npx playwright test tests/v166-sync-portability.spec.js --grep "archived remote pulls retain the Archive Vault envelope" --retries=0 --workers=1 --reporter=line
 
       - name: Upload browser traces on failure
         if: failure()
