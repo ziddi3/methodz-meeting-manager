@@ -4,6 +4,15 @@
 
   const config = global.METHODZ_MEETING_CONFIG || {};
   const settings = config.syncRehearsal || {};
+  const failureEventTypes = Object.freeze({
+    enqueuePush: "enqueue",
+    enqueuePull: "enqueue",
+    process: "process",
+    retry: "retry",
+    discard: "discard",
+    previewPull: "pull-preview",
+    resolveConflict: "conflict-decision"
+  });
   let pendingImport = null;
   let compactionPlan = null;
 
@@ -16,6 +25,7 @@
       installPanel();
       instrumentCurrentCoordinator();
       wrapTenantApplication();
+      wrapRemoteReset();
       renderEventSummary();
       setPortabilityStatus("Queue portability is ready. Import never mutates the queue until preview and explicit approval.", "ready");
     } catch (error) {
@@ -206,13 +216,20 @@
           after(resolved, args, beforeValue);
           return resolved;
         }).catch((error) => {
-          logEvent({
-            tenantId: this.tenantId,
-            eventType: methodName === "previewPull" ? "pull-preview" : "process",
-            entryId: args[0],
-            result: "error",
-            errorCode: error?.code || "UNEXPECTED_ERROR"
-          });
+          const currentEntry = typeof this.getEntry === "function" ? this.getEntry(args[0]) : null;
+          const eventType = failureEventTypes[methodName];
+          if (eventType) {
+            logEvent({
+              tenantId: this.tenantId,
+              eventType,
+              entryId: currentEntry?.id || args[0],
+              operation: currentEntry?.operation || operationForMethod(methodName),
+              state: currentEntry?.state || null,
+              strategy: methodName === "resolveConflict" ? args[1] : null,
+              result: "error",
+              errorCode: error?.code || "UNEXPECTED_ERROR"
+            });
+          }
           throw error;
         });
       }
@@ -221,20 +238,42 @@
     };
   }
 
+  function operationForMethod(methodName) {
+    if (methodName === "enqueuePush") return "push";
+    if (methodName === "enqueuePull" || methodName === "previewPull") return "pull";
+    return null;
+  }
+
   function wrapTenantApplication() {
     const original = global.applySyncTenantV165;
     if (typeof original !== "function" || original.__methodzV166Wrapped) return;
     const wrapped = async function applyTenantWithPortability(...args) {
       const result = await original(...args);
-      pendingImport = null;
-      compactionPlan = null;
-      instrumentCurrentCoordinator();
-      resetPreviews();
-      renderEventSummary();
+      refreshCoordinatorBoundary();
       return result;
     };
     Object.defineProperty(wrapped, "__methodzV166Wrapped", { value: true });
     global.applySyncTenantV165 = wrapped;
+  }
+
+  function wrapRemoteReset() {
+    const original = global.resetDisposableRemoteV165;
+    if (typeof original !== "function" || original.__methodzV166Wrapped) return;
+    const wrapped = async function resetRemoteWithPortability(...args) {
+      const result = await original(...args);
+      refreshCoordinatorBoundary();
+      return result;
+    };
+    Object.defineProperty(wrapped, "__methodzV166Wrapped", { value: true });
+    global.resetDisposableRemoteV165 = wrapped;
+  }
+
+  function refreshCoordinatorBoundary() {
+    pendingImport = null;
+    compactionPlan = null;
+    instrumentCurrentCoordinator();
+    resetPreviews();
+    renderEventSummary();
   }
 
   global.exportSyncQueuePackageV166 = () => {
