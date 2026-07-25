@@ -95,6 +95,32 @@ test.describe("Synchronization portability v1.6.6", () => {
     expect(await page.evaluate(() => window.MethodzSyncRehearsalWorkspaceV165.getCoordinator().listQueue().some((entry) => entry.id === "tenant-reload-entry"))).toBe(true);
   });
 
+  test("operator event instrumentation survives remote reset and classifies failures", async ({ page }) => {
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Reset Disposable Remote" }).click();
+    await expect(page.locator("#syncRehearsalStatusV165")).toContainText(/remote state reset/i);
+
+    const events = await page.evaluate(async () => {
+      const config = window.METHODZ_MEETING_CONFIG;
+      const workspace = window.MethodzSyncRehearsalWorkspaceV165;
+      const coordinator = workspace.getCoordinator();
+      const record = { id: "post-reset-record", title: "Post Reset", date: "2026-07-25", status: "Completed" };
+      coordinator.enqueuePush(record, { entryId: "post-reset-entry", idempotencyKey: "post-reset-idempotency" });
+      try {
+        await coordinator.enqueuePull("missing-remote-record", { entryId: "missing-pull-entry", idempotencyKey: "missing-pull-idempotency" });
+      } catch (error) {
+        // The failure is expected; the event classification is asserted below.
+      }
+      const base = config.storageKeys.syncRehearsalOperatorEvents;
+      const key = Object.keys(localStorage).find((name) => name.startsWith(`${base}:`));
+      return JSON.parse(localStorage.getItem(key) || "[]");
+    });
+
+    expect(events.some((event) => event.eventType === "enqueue" && event.result === "queued" && event.operation === "push")).toBe(true);
+    expect(events.some((event) => event.eventType === "enqueue" && event.result === "error" && event.operation === "pull")).toBe(true);
+    expect(events.some((event) => event.eventType === "process" && event.result === "error")).toBe(false);
+  });
+
   test("response-loss retry preserves returned conflict metadata", async ({ page }) => {
     const result = await page.evaluate(async () => {
       const config = window.METHODZ_MEETING_CONFIG;
