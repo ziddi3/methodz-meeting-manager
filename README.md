@@ -1,30 +1,31 @@
 # Methodz Meeting Manager
 
-Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC Inc., and future partner workflows connected through the Methodz brand ecosystem.
+Offline-first meeting preparation, capture, analysis, archive, and records for Canadian Soft Water Corporation, Method HVAC Inc., and future partner workflows connected through the Methodz brand ecosystem.
 
 > Methodz is a shared brand identity and operating ecosystem, not a separate company.
 
 ## Current release
 
-**App shell 1.6.4 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Pilot transport 1.0.0**
+**App shell 1.6.6 · Meeting-record schema 1.6.0 · Hosted-provider contract 1.0.0 · Synchronization rehearsal 1.0.0**
 
-The application is a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
+The application is plain HTML, CSS, and JavaScript. It has no required runtime packages, framework, build command, production backend, or mandatory server.
 
-Version 1.6.4 adds a disposable, CI-only hosted-provider pilot without connecting production infrastructure:
+Open `meeting.html` directly or deploy the repository to an ordinary static host.
 
-- JSON-serialized HTTP-style request and response envelopes;
-- a Promise-based client adapter that implements the complete provider contract;
-- disposable tenant-isolated in-memory provider instances;
-- bounded retries for retryable provider errors;
-- rate-limit, timeout, unavailable, dropped-response, and partial-success fault injection;
-- tenant-scoped idempotency and deterministic conflict behavior;
-- uncertain-write recovery through idempotent replay;
-- preservation tests for revisions, attachments, unknown fields, governance metadata, receipts, signatures, custody, and recovery metadata;
-- diagnostics that exclude meeting content, record IDs, credentials, tokens, signatures, private JWK material, request bodies, and response bodies;
-- a production-provider evidence gate covering authentication, authorization, tenant isolation, encryption, durable audit, recovery, residency, and incident response;
-- no schema migration, production endpoint, credential, backend, framework, or deployed runtime dependency.
+## What the application does
 
-All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, custody, recovery, offline, and provider-conformance features remain available.
+- Creates structured meeting records.
+- Captures organizations and representatives present.
+- Records attendance and explicit typed-signature consent.
+- Organizes agenda items and discussion notes.
+- Captures decisions and follow-up tasks.
+- Assigns responsibility with **Assigned To**, never “Owner.”
+- Generates meeting summaries and printable archive views.
+- Stores active records, archived records, revisions, templates, directories, and governance metadata locally.
+- Exports TXT, JSON, HTML, CSV, print/PDF, workspace backups, and controlled external packages.
+- Supports retention, preservation holds, disposition review, redaction, recipient policy, release approval, receipts, optional package signing, and independent verification.
+- Provides recovery inspection, no-write drills, hosted-provider conformance, and explicit synchronization rehearsals.
+- Provides mobile and cross-device readiness checks without exporting meeting content.
 
 ## Entry points
 
@@ -34,58 +35,71 @@ archive.html   Dedicated detail and print view
 verify.html    Standalone signed-package verifier
 ```
 
+## v1.6.6 mobile and cross-device readiness
+
+The Device Readiness panel checks:
+
+- browser storage write access;
+- storage quota and usage estimates;
+- persistent-storage status;
+- direct-file or service-worker state;
+- Web Crypto availability;
+- online/offline state;
+- mobile viewport fit;
+- counts of active, archived, revision, draft, template, directory, and synchronization-rehearsal data.
+
+The downloadable report contains metadata and counts only. It excludes meeting titles, notes, tasks, decisions, attendees, organizations, record IDs, signatures, credentials, and key material.
+
+Phone layouts add a touch-friendly Save, New, Records, and Device action dock, 44-pixel minimum controls, safe-area support, 16-pixel form inputs, and narrow-screen overflow protection.
+
+See:
+
+- `docs/V1.6.6-MOBILE-READINESS.md`
+- `docs/V1.6.6-TESTS.md`
+
 ## Core principles
 
-- Offline first
-- Static and directly deployable
-- No required server
-- No runtime framework
-- Exportable records before cloud sync
-- Non-destructive archive and revision history
-- Explicit confirmation before destructive actions
-- Active preservation holds block permanent disposition
-- External downloads require matching approval metadata
-- Recipient allow-lists apply only after redaction
-- Typed signatures require consent and remain excluded from external copies
-- Private signing keys never enter browser storage or provider exports
-- Public-key custody evidence never mutates registry status automatically
-- Workspace imports are validated immediately before mutation
-- Recovery reports exclude meeting and workspace values
-- Hosted-provider compatibility never substitutes for authentication or authority
-- Pilot transport logs never contain meeting payloads or credentials
-- **Assigned To**, never “Owner,” for task responsibility
-- **Organizations / Representatives Present** for participating groups
+- Offline first.
+- Static and directly deployable.
+- No required server or runtime framework.
+- Local records remain usable before any hosted provider is approved.
+- Explicit confirmation before destructive actions.
+- Non-destructive archive and revision history.
+- Preservation holds block permanent disposition.
+- External downloads require matching approval metadata.
+- Recipient allow-lists apply after redaction.
+- Typed signatures require consent and remain excluded from external copies.
+- Private signing keys never enter browser storage, provider exports, workspace backups, or signed packages.
+- Recovery reports exclude meeting and workspace values.
+- Hosted-provider compatibility never substitutes for authentication, authorization, tenant isolation, or legal approval.
+- Device readiness never substitutes for a protected backup or recovery rehearsal.
+- Infrastructure must support the meeting workflow rather than replace it.
 
 ## Architecture
 
 ```text
 Configuration
   config.js
-  config-v11.js through config-v16.js
-  config-v162.js
-  config-v163.js
-  config-v164.js
+  config-v11.js through config-v166.js
 
-Schema and migration
+Schema and migrations
   migrations.js
   migrations-v10.js through migrations-v16.js
 
-Record providers
+Record provider boundaries
   data-adapter.js
   async-data-adapter.js
   provider-contract.js
   hosted-provider-adapters.js
   provider-conformance.js
-
-CI-only provider pilot
   http-provider-pilot.js
-  tests/v164-provider-pilot.mjs
-  .github/workflows/provider-pilot.yml
 
-Attachment provider
-  attachment-adapter.js
+Synchronization rehearsal
+  sync-rehearsal-core.js
+  sync-rehearsal-hardening.js
+  features-v165-sync-rehearsal.js
 
-Package boundaries
+Package and recovery boundaries
   crypto-package-core.js
   key-custody-core.js
   workspace-package-core.js
@@ -94,19 +108,13 @@ Core workspace
   app.js
 
 Feature layers
-  features-v03*.js through features-v16*.js
-  features-v16-recovery.js
-  features-v16-recovery-guards.js
-  features-v162-custody.js
+  features-v03*.js through features-v166*.js
 
-Archive detail
+Archive and verification
   archive.js
   archive-v10.js
   archive-v11.js
   archive-v13.js
-
-Standalone verification
-  verify.html
   verify.js
 
 Static app shell
@@ -114,173 +122,56 @@ Static app shell
   service-worker.js
 ```
 
-Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
+Later feature layers intentionally wrap stable earlier functions. Script order in the HTML entry points is part of the current application contract.
 
-## Hosted-provider contract
+## Storage and transfer
 
-`provider-contract.js` exports the portable `MethodzHostedProviderContract` browser global and CommonJS module.
+Browser storage does not automatically move between devices, browser profiles, or hosting origins.
 
-A conforming provider implements Promise-returning operations:
+Recommended transfer sequence:
 
-```text
-listRecords(options?)
-getRecord(recordId, options?)
-upsertRecord(record, options?)
-archiveRecord(recordId, options?)
-restoreRecord(recordId, options?)
-deleteRecord(recordId, options?)
-exportWorkspace(options?)
-healthCheck()
-```
+1. Save the current meeting.
+2. Export a complete Workspace Backup.
+3. Store it outside the browser and source device.
+4. Keep private signing keys separately.
+5. Run Device Readiness on the destination browser.
+6. Inspect the package and run a no-write recovery drill.
+7. Restore only after reviewing the mutation plan.
+8. Confirm active, archived, revision, directory, template, governance, receipt, and public-key registry counts.
+9. Keep the source unchanged until destination verification is complete.
+10. Export a fresh backup after verification.
 
-### Conflict behavior
+## Hosted-provider boundary
 
-Stored records receive a provider version and deterministic conflict token. Updating an existing record requires the token returned by the last read or write. Missing or stale tokens fail with a non-retryable `CONFLICT` error.
+The current provider contract supports Promise-returning list, read, upsert, archive, restore, permanent-delete, export, and health operations with deterministic conflict tokens and idempotent replay.
 
-### Idempotency
+Reference and rehearsal providers are disposable compatibility tools. Passing their tests does not approve a production provider.
 
-`upsertRecord` accepts an idempotency key. Repeating the same key and request replays the original result. Reusing the key for different input fails with `IDEMPOTENCY_CONFLICT`.
+A production Firebase, Supabase, Drive, CRM, or Methodz API provider still requires evidence for:
 
-### Archive, revisions, and unknown fields
+- authentication and server-enforced authorization;
+- tenant isolation;
+- encryption and credential handling;
+- durable audit and retention enforcement;
+- backup and recovery;
+- privacy and residency review;
+- incident response.
 
-Providers must preserve:
+`localStorage` remains the default provider until a hosted provider is explicitly approved.
 
-- active and archived record separation;
-- revision snapshots;
-- unknown current and future fields;
-- retention, hold, disposition, redaction, approval, receipt, signature, custody, and recovery metadata;
-- source integrity metadata.
+## Signing and verification
 
-An archived record must be restored before update. Permanent deletion requires explicit `{ permanent: true }` and may be strengthened by server-side policy.
+Optional ECDSA P-256 / SHA-256 signatures protect exported JSON package bytes and bound signature metadata.
 
-### Provider exports
+Private signing keys exist only in current page memory and may be downloaded only through an explicit sensitive-backup action. Public keys may be recorded in the browser-local registry and custody workspace.
 
-A provider export includes active records, archived records, revisions, provider metadata, and integrity metadata. Private JWK parameters and recognized private-key fields are rejected before export.
-
-The compatibility integrity value detects changes. It is not a digital signature, identity proof, delivery proof, or immutable remote audit.
-
-### Reference providers
-
-- `InMemoryHostedProvider` is disposable and test-only.
-- `LocalStorageHostedProvider` can bind to Methodz browser storage.
-- CI uses isolated Storage-compatible objects and never writes to active user records.
-
-Passing the conformance suite proves client-contract compatibility only. A production provider still needs server-side authentication, authorization, tenant isolation, encryption, credential handling, durable audit, retention enforcement, backup, recovery, and incident response.
-
-See `docs/V1.6.3-PROVIDER-CONTRACT.md`.
-
-## Hosted-provider pilot
-
-`http-provider-pilot.js` places the provider contract behind a disposable serialized transport. It simulates uncertainty that does not appear in direct in-process adapters, including response loss after commit, rate limiting, timeouts, and partial success.
-
-The pilot is deliberately excluded from all application entry points and the service-worker cache. It is executed only by Node-based CI tests. No production URL or credential is accepted or stored.
-
-A production provider must pass both the v1.6.3 direct conformance suite and the v1.6.4 serialized transport suite, then satisfy the operational evidence gate.
-
-See:
-
-- `docs/V1.6.4-PROVIDER-PILOT.md`
-- `docs/V1.6.4-TESTS.md`
-- `docs/PRODUCTION-PROVIDER-EVIDENCE.md`
-
-## Attachment boundary
-
-The current attachment provider stores metadata references only:
-
-```text
-listReferences(record)
-getReference(record, referenceId)
-upsertReference(record, reference)
-deleteReference(record, referenceId)
-validateReference(reference)
-healthCheck()
-```
-
-Binary transfer is outside the v1.6.3 hosted-provider contract. Base64 blobs and `data:` payloads remain rejected.
-
-## Recovery readiness
-
-The Recovery Readiness panel provides no-write backup inspection and dry recovery drills. It validates package type, checksum, entry and byte limits, unsupported keys, private JWK material, summary counts, and the proposed storage mutation plan.
-
-Default import limits:
-
-```text
-500 recognized storage entries
-2 MiB per recognized entry
-12 MiB total recognized workspace data
-```
-
-The existing replacement-restore and merge interfaces remain available. Shared recovery guards validate the selected package immediately before mutation.
-
-See `docs/V1.6.1-RECOVERY-HARDENING.md`.
-
-## Cryptographic package signatures
-
-Recommended external release flow:
-
-```text
-controlled source record
-  -> redaction profile
-  -> recipient field allow-list
-  -> governance-version binding
-  -> content fingerprint
-  -> destination-bound approval
-  -> approved download and release receipt
-  -> optional ECDSA package signature
-  -> independent verification
-```
-
-Private signing JWKs exist only in current page memory. Workspace validation blocks private JWK material from restore and merge. Provider exports add another fail-closed boundary.
-
-A valid signature confirms package and signature-metadata integrity against the included public key. It does not independently prove signer identity, authority, recipient identity, delivery, approval legitimacy, or legal compliance.
-
-## Public-key custody and rotation
-
-The custody workspace records planned or completed rotation, revocation, lost-key response, and recovery-rehearsal evidence. Custody exports contain public JWKs and lifecycle metadata only. Recording a custody event does not automatically change key registry status.
-
-See `docs/KEY-CUSTODY-OPERATIONS.md` and `docs/V1.6.2-VERIFICATION-CONFORMANCE.md`.
-
-## External release controls
-
-Approval remains bound to the source, redacted-content fingerprint, redaction profile, destination policy, optional recipient policy, governance version, status, and expiration.
-
-Every successful approved external download creates a local release receipt with approval and destination snapshots, package integrity, release time, and receipt-chain metadata. The local chain provides change detection, not authenticated identity, delivery proof, or an immutable remote ledger.
-
-## Retention, preservation, and disposition
-
-Permanent Archive Vault removal requires:
-
-1. no active preservation hold;
-2. a documented disposition request and basis;
-3. review by an authorized role;
-4. a reviewer different from the requester;
-5. a fingerprint matching the current archived record;
-6. final deletion confirmation.
-
-A hosted provider must preserve these controls and may strengthen them server-side. Provider synchronization is never itself approval or authority.
-
-## Browser storage and backup practice
-
-Workspace backup captures Methodz-prefixed browser-storage entries. Private signing keys are intentionally absent because they are never written to browser storage.
-
-Recommended practice:
-
-1. Export a Workspace Backup after important meetings.
-2. Run a recovery drill after material workflow or browser changes.
-3. Export before changing devices, browsers, or hosting origins.
-4. Keep backups in a separate protected location.
-5. Store private signing keys separately from signed packages, custody manifests, and workspace backups.
-6. Preserve controlled source records separately from external copies.
-7. Use a separate browser profile or device for restore rehearsals.
-8. Independently confirm public-key IDs after generation, import, or rotation.
-
-Clearing browser data can remove records and local governance metadata.
+A valid signature confirms integrity relative to the matching key. It does not independently prove human identity, authority, recipient identity, approval legitimacy, delivery, or legal compliance.
 
 ## Static deployment
 
-No build step is required. Supported targets include:
+Supported deployment modes include:
 
-- direct `file:` use for the core meeting workflow;
+- direct `file:` use for core meeting workflows;
 - localhost;
 - GitHub Pages;
 - Cloudflare Pages;
@@ -289,69 +180,66 @@ No build step is required. Supported targets include:
 - Render static hosting;
 - any ordinary web server.
 
-Service workers and Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps core meeting, provider, and recovery workflows, although cryptographic availability may vary by browser context.
+HTTPS or localhost is recommended for service-worker and Web Crypto availability.
 
-## Automated validation
+Do not deploy this repository over `hub.methodz.ca`. Methodz Meeting Manager is a task-focused tool, not Method Hub or a business storefront container.
 
-GitHub Actions performs:
+## Validation
 
-1. JavaScript syntax checks;
-2. required static-file and app-shell wiring checks;
-3. Node Web Crypto signing and tamper tests;
-4. Node workspace-package validation and restore-plan tests;
-5. Node public-key custody manifest tests;
-6. isolated hosted-provider conformance for disposable memory and localStorage providers;
-7. serialized HTTP-style pilot conformance and network-fault scenarios;
-8. manifest JSON validation;
-9. isolated Playwright browser regression suites across supported engines.
+GitHub Actions covers:
 
-Provider conformance and provider-pilot tests are separate jobs, so their failures are not blended with browser-engine failures. Playwright is installed only in CI and is not a deployed dependency.
+- JavaScript syntax and required-file wiring;
+- manifest and service-worker checks;
+- cryptographic signing and tamper tests;
+- recovery-package validation;
+- public-key custody operations;
+- hosted-provider conformance;
+- serialized network-fault pilot scenarios;
+- offline synchronization rehearsals;
+- Chromium, Firefox, and WebKit verification coverage;
+- phone-viewport mobile readiness and metadata-exclusion tests.
+
+Playwright and other test packages are installed only in CI and are not deployed runtime dependencies.
 
 ## Documentation
+
+Primary current documents:
 
 ```text
 docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
 docs/SECURITY-AND-PRIVACY.md
 docs/RELEASE-CHECKLIST.md
-docs/V1.6-NOTES.md
-docs/V1.6-ARCHITECTURE.md
-docs/V1.6-TESTS.md
 docs/V1.6.1-RECOVERY-HARDENING.md
-docs/V1.6.2-NOTES.md
-docs/V1.6.2-ARCHITECTURE.md
-docs/V1.6.2-TESTS.md
 docs/V1.6.2-VERIFICATION-CONFORMANCE.md
 docs/V1.6.3-PROVIDER-CONTRACT.md
-docs/V1.6.3-TESTS.md
 docs/V1.6.4-PROVIDER-PILOT.md
-docs/V1.6.4-TESTS.md
+docs/V1.6.5-SYNC-REHEARSAL.md
+docs/V1.6.6-MOBILE-READINESS.md
+docs/V1.6.6-TESTS.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
 
-Earlier version-specific documents remain in `docs/` for historical context.
+Earlier version-specific documents remain under `docs/` as historical engineering context.
 
 ## Roadmap
 
 ### 1.x hardening
 
-- complete mobile and cross-device regression testing;
+- complete real-device Android and iOS regression testing;
 - consolidate older feature layers without breaking direct-file compatibility;
 - run documented cross-device recovery and key-rotation rehearsals;
+- improve the direct meeting workflow before adding more infrastructure;
 - evaluate production-provider candidates against the evidence gate;
-- add a disposable synchronization coordinator for offline queue, conflict review, and explicit user-controlled push/pull rehearsals;
-- preserve localStorage as the default until a hosted provider is explicitly approved.
+- preserve browser-local storage as the default until a hosted provider is explicitly approved.
 
 ### 2.0 hosted provider
 
-- Firebase, Supabase, or Methodz API provider;
-- authenticated user accounts and server-enforced permissions;
-- organization and tenant isolation;
-- organization-managed recipient policy and public-key administration;
-- durable key revocation and rotation records;
-- server-enforced retention, preservation, export approval, and disposition approval;
-- append-only remote audit, release receipt, and recovery-drill storage;
-- calendar and CRM integration;
-- AI-assisted summaries with explicit human review;
-- audio or video recording workflows with consent controls.
+- explicitly approved Firebase, Supabase, or Methodz API provider;
+- authenticated user accounts;
+- server-enforced permissions and tenant isolation;
+- durable organization-managed governance, retention, release, and key records;
+- controlled synchronization with conflict resolution and recovery evidence.
+
+No 2.0 provider is active in this release.
