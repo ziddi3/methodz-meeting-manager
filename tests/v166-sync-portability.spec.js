@@ -5,6 +5,7 @@ async function resetWorkspace(page) {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector("#syncPortabilityPanelV166");
+  await page.evaluate(() => document.querySelectorAll("details").forEach((details) => { details.open = true; }));
 }
 
 test.describe("Synchronization portability v1.6.6", () => {
