@@ -21,18 +21,25 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check synchronization JavaScript syntax
-        shell: bash
+      - name: Check v1.6.5 synchronization syntax
         run: |
-          set -euo pipefail
           node --check config-v165.js
-          node --check config-v166.js
           node --check sync-rehearsal-core.js
           node --check sync-rehearsal-hardening.js
-          node --check sync-queue-portability.js
           node --check features-v165-sync-rehearsal.js
-          node --check features-v166-sync-portability.js
           node --check tests/v165-sync-rehearsal.mjs
+
+      - name: Check v1.6.6 configuration syntax
+        run: node --check config-v166.js
+
+      - name: Check v1.6.6 portability core syntax
+        run: node --check sync-queue-portability.js
+
+      - name: Check v1.6.6 browser workspace syntax
+        run: node --check features-v166-sync-portability.js
+
+      - name: Check v1.6.6 test syntax
+        run: |
           node --check tests/v166-sync-portability.mjs
           node --check tests/v166-sync-portability.spec.js
 
