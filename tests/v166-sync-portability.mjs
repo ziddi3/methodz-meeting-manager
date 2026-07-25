@@ -79,7 +79,7 @@ function run() {
 
   assert.throws(() => Portability.buildQueuePackage({
     tenantId: TENANT,
-    entries: [queueEntry({ sourceSnapshot: { ...record("private-record"), privateJwk: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "private" } })]
+    entries: [queueEntry({ sourceSnapshot: { ...record("private-record"), privateJwk: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "private" } } })]
   }), (error) => error.code === Contract.errorCodes.PRIVATE_KEY_REJECTED);
 
   assert.throws(() => Portability.buildQueuePackage({
