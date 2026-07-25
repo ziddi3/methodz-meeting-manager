@@ -127,7 +127,8 @@ function run() {
     queueEntry({ id: "pending-protected", state: "pending" }),
     queueEntry({ id: "offline-protected", state: "offline" }),
     queueEntry({ id: "conflict-protected", state: "blocked-conflict" }),
-    queueEntry({ id: "completed-old", state: "completed", completedAt: "2026-05-01T00:00:00.000Z", updatedAt: "2026-05-01T00:00:00.000Z" })
+    queueEntry({ id: "completed-old", state: "completed", completedAt: "2026-05-01T00:00:00.000Z", updatedAt: "2026-05-01T00:00:00.000Z" }),
+    queueEntry({ id: "completed-offset-recent", state: "completed", completedAt: "2026-06-30T23:30:00-05:00", updatedAt: "2026-06-30T23:30:00-05:00" })
   ];
   const compactionPlan = Portability.planQueueCompaction(compactionEntries, {
     tenantId: TENANT,
@@ -136,10 +137,13 @@ function run() {
   });
   assert.deepEqual(compactionPlan.candidateIds, ["completed-old"]);
   assert.equal(compactionPlan.protectedEntries, 3);
+  assert.equal(compactionPlan.completedEntries, 2);
+  assert.throws(() => Portability.planQueueCompaction(compactionEntries, { tenantId: TENANT, staleBefore: "not-a-date" }), /valid stale-before timestamp/);
   assert.throws(() => Portability.applyQueueCompaction(compactionEntries, ["pending-protected"], { tenantId: TENANT }), /Protected queue work/);
   const compacted = Portability.applyQueueCompaction(compactionEntries, ["completed-old"], { tenantId: TENANT });
   assert.equal(compacted.removed, 1);
   assert.equal(compacted.entries.some((entry) => entry.id === "pending-protected"), true);
+  assert.equal(compacted.entries.some((entry) => entry.id === "completed-offset-recent"), true);
 
   const enqueueEvent = Portability.createOperatorEvent({
     id: "event-1",
