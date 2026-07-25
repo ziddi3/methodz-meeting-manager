@@ -83,12 +83,12 @@ test.describe("Synchronization portability v1.6.6", () => {
 
     await page.locator("#syncTenantV165").fill("second-rehearsal-tenant");
     await page.getByRole("button", { name: "Apply Tenant" }).click();
-    await expect(page.locator("#syncRehearsalStatusV165")).toContainText("tenant applied", { ignoreCase: true });
+    await expect(page.locator("#syncRehearsalStatusV165")).toContainText(/tenant applied/i);
     expect(await page.evaluate(() => window.MethodzSyncRehearsalWorkspaceV165.getCoordinator().listQueue().length)).toBe(0);
 
     await page.locator("#syncTenantV165").fill("methodz-rehearsal");
     await page.getByRole("button", { name: "Apply Tenant" }).click();
-    await expect(page.locator("#syncQueueV165")).toContainText("tenant-reload-entry");
+    await expect.poll(() => page.evaluate(() => window.MethodzSyncRehearsalWorkspaceV165.getCoordinator().listQueue().some((entry) => entry.id === "tenant-reload-entry"))).toBe(true);
 
     await page.reload();
     await page.waitForSelector("#syncPortabilityPanelV166");
