@@ -96,6 +96,10 @@
     return typeof value === "string" && !Number.isNaN(new Date(value).getTime());
   }
 
+  function timestampValue(entry) {
+    return new Date(entry.completedAt || entry.updatedAt || entry.createdAt).getTime();
+  }
+
   function integrityFor(body) {
     return Contract.fnv1a32(Contract.canonicalStringify(body));
   }
@@ -345,21 +349,23 @@
     const normalized = normalizeQueue(entries || [], tenantId, options.maximumEntries || 100000);
     const staleDays = positiveInteger(options.staleDays, 30);
     const staleBefore = options.staleBefore || new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000).toISOString();
+    const staleBeforeMs = new Date(staleBefore).getTime();
+    if (!Number.isFinite(staleBeforeMs)) throw new Error("Queue compaction requires a valid stale-before timestamp.");
     const completed = normalized.filter((entry) => entry.state === "completed");
     const protectedEntries = normalized.filter((entry) => PROTECTED_STATES.has(entry.state));
     const staleCandidates = completed
-      .filter((entry) => String(entry.completedAt || entry.updatedAt || entry.createdAt) < staleBefore)
-      .sort((a, b) => String(a.completedAt || a.updatedAt).localeCompare(String(b.completedAt || b.updatedAt)));
+      .filter((entry) => timestampValue(entry) < staleBeforeMs)
+      .sort((a, b) => timestampValue(a) - timestampValue(b));
     const maximumRetained = positiveInteger(options.maximumRetained, normalized.length || 1);
     const overflow = Math.max(0, normalized.length - maximumRetained);
-    const orderedCompleted = [...completed].sort((a, b) => String(a.completedAt || a.updatedAt).localeCompare(String(b.completedAt || b.updatedAt)));
+    const orderedCompleted = [...completed].sort((a, b) => timestampValue(a) - timestampValue(b));
     const candidateIds = [];
     [...staleCandidates, ...orderedCompleted.slice(0, overflow)].forEach((entry) => {
       if (!candidateIds.includes(entry.id)) candidateIds.push(entry.id);
     });
     return {
       generatedAt: nowIso(options.clock),
-      staleBefore,
+      staleBefore: new Date(staleBeforeMs).toISOString(),
       totalEntries: normalized.length,
       protectedEntries: protectedEntries.length,
       completedEntries: completed.length,
