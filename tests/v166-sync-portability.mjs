@@ -187,16 +187,28 @@ function run() {
   }), /unsupported field|meeting or secret material/i);
 
   const queueStorageKey = "methodzSyncRehearsalQueueV165:tenant-hash";
-  const workspaceSummary = Workspace.summarizeEntries({
-    methodzMeetingRecords: JSON.stringify([record("workspace-record")]),
-    [queueStorageKey]: JSON.stringify([queueEntry()])
-  }, {
-    records: "methodzMeetingRecords",
-    syncRehearsalQueue: "methodzSyncRehearsalQueueV165"
-  });
-  assert.equal(workspaceSummary.activeRecords, 1);
-  assert.equal(workspaceSummary.syncQueueEntries, 1);
-  assert.equal(workspaceSummary.syncQueueTenants, 1);
+  assert.equal(Workspace.isRecognizedKey(queueStorageKey), true);
+  const workspaceBody = {
+    packageType: Workspace.PACKAGE_TYPE,
+    packageVersion: 1,
+    schemaVersion: "1.6.0",
+    exportedAt: CREATED,
+    entries: {
+      methodzMeetingRecords: JSON.stringify([record("workspace-record")]),
+      [queueStorageKey]: JSON.stringify([queueEntry()])
+    }
+  };
+  workspaceBody.summary = Workspace.summarizeEntries(workspaceBody.entries, { records: "methodzMeetingRecords" });
+  const workspacePayload = {
+    ...workspaceBody,
+    checksum: Workspace.hashText(Workspace.stableStringify(workspaceBody))
+  };
+  const workspaceInspection = Workspace.inspectWorkspacePackage(workspacePayload);
+  assert.equal(workspaceInspection.valid, true);
+  assert.equal(workspaceInspection.checksumVerified, true);
+  assert.equal(workspaceInspection.recognizedKeys.includes(queueStorageKey), true);
+  const restorePlan = Workspace.buildRestorePlan(workspacePayload, {}, { mode: "replace" });
+  assert.equal(restorePlan.plan.add.includes(queueStorageKey), true);
 
   console.log("v1.6.6 synchronization queue portability tests passed");
 }
