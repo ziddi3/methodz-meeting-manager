@@ -1,5 +1,5 @@
 /* Methodz Meeting Manager optional static app-shell service worker. */
-const CACHE_NAME = "methodz-meeting-manager-v1.6.5";
+const CACHE_NAME = "methodz-meeting-manager-v1.6.6";
 const APP_SHELL = [
   "./",
   "./meeting.html",
@@ -22,6 +22,7 @@ const APP_SHELL = [
   "./features-v16-recovery.css",
   "./features-v162.css",
   "./features-v165.css",
+  "./features-v166.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -33,6 +34,7 @@ const APP_SHELL = [
   "./config-v163.js",
   "./config-v164.js",
   "./config-v165.js",
+  "./config-v166.js",
   "./migrations.js",
   "./migrations-v10.js",
   "./migrations-v11.js",
@@ -98,6 +100,7 @@ const APP_SHELL = [
   "./features-v16-recovery.js",
   "./features-v16-recovery-guards.js",
   "./features-v165-sync-rehearsal.js",
+  "./features-v166-device-readiness.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
