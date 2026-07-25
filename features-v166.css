@@ -1,0 +1,112 @@
+/* Methodz Meeting Manager v1.6.6 synchronization portability styles. */
+.sync-portability-v166 {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border, #dddddd);
+  padding-top: 0.75rem;
+}
+
+.sync-portability-v166 > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.5rem 0;
+}
+
+.release-badge-v166 {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid #9a7727;
+  border-radius: 999px;
+  background: #fff8df;
+  color: #5d470f;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.sync-portability-grid-v166 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.sync-portability-grid-v166 > section,
+.sync-portability-v166 > section {
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fafafa;
+}
+
+.sync-import-preview-v166 {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid #b6c8b9;
+  border-radius: 7px;
+  background: #f5fff6;
+}
+
+.sync-import-preview-v166.has-error {
+  border-color: #c98c8c;
+  background: #fff4f4;
+}
+
+.sync-preview-metrics-v166 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.65rem 0;
+}
+
+.sync-preview-metrics-v166 span {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #d4d4d4;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 0.86rem;
+}
+
+.sync-warning-v166 {
+  padding: 0.65rem;
+  border-left: 4px solid #b48b24;
+  background: #fff9e8;
+}
+
+.sync-compaction-option-v166 {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0.5rem 0;
+  padding: 0.65rem;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  background: #ffffff;
+  font-weight: normal;
+}
+
+.sync-compaction-option-v166 input {
+  width: auto;
+  margin-top: 0.25rem;
+}
+
+.sync-compaction-option-v166 span {
+  min-width: 0;
+}
+
+.sync-compaction-option-v166 small {
+  display: block;
+  color: var(--muted, #666666);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .sync-portability-grid-v166 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .sync-portability-v166 {
+    display: none !important;
+  }
+}
