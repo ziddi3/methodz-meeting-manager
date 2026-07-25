@@ -6,25 +6,24 @@ Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC I
 
 ## Current release
 
-**App shell 1.6.4 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Pilot transport 1.0.0**
+**App shell 1.6.6 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Pilot transport 1.0.0 · Synchronization queue package 1.0.0**
 
-The application is a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly or deploy the repository to an ordinary static host.
+The application remains a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly for the core meeting workflow or deploy the repository to an ordinary static host.
 
-Version 1.6.4 adds a disposable, CI-only hosted-provider pilot without connecting production infrastructure:
+Version 1.6.6 extends the explicit offline synchronization rehearsal with:
 
-- JSON-serialized HTTP-style request and response envelopes;
-- a Promise-based client adapter that implements the complete provider contract;
-- disposable tenant-isolated in-memory provider instances;
-- bounded retries for retryable provider errors;
-- rate-limit, timeout, unavailable, dropped-response, and partial-success fault injection;
-- tenant-scoped idempotency and deterministic conflict behavior;
-- uncertain-write recovery through idempotent replay;
-- preservation tests for revisions, attachments, unknown fields, governance metadata, receipts, signatures, custody, and recovery metadata;
-- diagnostics that exclude meeting content, record IDs, credentials, tokens, signatures, private JWK material, request bodies, and response bodies;
-- a production-provider evidence gate covering authentication, authorization, tenant isolation, encryption, durable audit, recovery, residency, and incident response;
-- no schema migration, production endpoint, credential, backend, framework, or deployed runtime dependency.
+- durable tenant-scoped push and pull queues;
+- integrity-checked queue export and import;
+- no-write import preview and explicit approval;
+- keep-local, newest-metadata, and retain-both merge strategies;
+- fail-closed rejection of tampering, unsupported versions, cross-tenant packages, private keys, credentials, and embedded binary payloads;
+- completed-entry compaction that protects pending, offline, retryable, and blocked-conflict work;
+- bounded metadata-only operator evidence;
+- workspace backup and recovery-plan coverage for tenant queue keys;
+- browser regression tests for tenant isolation, reload recovery, uncertain-write replay, conflict-token persistence, archived pulls, reset instrumentation, and no automatic processing;
+- no production endpoint, credential, backend, framework, or automatic background synchronization.
 
-All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, custody, recovery, offline, and provider-conformance features remain available.
+All earlier archive, revision, retention, preservation, redaction, export approval, recipient policy, disposition, signature-consent, directory, task, template, release-receipt, signing, verification, custody, recovery, offline, provider-conformance, and provider-pilot features remain available.
 
 ## Entry points
 
@@ -40,7 +39,7 @@ verify.html    Standalone signed-package verifier
 - Static and directly deployable
 - No required server
 - No runtime framework
-- Exportable records before cloud sync
+- Exportable records before hosted synchronization
 - Non-destructive archive and revision history
 - Explicit confirmation before destructive actions
 - Active preservation holds block permanent disposition
@@ -52,7 +51,8 @@ verify.html    Standalone signed-package verifier
 - Workspace imports are validated immediately before mutation
 - Recovery reports exclude meeting and workspace values
 - Hosted-provider compatibility never substitutes for authentication or authority
-- Pilot transport logs never contain meeting payloads or credentials
+- Synchronization rehearsal never substitutes for approval, identity, delivery, or remote audit
+- Service workers cache static assets only and never process queue work
 - **Assigned To**, never “Owner,” for task responsibility
 - **Organizations / Representatives Present** for participating groups
 
@@ -62,9 +62,7 @@ verify.html    Standalone signed-package verifier
 Configuration
   config.js
   config-v11.js through config-v16.js
-  config-v162.js
-  config-v163.js
-  config-v164.js
+  config-v162.js through config-v166.js
 
 Schema and migration
   migrations.js
@@ -77,10 +75,21 @@ Record providers
   hosted-provider-adapters.js
   provider-conformance.js
 
-CI-only provider pilot
+Disposable provider pilot
   http-provider-pilot.js
   tests/v164-provider-pilot.mjs
   .github/workflows/provider-pilot.yml
+
+Synchronization rehearsal
+  sync-rehearsal-core.js
+  sync-rehearsal-hardening.js
+  features-v165-sync-rehearsal.js
+  sync-queue-portability.js
+  features-v166-sync-portability.js
+  tests/v165-sync-rehearsal.mjs
+  tests/v166-sync-portability.mjs
+  tests/v166-sync-portability.spec.js
+  .github/workflows/sync-rehearsal.yml
 
 Attachment provider
   attachment-adapter.js
@@ -92,12 +101,7 @@ Package boundaries
 
 Core workspace
   app.js
-
-Feature layers
-  features-v03*.js through features-v16*.js
-  features-v16-recovery.js
-  features-v16-recovery-guards.js
-  features-v162-custody.js
+  features-v03*.js through features-v166*.js
 
 Archive detail
   archive.js
@@ -116,6 +120,43 @@ Static app shell
 
 Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the application contract.
 
+## Synchronization rehearsal
+
+The synchronization workspace uses a disposable, browser-local HTTP-style provider simulator. It supports explicit enqueue, preview, process, retry, discard, reconnect, and conflict-resolution operations.
+
+It does **not** provide:
+
+- a production endpoint;
+- authenticated users;
+- server-side permissions;
+- durable remote audit;
+- background synchronization;
+- production credentials;
+- automatic conflict resolution.
+
+Queue packages can move pending rehearsal work between browser profiles. A queue package may contain meeting-record snapshots required for an explicit future operation and must therefore be protected like a full workspace backup.
+
+Import is always a two-stage operation:
+
+```text
+choose package
+  -> validate package type, version, tenant, entries, unsafe material, and integrity
+  -> show a no-write preview
+  -> choose merge strategy
+  -> explicit approval
+  -> update browser-local queue only
+```
+
+Imported work remains unprocessed until an operator presses **Process**.
+
+Completed-entry compaction never removes pending, offline, retryable, or blocked-conflict entries. The browser-local operator log contains opaque references and bounded operational metadata only. It is not authenticated remote evidence.
+
+See:
+
+- `docs/V1.6.5-SYNC-REHEARSAL.md`
+- `docs/V1.6.6-SYNC-PORTABILITY.md`
+- `docs/V1.6.6-TESTS.md`
+
 ## Hosted-provider contract
 
 `provider-contract.js` exports the portable `MethodzHostedProviderContract` browser global and CommonJS module.
@@ -133,70 +174,19 @@ exportWorkspace(options?)
 healthCheck()
 ```
 
-### Conflict behavior
+Stored records receive a provider version and deterministic conflict token. Updating an existing record requires the token returned by the latest read or write. Repeating the same idempotency key and request replays the original result; reusing a key for different input fails.
 
-Stored records receive a provider version and deterministic conflict token. Updating an existing record requires the token returned by the last read or write. Missing or stale tokens fail with a non-retryable `CONFLICT` error.
+Providers must preserve active and archived separation, revision snapshots, unknown fields, attachment references, integrity metadata, and all retention, hold, disposition, redaction, approval, receipt, signature, custody, and recovery metadata.
 
-### Idempotency
+Private JWK material, credentials, embedded binary fields, and data URLs are rejected before provider writes and exports.
 
-`upsertRecord` accepts an idempotency key. Repeating the same key and request replays the original result. Reusing the key for different input fails with `IDEMPOTENCY_CONFLICT`.
-
-### Archive, revisions, and unknown fields
-
-Providers must preserve:
-
-- active and archived record separation;
-- revision snapshots;
-- unknown current and future fields;
-- retention, hold, disposition, redaction, approval, receipt, signature, custody, and recovery metadata;
-- source integrity metadata.
-
-An archived record must be restored before update. Permanent deletion requires explicit `{ permanent: true }` and may be strengthened by server-side policy.
-
-### Provider exports
-
-A provider export includes active records, archived records, revisions, provider metadata, and integrity metadata. Private JWK parameters and recognized private-key fields are rejected before export.
-
-The compatibility integrity value detects changes. It is not a digital signature, identity proof, delivery proof, or immutable remote audit.
-
-### Reference providers
-
-- `InMemoryHostedProvider` is disposable and test-only.
-- `LocalStorageHostedProvider` can bind to Methodz browser storage.
-- CI uses isolated Storage-compatible objects and never writes to active user records.
-
-Passing the conformance suite proves client-contract compatibility only. A production provider still needs server-side authentication, authorization, tenant isolation, encryption, credential handling, durable audit, retention enforcement, backup, recovery, and incident response.
-
-See `docs/V1.6.3-PROVIDER-CONTRACT.md`.
-
-## Hosted-provider pilot
-
-`http-provider-pilot.js` places the provider contract behind a disposable serialized transport. It simulates uncertainty that does not appear in direct in-process adapters, including response loss after commit, rate limiting, timeouts, and partial success.
-
-The pilot is deliberately excluded from all application entry points and the service-worker cache. It is executed only by Node-based CI tests. No production URL or credential is accepted or stored.
-
-A production provider must pass both the v1.6.3 direct conformance suite and the v1.6.4 serialized transport suite, then satisfy the operational evidence gate.
+Passing conformance proves client-contract compatibility only. A production provider still requires server-side authentication, authorization, tenant isolation, encryption, key management, durable audit, retention enforcement, backup, recovery, residency review, and incident response.
 
 See:
 
+- `docs/V1.6.3-PROVIDER-CONTRACT.md`
 - `docs/V1.6.4-PROVIDER-PILOT.md`
-- `docs/V1.6.4-TESTS.md`
 - `docs/PRODUCTION-PROVIDER-EVIDENCE.md`
-
-## Attachment boundary
-
-The current attachment provider stores metadata references only:
-
-```text
-listReferences(record)
-getReference(record, referenceId)
-upsertReference(record, reference)
-deleteReference(record, referenceId)
-validateReference(reference)
-healthCheck()
-```
-
-Binary transfer is outside the v1.6.3 hosted-provider contract. Base64 blobs and `data:` payloads remain rejected.
 
 ## Recovery readiness
 
@@ -210,11 +200,22 @@ Default import limits:
 12 MiB total recognized workspace data
 ```
 
-The existing replacement-restore and merge interfaces remain available. Shared recovery guards validate the selected package immediately before mutation.
+Workspace backup captures Methodz-prefixed browser-storage entries, including tenant-scoped rehearsal queues and operator-event logs. Private signing keys are absent because they are never written to browser storage.
+
+Recommended practice:
+
+1. Export a Workspace Backup after important meetings.
+2. Run a recovery drill after material workflow or browser changes.
+3. Export before changing devices, browsers, or hosting origins.
+4. Keep backups in a separate protected location.
+5. Store private signing keys separately from signed packages, custody manifests, and workspace backups.
+6. Preserve controlled source records separately from external copies.
+7. Use a separate browser profile or device for restore rehearsals.
+8. Independently confirm public-key IDs after generation, import, or rotation.
 
 See `docs/V1.6.1-RECOVERY-HARDENING.md`.
 
-## Cryptographic package signatures
+## Cryptographic package signatures and custody
 
 Recommended external release flow:
 
@@ -230,21 +231,16 @@ controlled source record
   -> independent verification
 ```
 
-Private signing JWKs exist only in current page memory. Workspace validation blocks private JWK material from restore and merge. Provider exports add another fail-closed boundary.
+Private signing JWKs exist only in current page memory. Workspace validation and provider boundaries reject private JWK material.
 
 A valid signature confirms package and signature-metadata integrity against the included public key. It does not independently prove signer identity, authority, recipient identity, delivery, approval legitimacy, or legal compliance.
 
-## Public-key custody and rotation
+The custody workspace records rotation, revocation, lost-key response, and recovery-rehearsal evidence. Custody exports contain public JWKs and lifecycle metadata only. Recording a custody event does not automatically change registry status.
 
-The custody workspace records planned or completed rotation, revocation, lost-key response, and recovery-rehearsal evidence. Custody exports contain public JWKs and lifecycle metadata only. Recording a custody event does not automatically change key registry status.
+See:
 
-See `docs/KEY-CUSTODY-OPERATIONS.md` and `docs/V1.6.2-VERIFICATION-CONFORMANCE.md`.
-
-## External release controls
-
-Approval remains bound to the source, redacted-content fingerprint, redaction profile, destination policy, optional recipient policy, governance version, status, and expiration.
-
-Every successful approved external download creates a local release receipt with approval and destination snapshots, package integrity, release time, and receipt-chain metadata. The local chain provides change detection, not authenticated identity, delivery proof, or an immutable remote ledger.
+- `docs/KEY-CUSTODY-OPERATIONS.md`
+- `docs/V1.6.2-VERIFICATION-CONFORMANCE.md`
 
 ## Retention, preservation, and disposition
 
@@ -257,24 +253,7 @@ Permanent Archive Vault removal requires:
 5. a fingerprint matching the current archived record;
 6. final deletion confirmation.
 
-A hosted provider must preserve these controls and may strengthen them server-side. Provider synchronization is never itself approval or authority.
-
-## Browser storage and backup practice
-
-Workspace backup captures Methodz-prefixed browser-storage entries. Private signing keys are intentionally absent because they are never written to browser storage.
-
-Recommended practice:
-
-1. Export a Workspace Backup after important meetings.
-2. Run a recovery drill after material workflow or browser changes.
-3. Export before changing devices, browsers, or hosting origins.
-4. Keep backups in a separate protected location.
-5. Store private signing keys separately from signed packages, custody manifests, and workspace backups.
-6. Preserve controlled source records separately from external copies.
-7. Use a separate browser profile or device for restore rehearsals.
-8. Independently confirm public-key IDs after generation, import, or rotation.
-
-Clearing browser data can remove records and local governance metadata.
+A hosted provider must preserve these controls and may strengthen them server-side. Synchronization is never itself approval or authority.
 
 ## Static deployment
 
@@ -289,7 +268,7 @@ No build step is required. Supported targets include:
 - Render static hosting;
 - any ordinary web server.
 
-Service workers and Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps core meeting, provider, and recovery workflows, although cryptographic availability may vary by browser context.
+Service workers and Web Crypto are normally available on HTTPS or localhost. Direct-file mode keeps core meeting, provider, recovery, and queue-package logic, although some browser security capabilities may vary by context.
 
 ## Automated validation
 
@@ -298,14 +277,15 @@ GitHub Actions performs:
 1. JavaScript syntax checks;
 2. required static-file and app-shell wiring checks;
 3. Node Web Crypto signing and tamper tests;
-4. Node workspace-package validation and restore-plan tests;
-5. Node public-key custody manifest tests;
-6. isolated hosted-provider conformance for disposable memory and localStorage providers;
-7. serialized HTTP-style pilot conformance and network-fault scenarios;
-8. manifest JSON validation;
-9. isolated Playwright browser regression suites across supported engines.
+4. workspace-package validation and recovery-plan tests;
+5. public-key custody manifest tests;
+6. hosted-provider conformance for disposable memory and isolated storage providers;
+7. serialized HTTP-style pilot conformance and network-fault tests;
+8. synchronization rehearsal and queue portability contracts;
+9. manifest validation;
+10. isolated Playwright browser regression suites, including portable verification in Chromium, Firefox, and WebKit.
 
-Provider conformance and provider-pilot tests are separate jobs, so their failures are not blended with browser-engine failures. Playwright is installed only in CI and is not a deployed dependency.
+Playwright is installed only in CI and is not a deployed dependency.
 
 ## Documentation
 
@@ -326,6 +306,10 @@ docs/V1.6.3-PROVIDER-CONTRACT.md
 docs/V1.6.3-TESTS.md
 docs/V1.6.4-PROVIDER-PILOT.md
 docs/V1.6.4-TESTS.md
+docs/V1.6.5-SYNC-REHEARSAL.md
+docs/V1.6.5-TESTS.md
+docs/V1.6.6-SYNC-PORTABILITY.md
+docs/V1.6.6-TESTS.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
@@ -338,10 +322,10 @@ Earlier version-specific documents remain in `docs/` for historical context.
 
 - complete mobile and cross-device regression testing;
 - consolidate older feature layers without breaking direct-file compatibility;
-- run documented cross-device recovery and key-rotation rehearsals;
+- run documented cross-device recovery, queue-transfer, and key-rotation rehearsals;
 - evaluate production-provider candidates against the evidence gate;
-- add a disposable synchronization coordinator for offline queue, conflict review, and explicit user-controlled push/pull rehearsals;
-- preserve localStorage as the default until a hosted provider is explicitly approved.
+- keep synchronization explicit and user-controlled until a production provider is approved;
+- preserve localStorage as the default provider.
 
 ### 2.0 hosted provider
 
@@ -351,7 +335,7 @@ Earlier version-specific documents remain in `docs/` for historical context.
 - organization-managed recipient policy and public-key administration;
 - durable key revocation and rotation records;
 - server-enforced retention, preservation, export approval, and disposition approval;
-- append-only remote audit, release receipt, and recovery-drill storage;
+- append-only remote audit, release receipt, synchronization, and recovery-drill storage;
 - calendar and CRM integration;
 - AI-assisted summaries with explicit human review;
 - audio or video recording workflows with consent controls.
