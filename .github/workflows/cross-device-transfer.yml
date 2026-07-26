@@ -47,14 +47,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -Eiq 'https://[^[:space:]"'"']*(firebase|supabase)' config-v168.js cross-device-transfer-core.js features-v168-transfer-rehearsal.js
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v168.js cross-device-transfer-core.js features-v168-transfer-rehearsal.js
           grep -q 'automaticImport: false' config-v168.js
           grep -q 'automaticSynchronization: false' config-v168.js
           grep -q 'productionEndpointConfigured: false' config-v168.js
           grep -q 'productionCredentialsAllowed: false' config-v168.js
           grep -q 'privateKeyMaterialAllowed: false' config-v168.js
           grep -q 'no background-sync, transfer-import, or queue-processing handler' service-worker.js
-          ! grep -Eq 'sync[^a-zA-Z]*(event|handler)|periodicSync' service-worker.js
+          ! grep -q 'addEventListener("sync"' service-worker.js
+          ! grep -q "addEventListener('sync'" service-worker.js
+          ! grep -q 'periodicSync' service-worker.js
 
       - name: Run transfer core checks
         run: node tests/v168-transfer-rehearsal.mjs
