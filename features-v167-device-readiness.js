@@ -105,10 +105,23 @@
     }
   }
 
+  function activeQueueCount() {
+    try {
+      const coordinator = global.MethodzSyncRehearsalWorkspaceV165?.getCoordinator?.();
+      if (coordinator && typeof coordinator.listQueue === "function") return coordinator.listQueue().length;
+
+      const tenantId = document.getElementById("syncTenantV165")?.value.trim()
+        || config.syncRehearsal?.defaultTenantId
+        || "methodz-rehearsal";
+      const hash = global.MethodzHostedProviderContract?.fnv1a32?.(tenantId);
+      const baseKey = storageKeys.syncRehearsalQueue || "methodzSyncRehearsalQueueV165";
+      return hash ? countArray(`${baseKey}:${hash}`) : countArray(baseKey);
+    } catch (error) {
+      return 0;
+    }
+  }
+
   function workspaceCounts() {
-    const queueKey = typeof global.MethodzSyncQueuePortabilityV166?.tenantQueueKey === "function"
-      ? global.MethodzSyncQueuePortabilityV166.tenantQueueKey("default")
-      : storageKeys.syncRehearsalQueue;
     return {
       activeRecords: countArray(storageKeys.records),
       archivedRecords: countArray(storageKeys.archivedRecords),
@@ -117,7 +130,7 @@
       customTemplates: countArray(storageKeys.templates),
       attendeeDirectoryEntries: countArray(storageKeys.directory),
       organizationDirectoryEntries: countArray(storageKeys.organizationDirectory),
-      queuedSyncRehearsals: countArray(queueKey)
+      queuedSyncRehearsals: activeQueueCount()
     };
   }
 
@@ -323,6 +336,7 @@
     refreshDeviceReadinessV167();
     global.addEventListener("online", refreshDeviceReadinessV167);
     global.addEventListener("offline", refreshDeviceReadinessV167);
+    global.navigator.serviceWorker?.addEventListener("controllerchange", refreshDeviceReadinessV167);
     global.addEventListener("resize", () => {
       global.clearTimeout(resizeTimer);
       resizeTimer = global.setTimeout(refreshDeviceReadinessV167, 250);
