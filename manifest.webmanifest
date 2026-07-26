@@ -30,6 +30,11 @@
       "url": "./meeting.html#archiveVaultV08"
     },
     {
+      "name": "Device Readiness",
+      "short_name": "Device Check",
+      "url": "./meeting.html#deviceReadinessV167"
+    },
+    {
       "name": "Verify Signed Package",
       "short_name": "Verify Package",
       "url": "./verify.html"
