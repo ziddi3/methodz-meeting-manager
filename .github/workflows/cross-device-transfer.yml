@@ -1,0 +1,106 @@
+name: Cross-Device Transfer Rehearsal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  transfer-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate v1.6.8 syntax and wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check config-v168.js
+          node --check cross-device-transfer-core.js
+          node --check features-v168-transfer-rehearsal.js
+          node --check tests/v168-transfer-rehearsal.mjs
+          node --check tests/v168-transfer-rehearsal.spec.js
+          grep -q 'features-v168.css' meeting.html
+          grep -q 'config-v168.js' meeting.html
+          grep -q 'cross-device-transfer-core.js' meeting.html
+          grep -q 'features-v168-transfer-rehearsal.js' meeting.html
+          grep -q 'config-v168.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.6.8' service-worker.js
+          grep -q 'features-v168.css' service-worker.js
+          grep -q 'config-v168.js' service-worker.js
+          grep -q 'cross-device-transfer-core.js' service-worker.js
+          grep -q 'features-v168-transfer-rehearsal.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.8"' config-v168.js
+          grep -q 'schemaVersion = "1.6.0"' config-v168.js
+
+      - name: Verify offline and service-worker boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eiq 'https://[^[:space:]"'"']*(firebase|supabase)' config-v168.js cross-device-transfer-core.js features-v168-transfer-rehearsal.js
+          grep -q 'automaticImport: false' config-v168.js
+          grep -q 'automaticSynchronization: false' config-v168.js
+          grep -q 'productionEndpointConfigured: false' config-v168.js
+          grep -q 'productionCredentialsAllowed: false' config-v168.js
+          grep -q 'privateKeyMaterialAllowed: false' config-v168.js
+          grep -q 'no background-sync, transfer-import, or queue-processing handler' service-worker.js
+          ! grep -Eq 'sync[^a-zA-Z]*(event|handler)|periodicSync' service-worker.js
+
+      - name: Run transfer core checks
+        run: node tests/v168-transfer-rehearsal.mjs
+
+  transfer-browser:
+    runs-on: ubuntu-latest
+    needs: transfer-core
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --silent @playwright/test@1.53.2
+          npx playwright install --with-deps chromium
+
+      - name: Start static server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-transfer-http.log 2>&1 &
+          echo $! > /tmp/methodz-transfer-http.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/meeting.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/methodz-transfer-http.log
+          exit 1
+
+      - name: Run transfer browser checks
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/v168-transfer-rehearsal.spec.js --reporter=line
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: methodz-v168-transfer-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
