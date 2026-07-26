@@ -148,7 +148,7 @@
       check("browser-storage", "Browser storage", writable ? "ready" : "limited", writable ? "Writable" : "Unavailable", writable ? "This browser context can save local meeting data." : "Do not use this context for meeting capture until browser storage is available."),
       check("storage-capacity", "Storage capacity", estimate.percent !== null && estimate.percent >= warningPercent ? "review" : "ready", estimate.percent === null ? "Estimate unavailable" : `${estimate.percent}% used · ${formatBytes(estimate.usage)} of ${formatBytes(estimate.quota)}`, "Browser-provided quota estimates can change and never replace an off-device backup."),
       check("persistent-storage", "Persistent storage", persistence.granted === false ? "review" : "ready", persistence.supported ? (persistence.granted === true ? "Granted" : persistence.granted === false ? "Not granted" : "Unknown") : "Unsupported", "Persistence may reduce eviction risk but does not prove backup or recovery."),
-      check("offline-shell", "Offline app shell", directFile || workerActive ? "ready" : workerSupported ? "review" : "ready", directFile ? "Direct-file mode" : workerActive ? "Service worker active" : workerSupported ? "Not controlling this page" : "Service worker unsupported", directFile ? "Core workflows remain available without a service worker." : "Hosted offline caching requires HTTPS or localhost and an active service worker."),
+      check("offline-shell", "Offline app shell", directFile || workerActive ? "ready" : "review", directFile ? "Direct-file mode" : workerActive ? "Service worker active" : workerSupported ? "Not controlling this page" : "Service worker unsupported", directFile ? "Core workflows remain available without a service worker." : workerSupported ? "Hosted offline caching requires HTTPS or localhost and an active service worker." : "This browser cannot provide the hosted offline app shell; core meeting capture may still work while the page remains open."),
       check("web-crypto", "Package signing and verification", cryptoAvailable ? "ready" : "review", cryptoAvailable ? "Web Crypto available" : "Web Crypto unavailable", "Core meeting capture remains available when optional cryptographic features are limited."),
       check("network", "Current connection", online ? "ready" : "review", online ? "Online" : "Offline", online ? "Optional network-dependent services may be reachable." : "The local meeting workflow remains available; external services are unreachable."),
       check("viewport", "Mobile layout fit", viewportFits ? "ready" : "review", viewportFits ? "No page-level overflow" : "Horizontal overflow detected", viewportFits ? "The current viewport fits the workspace." : "Review the visible section before relying on this device during a meeting.")
@@ -224,7 +224,7 @@
     anchor.href = url;
     anchor.download = filename;
     anchor.click();
-    URL.revokeObjectURL(url);
+    global.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   async function downloadDeviceReadinessReportV167() {
