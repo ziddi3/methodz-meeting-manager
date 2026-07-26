@@ -51,86 +51,91 @@ test(`${RECOVERY_PREFIX} current workspace recovery drill records a passing meta
   expect(JSON.stringify(events[0])).not.toContain("Recovery Drill");
 });
 
-test(`${RECOVERY_PREFIX} backup inspection blocks private JWK material`, async ({ page }) => {
-  const packageWithPrivateKey = await page.evaluate(async () => {
-    const pair = await window.MethodzCryptoPackageV16.generateKeyPair();
-    const privateJwk = await window.MethodzCryptoPackageV16.exportPrivateJwk(pair.privateKey);
-    const storage = {
-      methodzMeetingRecords: JSON.stringify([{ id: "safe-record", title: "Safe" }]),
-      methodzUnsafeKeyFixture: JSON.stringify({ privateJwk })
+test(`${RECOVERY_PREFIX} backup inspection blocks private JWK material without changing local data`, async ({ page }) => {
+  const before = await page.evaluate(() => Object.fromEntries(
+    Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])
+  ));
+
+  const packageText = await page.evaluate(() => {
+    const core = window.MethodzWorkspacePackageCore;
+    const entries = {
+      methodzMeetingRecords: JSON.stringify([{ id: "safe-local" }]),
+      methodzSigningAudit: JSON.stringify([{ privateJwk: { kty: "EC", crv: "P-256", x: "x", y: "y", d: "secret" } }])
     };
-    const checksum = await window.MethodzWorkspacePackageCore.calculateStorageChecksum(storage);
-    return {
-      type: "methodz-complete-workspace-backup",
-      version: 3,
-      exportedAt: new Date().toISOString(),
-      storage,
-      checksum
+    const body = {
+      packageType: core.PACKAGE_TYPE,
+      packageVersion: 1,
+      appName: "Methodz Meeting Manager",
+      schemaVersion: "1.6.0",
+      exportedAt: "2026-07-18T20:00:00.000Z",
+      entries,
+      summary: core.summarizeEntries(entries)
     };
+    return JSON.stringify({ ...body, checksum: core.hashText(core.stableStringify(body)) });
   });
 
-  const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.getByLabel("Choose Workspace Backup").click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: "private-key-workspace.json",
+  await page.locator("#workspaceInspectionFileV16").setInputFiles({
+    name: "unsafe-workspace.json",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(packageWithPrivateKey))
+    buffer: Buffer.from(packageText)
   });
 
-  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Blocked");
-  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("private JWK");
-  await expect(page.locator("#downloadRecoveryReportV16")).toBeEnabled();
+  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Restore blocked");
+  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Private cryptographic key material");
+
+  const after = await page.evaluate(() => Object.fromEntries(
+    Object.keys(localStorage).map((key) => [key, localStorage.getItem(key)])
+  ));
+  expect(after).toEqual(before);
 });
 
 test(`${RECOVERY_PREFIX} configured package limits apply to no-write inspections`, async ({ page }) => {
-  await page.evaluate(() => {
-    window.METHODZ_MEETING_CONFIG.recovery.maximumRecognizedEntries = 1;
-  });
+  const state = await page.evaluate(() => {
+    const core = window.MethodzWorkspacePackageCore;
+    window.METHODZ_MEETING_CONFIG.workspaceRecovery.maximumEntries = Number.NaN;
+    window.METHODZ_MEETING_CONFIG.workspaceRecovery.maximumEntryBytes = 8;
+    window.METHODZ_MEETING_CONFIG.workspaceRecovery.maximumPackageBytes = 16;
 
-  const oversizedEntryPackage = await page.evaluate(async () => {
-    const storage = {
-      methodzMeetingRecords: JSON.stringify([{ id: "one" }]),
-      methodzMeetingTemplates: JSON.stringify([{ id: "two" }])
+    const entries = {
+      methodzMeetingRecords: JSON.stringify([{ id: "configured-limit-test" }])
     };
-    const checksum = await window.MethodzWorkspacePackageCore.calculateStorageChecksum(storage);
+    const body = {
+      packageType: core.PACKAGE_TYPE,
+      packageVersion: 1,
+      appName: "Methodz Meeting Manager",
+      schemaVersion: "1.6.0",
+      exportedAt: "2026-07-19T20:00:00.000Z",
+      entries,
+      summary: core.summarizeEntries(entries)
+    };
+    const payload = { ...body, checksum: core.hashText(core.stableStringify(body)) };
+    const report = window.MethodzRecoveryReadinessV16.inspectWorkspacePackage(payload);
     return {
-      type: "methodz-complete-workspace-backup",
-      version: 3,
-      exportedAt: new Date().toISOString(),
-      storage,
-      checksum
+      valid: report.valid,
+      limits: report.limits,
+      errors: report.errors
     };
   });
 
-  const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.getByLabel("Choose Workspace Backup").click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles({
-    name: "configured-limit-workspace.json",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(oversizedEntryPackage))
-  });
-
-  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Blocked");
-  await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("recognized entries");
+  expect(state.valid).toBe(false);
+  expect(state.limits.maxEntries).toBe(500);
+  expect(state.limits.maxEntryBytes).toBe(8);
+  expect(state.limits.maxTotalBytes).toBe(16);
+  expect(state.errors.join("\n")).toMatch(/per-entry limit|package limit/i);
 });
 
-test(`${RECOVERY_PREFIX} configured drill history cap is honored`, async ({ page }) => {
+test(`${RECOVERY_PREFIX} configured drill history cap is enforced`, async ({ page }) => {
   await page.evaluate(() => {
-    window.METHODZ_MEETING_CONFIG.recovery.maximumDrillHistory = 2;
-    localStorage.setItem("methodzMeetingRecords", JSON.stringify([{ id: "history-record", title: "History" }]));
-  });
-  await page.reload();
-  await page.evaluate(() => {
-    window.METHODZ_MEETING_CONFIG.recovery.maximumDrillHistory = 2;
+    window.METHODZ_MEETING_CONFIG.workspaceRecovery.maximumDrillEvents = 2;
+    localStorage.setItem("methodzMeetingRecords", JSON.stringify([{ id: "history-cap" }]));
   });
 
-  for (let index = 0; index < 3; index += 1) {
-    await page.getByRole("button", { name: "Run Current Workspace Drill" }).click();
-    await expect(page.locator("#workspaceRecoveryResultV16")).toContainText("Current Workspace Drill: Passed");
-  }
+  const drillButton = page.getByRole("button", { name: "Run Current Workspace Drill" });
+  await drillButton.click();
+  await drillButton.click();
+  await drillButton.click();
 
   const events = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzRecoveryDrillLog") || "[]"));
   expect(events).toHaveLength(2);
+  expect(events.every((event) => event.result === "Passed" && event.checksumVerified)).toBe(true);
 });
