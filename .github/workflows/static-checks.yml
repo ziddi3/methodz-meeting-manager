@@ -43,11 +43,11 @@ jobs:
           required_files=(
             meeting.html archive.html verify.html verify.js style.css
             config.js config-v11.js config-v12.js config-v13.js config-v14.js config-v15.js
-            config-v16.js config-v162.js config-v163.js config-v164.js config-v165.js config-v166.js config-v167.js
+            config-v16.js config-v162.js config-v163.js config-v164.js config-v165.js config-v166.js config-v167.js config-v168.js
             migrations.js migrations-v10.js migrations-v11.js migrations-v12.js migrations-v13.js
             migrations-v14.js migrations-v15.js migrations-v16.js
             provider-contract.js hosted-provider-adapters.js provider-conformance.js http-provider-pilot.js
-            sync-rehearsal-core.js sync-rehearsal-hardening.js sync-queue-portability.js
+            sync-rehearsal-core.js sync-rehearsal-hardening.js sync-queue-portability.js cross-device-transfer-core.js
             data-adapter.js async-data-adapter.js attachment-adapter.js
             crypto-package-core.js key-custody-core.js workspace-package-core.js app.js
             features-v11-retention.js features-v11-redaction.js features-v11-redaction-policy.js
@@ -61,6 +61,7 @@ jobs:
             features-v165-sync-rehearsal.js features-v165.css
             features-v166-sync-portability.js features-v166.css
             features-v167-device-readiness.js features-v167.css
+            features-v168-transfer-rehearsal.js features-v168.css
             manifest.webmanifest service-worker.js
             tests/v12-smoke.spec.js tests/v13-smoke.spec.js tests/v14-smoke.spec.js
             tests/v14-stability.spec.js tests/v15-smoke.spec.js tests/v15-ledger.spec.js
@@ -69,19 +70,20 @@ jobs:
             tests/generate-v162-disposable-fixture.mjs tests/v162-fixture-core.mjs
             tests/v162-fixture.spec.js tests/v163-provider-conformance.mjs tests/v164-provider-pilot.mjs
             tests/v165-sync-rehearsal.mjs tests/v166-sync-portability.mjs tests/v166-sync-portability.spec.js
-            tests/v167-mobile-readiness.spec.js
+            tests/v167-mobile-readiness.spec.js tests/v168-transfer-rehearsal.mjs tests/v168-transfer-rehearsal.spec.js
             docs/V1.6.2-VERIFICATION-CONFORMANCE.md docs/V1.6.3-PROVIDER-CONTRACT.md
             docs/V1.6.3-TESTS.md docs/V1.6.4-PROVIDER-PILOT.md docs/V1.6.4-TESTS.md
             docs/V1.6.5-SYNC-REHEARSAL.md docs/V1.6.5-TESTS.md
             docs/V1.6.6-SYNC-PORTABILITY.md docs/V1.6.6-TESTS.md
             docs/V1.6.7-MOBILE-READINESS.md docs/V1.6.7-TESTS.md
+            docs/V1.6.8-TRANSFER-REHEARSAL.md docs/V1.6.8-TESTS.md
             docs/PRODUCTION-PROVIDER-EVIDENCE.md
           )
           for file in "${required_files[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
 
-      - name: Verify v1.6.7 assets and boundaries
+      - name: Verify v1.6.8 assets and boundaries
         shell: bash
         run: |
           set -euo pipefail
@@ -91,6 +93,7 @@ jobs:
           grep -q 'features-v165.css' meeting.html
           grep -q 'features-v166.css' meeting.html
           grep -q 'features-v167.css' meeting.html
+          grep -q 'features-v168.css' meeting.html
           grep -q 'config-v16.js' meeting.html
           grep -q 'config-v162.js' meeting.html
           grep -q 'config-v163.js' meeting.html
@@ -98,6 +101,7 @@ jobs:
           grep -q 'config-v165.js' meeting.html
           grep -q 'config-v166.js' meeting.html
           grep -q 'config-v167.js' meeting.html
+          grep -q 'config-v168.js' meeting.html
           grep -q 'migrations-v16.js' meeting.html
           grep -q 'provider-contract.js' meeting.html
           grep -q 'hosted-provider-adapters.js' meeting.html
@@ -105,9 +109,11 @@ jobs:
           grep -q 'sync-rehearsal-core.js' meeting.html
           grep -q 'sync-rehearsal-hardening.js' meeting.html
           grep -q 'sync-queue-portability.js' meeting.html
+          grep -q 'cross-device-transfer-core.js' meeting.html
           grep -q 'features-v165-sync-rehearsal.js' meeting.html
           grep -q 'features-v166-sync-portability.js' meeting.html
           grep -q 'features-v167-device-readiness.js' meeting.html
+          grep -q 'features-v168-transfer-rehearsal.js' meeting.html
           grep -q 'crypto-package-core.js' meeting.html
           grep -q 'key-custody-core.js' meeting.html
           grep -q 'workspace-package-core.js' meeting.html
@@ -119,20 +125,27 @@ jobs:
           grep -q 'config-v16.js' archive.html
           grep -q 'config-v166.js' archive.html
           grep -q 'config-v167.js' archive.html
+          grep -q 'config-v168.js' archive.html
           grep -q 'features-v167.css' archive.html
           grep -q 'migrations-v16.js' archive.html
           grep -q 'crypto-package-core.js' verify.html
           grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.7' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.8' service-worker.js
           grep -q 'schemaVersion = "1.6.0"' config-v16.js
+          grep -q 'schemaVersion = "1.6.0"' config-v168.js
           grep -q 'appShellVersion = "1.6.6"' config-v166.js
           grep -q 'appShellVersion = "1.6.7"' config-v167.js
+          grep -q 'appShellVersion = "1.6.8"' config-v168.js
           grep -q 'config-v166.js' service-worker.js
           grep -q 'config-v167.js' service-worker.js
+          grep -q 'config-v168.js' service-worker.js
           grep -q 'features-v166.css' service-worker.js
           grep -q 'features-v167.css' service-worker.js
+          grep -q 'features-v168.css' service-worker.js
           grep -q 'features-v166-sync-portability.js' service-worker.js
           grep -q 'features-v167-device-readiness.js' service-worker.js
+          grep -q 'features-v168-transfer-rehearsal.js' service-worker.js
+          grep -q 'cross-device-transfer-core.js' service-worker.js
           grep -q 'provider-contract.js' service-worker.js
           grep -q 'hosted-provider-adapters.js' service-worker.js
           grep -q 'http-provider-pilot.js' service-worker.js
@@ -144,7 +157,7 @@ jobs:
           grep -q 'features-v162-custody.js' service-worker.js
           grep -q 'verify.html' service-worker.js
           grep -q 'verify.js' service-worker.js
-          ! grep -Eq 'http-provider-pilot\.js|sync-rehearsal-core\.js|sync-queue-portability\.js|features-v165-sync-rehearsal\.js|features-v166-sync-portability\.js|features-v167-device-readiness\.js' archive.html verify.html
+          ! grep -Eq 'http-provider-pilot\.js|sync-rehearsal-core\.js|sync-queue-portability\.js|cross-device-transfer-core\.js|features-v165-sync-rehearsal\.js|features-v166-sync-portability\.js|features-v167-device-readiness\.js|features-v168-transfer-rehearsal\.js' archive.html verify.html
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
 
@@ -162,6 +175,9 @@ jobs:
 
       - name: Run v1.6.6 queue portability self-test
         run: node tests/v166-sync-portability.mjs
+
+      - name: Run v1.6.8 transfer rehearsal self-test
+        run: node tests/v168-transfer-rehearsal.mjs
 
       - name: Generate disposable public verification fixture
         run: node tests/generate-v162-disposable-fixture.mjs
@@ -203,7 +219,7 @@ jobs:
         include:
           - suite: existing-regression
             browser: chromium
-            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\.6\.1:|^Custody v1\.6\.2:|^Portable signed fixture v1\.6\.2:|^Synchronization portability v1\.6\.6|^Mobile and cross-device readiness v1\.6\.7"
+            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\.6\.1:|^Custody v1\.6\.2:|^Portable signed fixture v1\.6\.2:|^Synchronization portability v1\.6\.6|^Mobile and cross-device readiness v1\.6\.7|^v1\.6\.8 cross-device transfer rehearsal"
           - suite: recovery-architecture
             browser: chromium
             test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
