@@ -1,0 +1,170 @@
+/* Methodz Meeting Manager v1.6.8 cross-device transfer rehearsal. */
+.cross-device-transfer-v168 {
+  border-top: 4px solid #8a6a20;
+}
+
+.transfer-header-v168 {
+  align-items: flex-start;
+}
+
+.transfer-status-v168 {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #cfcfcf;
+  background: #f7f7f7;
+  font-weight: 700;
+}
+
+.transfer-status-v168.is-ready {
+  border-color: #8aac8a;
+  background: #f1f8f1;
+}
+
+.transfer-status-v168.is-warning {
+  border-color: #c9a84d;
+  background: #fff9e8;
+}
+
+.transfer-status-v168.is-error {
+  border-color: #b56a6a;
+  background: #fff1f1;
+}
+
+.transfer-grid-v168 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.transfer-stage-v168 {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border, #dddddd);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.transfer-stage-v168 h3,
+.transfer-stage-v168 h4,
+.transfer-stage-v168 h5 {
+  margin-top: 0;
+}
+
+.transfer-approval-v168 {
+  margin-top: 16px;
+}
+
+.transfer-check-v168 {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  font-weight: 600;
+}
+
+.transfer-check-v168 input {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin: 1px 0 0;
+}
+
+.transfer-preview-v168 {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #b8c6b8;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.transfer-preview-v168.has-error {
+  border-color: #b56a6a;
+  background: #fff1f1;
+}
+
+.transfer-preview-v168.is-hidden {
+  display: none;
+}
+
+.transfer-metrics-v168 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.transfer-metrics-v168 span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dedede;
+  border-radius: 8px;
+  background: #f8f8f8;
+  font-size: 0.86rem;
+}
+
+.transfer-metrics-v168 strong {
+  font-size: 1.15rem;
+}
+
+.transfer-collisions-v168 {
+  padding: 12px;
+  border-left: 4px solid #b58925;
+  background: #fff9e8;
+}
+
+.transfer-collisions-v168 ul {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.transfer-clear-v168 {
+  padding: 10px 12px;
+  border-left: 4px solid #618b61;
+  background: #f1f8f1;
+}
+
+.transfer-confirmations-v168 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 18px;
+  margin: 16px 0;
+}
+
+.transfer-confirmations-v168 > label[for] {
+  grid-column: 1 / -1;
+}
+
+.transfer-confirmations-v168 > input[type="text"] {
+  grid-column: 1 / -1;
+  max-width: 340px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .transfer-grid-v168,
+  .transfer-confirmations-v168 {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-stage-v168 {
+    padding: 14px;
+  }
+
+  .transfer-confirmations-v168 > label[for],
+  .transfer-confirmations-v168 > input[type="text"] {
+    grid-column: 1;
+  }
+}
+
+@media print {
+  .cross-device-transfer-v168 {
+    display: none !important;
+  }
+}
