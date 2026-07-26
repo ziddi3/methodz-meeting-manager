@@ -27,10 +27,18 @@ test.describe("Mobile and cross-device readiness v1.6.7", () => {
     expect(titleFontSize).toBeGreaterThanOrEqual(16);
   });
 
-  test("readiness report contains capability metadata but excludes meeting content", async ({ page }) => {
+  test("readiness report contains capability metadata and active queue count but excludes meeting content", async ({ page }) => {
     const sensitiveMarker = "PRIVATE-MEETING-CONTENT-V167";
     await page.fill("#meetingTitle", sensitiveMarker);
     await page.fill("#notes", `${sensitiveMarker}-NOTES`);
+    await page.evaluate(() => {
+      const coordinator = window.MethodzSyncRehearsalWorkspaceV165.getCoordinator();
+      coordinator.queueStore.write([{
+        id: "readiness-queue-entry",
+        createdAt: "2026-07-26T00:00:00.000Z",
+        state: "pending"
+      }]);
+    });
 
     const report = await page.evaluate(() => window.collectDeviceReadinessV167());
     const serialized = JSON.stringify(report);
@@ -38,12 +46,14 @@ test.describe("Mobile and cross-device readiness v1.6.7", () => {
     expect(report.type).toBe("methodz-device-readiness-report");
     expect(report.appShellVersion).toBe("1.6.7");
     expect(report.recordSchemaVersion).toBe("1.6.0");
+    expect(report.workspaceCounts.queuedSyncRehearsals).toBe(1);
     expect(report.boundaries.containsMeetingContent).toBe(false);
     expect(report.boundaries.containsRecordIds).toBe(false);
     expect(report.boundaries.containsCredentials).toBe(false);
     expect(report.boundaries.containsKeyMaterial).toBe(false);
     expect(serialized).not.toContain(sensitiveMarker);
     expect(serialized).not.toContain(`${sensitiveMarker}-NOTES`);
+    expect(serialized).not.toContain("readiness-queue-entry");
   });
 
   test("readiness actions remain explicit and mobile navigation reaches records", async ({ page }) => {
