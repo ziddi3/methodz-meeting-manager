@@ -14,9 +14,10 @@ Methodz is a brand identity and operating ecosystem, not a separate company. The
 - Keep meeting information organized, recoverable, exportable, and reviewable.
 - Support separate organizations, sole proprietors, partners, guests, and future recipient groups.
 - Preserve controlled source records separately from external copies.
-- Make backup, recovery, device transfer, and synchronization operations explicit and reversible.
+- Make backup, recovery, device transfer, acceptance, rollback, and synchronization operations explicit and reversible.
 - Define provider boundaries for future Firebase, Supabase, CRM, Drive, or Methodz API integration.
 - Add governance controls without presenting browser-local workflow metadata as authenticated identity or legal proof.
+- Keep infrastructure subordinate to the direct meeting preparation and capture workflow.
 
 ## Deployment contract
 
@@ -36,11 +37,11 @@ Core meeting operation must require:
 - no mandatory server;
 - no network connection.
 
-The optional service worker may cache static application assets on HTTPS or localhost. It must never read, cache, transmit, import, merge, or process meeting records, workspace backups, transfer bundles, private keys, or synchronization queue work.
+The optional service worker may cache static application assets on HTTPS or localhost. It must never read, cache, transmit, import, merge, or process meeting records, workspace backups, transfer bundles, private keys, synchronization queue work, transfer acceptance, or rollback work.
 
 Do not deploy this repository over `hub.methodz.ca`. It is a task-focused meeting tool, not Method Hub, Nexus Hub, the Cathedral, or a storefront container.
 
-## Current release: app shell 1.6.8, record schema 1.6.0
+## Current release: app shell 1.6.9, record schema 1.6.0
 
 The application currently includes:
 
@@ -63,8 +64,12 @@ The application currently includes:
 - disposable hosted-provider and synchronization rehearsals;
 - tenant-scoped queue export, import, collision review, compaction, and metadata-only operator evidence;
 - mobile Device Readiness, persistent-storage controls, touch-target hardening, and phone navigation;
-- guided cross-device transfer bundles with component integrity validation, collision review, no-write drills, pre-import recovery, post-write verification, and rollback;
-- CI-only Node and Playwright regression suites.
+- guided cross-device transfer bundles with component integrity validation, collision review, no-write drills, pre-import recovery, post-write verification, and rollback on failed import;
+- guided destination acceptance with per-category review and expected-count comparison;
+- explicit restoration of the pre-import destination snapshot with a preserved pre-rollback recovery package;
+- compact Meeting-Day Mode for direct live meeting work;
+- aggregate large-workspace timing, size, parsing, and quota diagnostics;
+- CI-only Node and Playwright regression suites, including an isolated two-profile transfer, acceptance, and rollback rehearsal.
 
 ## Important label rules
 
@@ -140,7 +145,7 @@ recovery and synchronization metadata
 schema and release audit metadata
 ```
 
-Unknown fields must survive migration, backup, merge, revision, archive, restore, provider operations, synchronization rehearsal, and cross-device transfer.
+Unknown fields must survive migration, backup, merge, revision, archive, restore, provider operations, synchronization rehearsal, cross-device transfer, acceptance, and rollback.
 
 ## Architecture standards
 
@@ -149,19 +154,21 @@ Unknown fields must survive migration, backup, merge, revision, archive, restore
 - Keep JavaScript inspectable and dependency-free at runtime.
 - Avoid hardcoding values that belong in configuration.
 - Preserve direct-file operation for core meeting workflows.
-- Confirm before clearing, replacing, deleting, importing, releasing, or synchronizing data.
+- Confirm before clearing, replacing, deleting, importing, releasing, synchronizing, accepting, or rolling back data.
 - Archive non-destructively by default.
 - Create recovery material before replacement mutations.
 - Revalidate imported packages immediately before mutation.
 - Roll back when a staged multi-entry mutation cannot be verified.
+- Preserve the current transferred state before restoring a pre-import destination snapshot.
 - Do not remove features without an intentional replacement.
 - Later feature modules may wrap stable functions, so script order is part of the runtime contract.
 - Keep migrations ordered, idempotent, additive, and safe to repeat.
 - Keep service-worker responsibilities limited to static application assets.
+- Keep Meeting-Day Mode on the existing meeting form and data model rather than creating a duplicate workflow.
 
 ## Governance boundaries
 
-Browser-local roles, requester names, reviewer names, policy stewards, recipient contacts, typed signatures, approvals, receipts, custody events, readiness results, synchronization events, and transfer reports are workflow metadata.
+Browser-local roles, requester names, reviewer names, policy stewards, recipient contacts, typed signatures, approvals, receipts, custody events, readiness results, synchronization events, transfer reports, acceptance reports, rollback reports, and diagnostics are workflow metadata.
 
 They do not independently prove:
 
@@ -193,7 +200,7 @@ A later layer may remove additional content or bind metadata. It must never rest
 
 Typed signatures, consent records, signature-verification data, and signed timestamps must remain excluded from every external copy.
 
-## Backup and transfer pipeline
+## Backup, transfer, acceptance, and rollback pipeline
 
 ```text
 saved source workspace
@@ -205,14 +212,38 @@ saved source workspace
   -> destination inspection
   -> collision review
   -> no-write recovery drill
-  -> explicit approval
+  -> explicit TRANSFER approval
   -> pre-import recovery package
   -> staged replacement and verification
-  -> rollback on failure
-  -> metadata-only rehearsal report
+  -> rollback on failed import
+  -> metadata-only transfer report
+  -> category-by-category destination acceptance
+  -> explicit ACCEPT approval
+  -> metadata-only acceptance report
+  -> no-write pre-import rollback preview
+  -> preserved pre-rollback recovery package
+  -> explicit ROLLBACK approval
+  -> verified restoration of the pre-import snapshot
+  -> metadata-only rollback report
 ```
 
-A transfer bundle contains meeting and workspace values and must be protected like a complete business backup. A rehearsal report contains only aggregate and opaque operational metadata.
+Transfer and recovery packages contain meeting and workspace values and must be protected like complete business backups. Transfer, acceptance, rollback, readiness, recovery, and diagnostics reports contain only aggregate or opaque operational metadata.
+
+## Meeting-Day Mode
+
+Meeting-Day Mode prioritizes:
+
+1. Meeting Information
+2. Organizations / Representatives Present
+3. Attendance Sign-On
+4. Agenda Checklist
+5. Discussion Notes
+6. Decisions Made
+7. Follow-Up Tasks
+8. Meeting Summary
+9. End of Meeting
+
+Governance, provider, recovery, synchronization, transfer, archive, acceptance, rollback, and diagnostics panels may be hidden only while the mode is active and must remain explicitly expandable. Mode and last-section preferences may be stored locally, but record data must continue to use the existing meeting model.
 
 ## Integrity terminology
 
@@ -230,22 +261,24 @@ Required automated gates:
 
 1. JavaScript syntax checks.
 2. Required-file and script-order checks.
-3. Manifest and service-worker boundary validation.
-4. Cryptographic, recovery, custody, provider, synchronization, mobile, and transfer core tests.
+3. Manifest, canonical deployment boundary, and service-worker validation.
+4. Cryptographic, recovery, custody, provider, synchronization, mobile, transfer, acceptance, rollback, and diagnostics core tests.
 5. Browser regression tests for current and earlier workflows.
-6. Tamper, private-material, cancellation, rollback, and no-write assertions.
+6. Tamper, private-material, cancellation, no-write, failed-mutation recovery, and rollback assertions.
+7. Narrow-phone overflow and Meeting-Day navigation checks.
+8. An isolated two-profile transfer, acceptance, and pre-import rollback rehearsal.
 
-Manual release testing remains required for direct-file operation, real mobile devices, printing, backup and restore, key custody, cross-device transfer, service-worker behavior, and destructive-action gates.
+Manual release testing remains required for direct-file operation, real mobile devices, printing, backup and restore, key custody, cross-device transfer, destination acceptance, rollback, service-worker behavior, and destructive-action gates.
 
 ## Roadmap
 
 ### 1.x hardening
 
 - Complete real-device Android and iOS regression testing.
-- Complete a documented two-device transfer and rollback rehearsal.
+- Execute the documented two-device transfer, acceptance, and rollback rehearsal.
 - Consolidate older feature layers without breaking direct-file compatibility.
-- Improve the direct meeting capture experience before adding more infrastructure.
-- Improve large-workspace performance and bounded-storage reporting.
+- Continue improving the direct meeting capture experience and Meeting-Day usability.
+- Profile very large workspaces and refine bounded-storage warnings.
 - Evaluate production-provider candidates against the evidence gate.
 - Keep synchronization explicit and user-controlled.
 - Preserve browser-local storage as the default until a hosted provider is explicitly approved.
