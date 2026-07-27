@@ -1,43 +1,60 @@
 # Architecture
 
-Methodz Meeting Manager is a static, offline-first meeting-record application. The design keeps the workflow inspectable and directly deployable while defining replaceable boundaries for records, attachment references, migration, revision history, archive lifecycle, recovery, governance, retention, redaction, approval, disposition, recipient policy, release receipts, cryptographic signatures, key custody, and future hosted providers.
+Methodz Meeting Manager is a static, offline-first meeting preparation, capture, analysis, archive, recovery, and records application. Its infrastructure exists to support that direct meeting purpose. It is not Method Hub, Nexus Hub, a storefront, a business container, the Cathedral, or a Cathedral wing, and it must not deploy over `hub.methodz.ca`.
+
+## Current version boundary
+
+```text
+App shell:                   1.6.9
+Meeting-record schema:       1.6.0
+Hosted-provider contract:    1.0.0
+Synchronization queue:       1.0.0
+Transfer rehearsal package:  1.0.0
+Transfer acceptance report:  1.0.0
+```
+
+No server, package manager, runtime dependency, or build command is required. Core meeting workflows continue to work when `meeting.html` is opened directly.
 
 ## Entry points
 
 ```text
-meeting.html   Creation, editing, dashboards, governance, approvals,
-               receipts, signing, verification, recovery, and exports
+meeting.html   Creation, editing, Meeting-Day Mode, dashboards, governance,
+               approvals, receipts, signing, recovery, transfer, acceptance,
+               rollback, diagnostics, and exports
 archive.html   Dedicated record detail, audit metadata, and print surface
 verify.html    Standalone signed-package verification surface
 ```
 
-No server, package manager, runtime dependency, or build command is required. Core meeting workflows must continue to work when `meeting.html` is opened directly.
-
-## Runtime model
+## Runtime order
 
 ```text
 meeting.html
-  ├─ config.js
-  ├─ config-v11.js through config-v16.js
-  ├─ config-v162.js
-  ├─ config-v163.js
-  ├─ migrations.js
-  ├─ migrations-v10.js through migrations-v16.js
-  ├─ provider-contract.js
-  ├─ hosted-provider-adapters.js
-  ├─ data-adapter.js
-  ├─ async-data-adapter.js
-  ├─ attachment-adapter.js
-  ├─ crypto-package-core.js
-  ├─ key-custody-core.js
-  ├─ workspace-package-core.js
+  ├─ configuration: config.js through config-v169.js
+  ├─ migrations: migrations.js through migrations-v16.js
+  ├─ provider and queue protocols
+  │    provider-contract.js
+  │    hosted-provider-adapters.js
+  │    http-provider-pilot.js
+  │    sync-rehearsal-core.js
+  │    sync-rehearsal-hardening.js
+  │    sync-queue-portability.js
+  ├─ active adapters
+  │    data-adapter.js
+  │    async-data-adapter.js
+  │    attachment-adapter.js
+  ├─ package and custody protocols
+  │    crypto-package-core.js
+  │    key-custody-core.js
+  │    workspace-package-core.js
+  │    cross-device-transfer-core.js
+  │    transfer-acceptance-core.js
   ├─ app.js
-  └─ ordered feature layers
+  └─ ordered browser feature layers through features-v169-meeting-day.js
 
 archive.html
-  ├─ ordered configuration and migration layers
-  ├─ data-adapter.js
-  ├─ attachment-adapter.js
+  ├─ configuration through config-v169.js
+  ├─ migrations through migrations-v16.js
+  ├─ data and attachment adapters
   └─ archive rendering and governance layers
 
 verify.html
@@ -45,28 +62,34 @@ verify.html
   └─ verify.js
 ```
 
-Feature modules extend the stable core through browser globals, function wrapping, and DOM injection. Script order is part of the application contract.
-
-Configuration extensions load before the migration registry. This preserves record schema `1.6.0` while allowing app-shell `1.6.3` provider configuration without a record migration.
+Feature modules extend stable behavior through browser globals, function wrapping, and DOM injection. Script order is part of the application contract. Moving scripts because they appear independent can silently remove governance, revision, receipt, transfer, or recovery behavior.
 
 ## Configuration
 
-`config.js` owns stable editable defaults including brand labels, logo paths, organizations, agenda groups, meeting options, numbering, governance roles, consent text, and base storage keys.
+`config.js` owns editable product defaults including branding, organizations, agendas, meeting options, numbering, governance roles, consent text, templates, and base storage keys.
 
 ```text
-config-v11.js    retention, lifecycle, redaction
+config-v11.js    retention, lifecycle, and redaction
 config-v12.js    external approval and destinations
 config-v13.js    disposition and preservation events
 config-v14.js    recipient policy
 config-v15.js    policy operations and release receipts
-config-v16.js    signing and recovery limits, schema 1.6.0
-config-v162.js   public-key custody and app shell 1.6.2
-config-v163.js   hosted-provider contract and app shell 1.6.3
+config-v16.js    signing, recovery limits, schema 1.6.0
+config-v162.js   public-key custody
+config-v163.js   hosted-provider contract
+config-v164.js   hosted-provider pilot
+config-v165.js   synchronization rehearsal
+config-v166.js   queue portability
+config-v167.js   mobile and Device Readiness
+config-v168.js   cross-device transfer rehearsal
+config-v169.js   transfer acceptance, rollback, Meeting-Day Mode, diagnostics
 ```
+
+App-shell versions may advance without a record migration. `config-v169.js` keeps the schema at `1.6.0`.
 
 ## Migration
 
-`migrations.js` owns the ordered registry and migration across active records, archived records, revisions, drafts, and the original `meetingRecords` key.
+`migrations.js` owns the ordered migration registry across active records, archived records, revisions, drafts, and the original `meetingRecords` key.
 
 ```text
 migrations-v10.js   governance, consent, provider, release metadata
@@ -78,9 +101,9 @@ migrations-v15.js   release receipts and policy operations
 migrations-v16.js   optional external signature controls
 ```
 
-Version 1.6.3 adds no migration. Migration functions remain ordered, idempotent, additive, and safe to repeat. They must preserve unknown fields and must not invent approvals, reviews, releases, holds, disposition events, recipient policies, receipts, signatures, custody events, or provider acknowledgements.
+Versions 1.6.1 through 1.6.9 add app-shell infrastructure and no record-schema migration. Migration functions remain ordered, idempotent, additive, and safe to repeat. They preserve unknown fields and do not invent approvals, reviews, releases, holds, disposition events, recipient policies, receipts, signatures, custody events, provider acknowledgements, synchronization outcomes, transfer acceptance, or rollback success.
 
-## Provider boundaries
+## Active record adapters
 
 ### Synchronous browser-local adapter
 
@@ -93,15 +116,19 @@ deleteRecord(recordId)
 healthCheck()
 ```
 
-`data-adapter.js` remains the active application provider in v1.6.3.
+`data-adapter.js` remains the active default provider. Browser-local storage is not silently replaced by a hosted provider.
 
-### Legacy async wrapper
+### Promise compatibility adapter
 
-`async-data-adapter.js` preserves the earlier Promise-based compatibility boundary and continues to wrap the active local adapter. It is not silently replaced in v1.6.3.
+`async-data-adapter.js` wraps the active provider with a Promise-returning compatibility boundary. It remains separate from the hosted-provider contract.
 
-### Hosted-provider contract
+### Attachment adapter
 
-`provider-contract.js` defines the versioned portable contract:
+The attachment boundary stores metadata references only. Inline binaries, `data:` payloads, and base64 meeting attachments are outside the contract.
+
+## Hosted-provider contract
+
+`provider-contract.js` defines Promise-returning operations:
 
 ```text
 listRecords(options?)
@@ -114,110 +141,124 @@ exportWorkspace(options?)
 healthCheck()
 ```
 
-The contract adds:
+The contract requires conflict tokens, tenant-scoped idempotency, active/archive separation, revision preservation, explicit permanent-deletion intent, structured retryability, unknown-field preservation, safe attachment references, and rejection of private JWK material, credentials, embedded binaries, and data URLs.
 
-- deterministic expected conflict tokens;
-- idempotency-key replay and misuse protection;
-- active versus Archive Vault separation;
-- revision preservation;
-- explicit permanent deletion intent;
-- structured errors and retryability metadata;
-- complete provider export packages;
-- private-key rejection before export.
+Reference providers and the HTTP-style pilot are disposable compatibility harnesses. Passing their tests does not establish authentication, authorization, tenant isolation, encryption, durable audit, data residency, retention enforcement, incident response, or production readiness.
 
-`hosted-provider-adapters.js` contains disposable in-memory and Storage-compatible local reference providers. Loading the module does not instantiate tests or mutate records.
+## Synchronization rehearsal
 
-`provider-conformance.js` contains one reusable suite run against both reference providers. CI uses isolated storage objects and keys, never active user storage.
+The synchronization workspace is browser-local and explicit. It supports queueing, preview, processing, retry, discard, reconnect, conflict review, queue export/import, and completed-entry compaction.
 
-### Attachment references
+It does not provide a production endpoint, authenticated users, server permissions, background synchronization, or automatic conflict resolution. Service workers never process queue work.
 
-```text
-listReferences(record)
-getReference(record, referenceId)
-upsertReference(record, reference)
-deleteReference(record, referenceId)
-validateReference(reference)
-healthCheck()
-```
-
-The current attachment boundary stores metadata references only and rejects inline binary payloads. Binary transfer is outside the hosted-provider 1.0.0 contract.
-
-## Conflict and idempotency model
-
-Stored hosted-provider records receive:
-
-```text
-providerMetadata.contractVersion
-providerMetadata.version
-providerMetadata.conflictToken
-```
-
-The token is derived from canonical JSON and provider version. It is a concurrency token, not a digital signature.
-
-Existing records may be updated only with the current token. Missing or stale tokens fail with a non-retryable `CONFLICT` error.
-
-Accepted writes may include an idempotency key. Replaying the same request returns the original result. Reusing the key with different input fails with `IDEMPOTENCY_CONFLICT`. A production provider must scope idempotency by tenant and operation.
-
-## Provider error model
-
-`ProviderError` exposes:
-
-```text
-code
-retryable
-operation
-providerId
-details
-```
-
-Temporary partial failure, unavailability, and rate limiting may be retryable. Validation, conflict, authority, integrity, and private-key rejection failures are not retryable until the request or security context changes.
-
-A provider must not hide partial success. Safe completion and failure counts may appear in error details, but meeting values, credentials, private keys, and sensitive payloads must not enter logs.
-
-## Provider export model
-
-Hosted-provider exports contain:
-
-```text
-packageType
-packageVersion
-providerContractVersion
-providerId
-exportedAt
-activeRecords
-archivedRecords
-revisions
-metadata
-integrity
-```
-
-The package preserves unknown fields and existing recovery, signature, redaction, approval, retention, hold, disposition, receipt, and integrity metadata.
-
-The portable core rejects private EC JWK `d` parameters and recognized private-key fields before export. The built-in FNV-1a canonical value provides direct-file-compatible change detection, not cryptographic identity or non-repudiation. Optional ECDSA package signing remains a separate layer.
-
-## Portable package cores
+## Package and recovery cores
 
 ### Cryptographic package core
 
-`crypto-package-core.js` owns canonicalization, key import/export, public-key IDs, package signing, and verification. Private signing material remains memory-only.
+`crypto-package-core.js` owns canonicalization, P-256 key import/export, public-key IDs, package signing, and signature verification. Private signing material remains memory-only unless the operator explicitly downloads a sensitive backup.
 
-### Key custody core
+### Public-key custody core
 
-`key-custody-core.js` owns public custody manifests and validation for rotation, revocation, lost-key response, and recovery rehearsal evidence.
+`key-custody-core.js` validates public custody manifests and records rotation, revocation, lost-key response, and recovery-rehearsal evidence. Browser-local custody metadata is process evidence, not immutable proof of identity or authority.
 
 ### Workspace package core
 
-`workspace-package-core.js` owns backup inspection, limits, private-key detection, checksum verification, restore planning, and recovery reports.
+`workspace-package-core.js` owns:
 
-These cores remain independent of UI state so browser surfaces and Node tests share the same protocol logic.
+- recognized-key filtering;
+- entry and total byte limits;
+- checksum verification;
+- private-JWK scanning;
+- workspace summaries;
+- merge and replacement plans;
+- no-write recovery inspection.
 
-## Stable core and feature layers
+Browser restore, transfer, acceptance, and rollback paths use this same core.
 
-`app.js` owns startup rendering, meeting collection, validation, save/edit flow, draft auto-save, saved-record search, basic import/export, printing, and direct downloads.
+## Cross-device transfer
 
-Later feature layers add decisions, templates, directories, attachment references, numbering, archive detail, revisions, recovery, accessibility, governance, signatures, retention, redaction, approval, recipient policies, receipts, disposition, signing, verification, custody, and recovery hardening.
+`cross-device-transfer-core.js` creates and inspects a package containing:
 
-A later layer may remove external content or bind more metadata, but it must never restore sensitive content removed by an earlier redaction layer or bypass an earlier control.
+- a complete workspace package;
+- a tenant synchronization queue package;
+- metadata-only operator evidence;
+- metadata-only Device Readiness evidence;
+- top-level integrity metadata;
+- source checkpoints.
+
+`features-v168-transfer-rehearsal.js` performs destination collision review, a no-write recovery drill, explicit typed `TRANSFER` approval, creation of a pre-import recovery package, staged writes, read-back verification, and automatic restoration of the original destination snapshot if the staged import cannot be verified.
+
+The source remains unchanged until destination verification is complete.
+
+## Transfer acceptance and rollback
+
+### Portable acceptance core
+
+`transfer-acceptance-core.js` has no direct DOM or storage dependency. It:
+
+- packages current recognized entries with verified integrity;
+- classifies active records, Archive Vault records, revisions, directories, templates, governance metadata, public verification keys, custody records, recovery logs, and tenant queue state;
+- compares transfer-report counts with the destination workspace;
+- verifies the pre-import recovery package;
+- creates metadata-only acceptance reports;
+- creates no-write rollback plans;
+- creates metadata-only rollback reports;
+- creates aggregate large-workspace diagnostics.
+
+### Browser acceptance layer
+
+`features-v169-transfer-acceptance.js` orchestrates explicit user actions:
+
+1. run automated acceptance checks;
+2. review every category;
+3. confirm recovery-package retention;
+4. type `ACCEPT`;
+5. record bounded browser-local acceptance evidence.
+
+Acceptance evidence does not authenticate a person or device and does not prove delivery, authority, legal approval, or identity.
+
+### Rollback transaction
+
+Rollback requires:
+
+1. a verified pre-import package;
+2. a fresh no-write replacement plan;
+3. an understanding confirmation;
+4. the typed phrase `ROLLBACK`;
+5. final browser confirmation;
+6. creation of a pre-rollback package preserving the transferred state.
+
+The browser then applies the pre-import entries, verifies writes and required removals, and records aggregate evidence. If mutation fails, it restores and verifies the transferred snapshot. No rollback occurs automatically or in a service worker.
+
+## Meeting-Day Mode
+
+`features-v169-meeting-day.js` progressively classifies the existing form rather than creating a second meeting model. It prioritizes:
+
+- Meeting Information;
+- Organizations / Representatives Present;
+- Attendance Sign-On;
+- Agenda Checklist;
+- Discussion Notes;
+- Decisions Made;
+- Follow-Up Tasks;
+- Meeting Summary;
+- End of Meeting.
+
+Supporting governance, provider, recovery, synchronization, transfer, archive, and diagnostics cards are hidden only while the mode is active. They remain available through an explicit expansion control. Section IDs, keyboard focus, horizontal phone navigation, mode state, and last-section state are restored without copying record data.
+
+## Aggregate diagnostics
+
+The diagnostics report includes only aggregate values:
+
+- recognized entry count;
+- total and largest-entry bytes;
+- JSON parse-error count;
+- active, archived, and revision counts;
+- size buckets;
+- scan duration;
+- storage usage and quota ratio when available.
+
+It excludes meeting content, record IDs, attendee names, signatures, credentials, private keys, and storage-key names.
 
 ## External release pipeline
 
@@ -234,45 +275,52 @@ controlled source record
   -> independent verification
 ```
 
-Provider synchronization does not replace or satisfy any stage in this pipeline.
+Provider synchronization, transfer, acceptance, or rollback never replaces any stage in this release pipeline.
 
 ## Data safety invariants
 
 - Unknown record fields survive migration and provider round trips.
-- Active and archived copies with the same record ID are not allowed.
-- Revision history survives archive, restore, backup, and provider export.
+- Active and archived records with the same ID are not allowed.
+- Revision history survives archive, restore, backup, transfer, and provider export.
 - Active preservation holds block permanent disposition.
 - Typed signatures and verification data remain excluded from external copies.
-- Private signing keys remain absent from browser storage, provider state, exports, logs, backups, fixtures, and service-worker caches.
+- Private signing keys remain absent from browser storage, provider state, exports, logs, workspace packages, transfer packages, acceptance reports, rollback reports, fixtures, and service-worker caches.
+- Transfer, restore, merge, and rollback revalidate immediately before mutation.
+- Acceptance, rollback, recovery, readiness, and diagnostics reports are metadata-only.
 - Service workers cache application assets only.
-- Provider health does not prove authentication, authorization, durability, identity, or delivery.
+- Provider health, checksums, conflict tokens, and browser-local evidence do not prove authentication, identity, authority, delivery, or legal approval.
 
-## Hosted-provider responsibility boundary
+## Script-order audit and consolidation
 
-Passing the client conformance suite does not establish production readiness. A real hosted provider must independently implement and prove:
+Safe candidates for a future regression-driven consolidation milestone:
 
-- authentication and authorization;
-- tenant and organization isolation;
-- encryption in transit and at rest;
-- credential lifecycle and secret handling;
-- server-side validation and rate limiting;
-- durable audit and trusted timestamps;
-- retention, preservation, approval, and disposition enforcement;
-- backups and disaster recovery;
-- data residency and deletion guarantees;
-- observability without sensitive-data leakage;
-- incident response.
+- HTML escaping and JSON download helpers;
+- recognized-key collection;
+- bounded metadata-report persistence;
+- workspace-limit normalization;
+- repeated metadata-boundary declarations.
 
-See `V1.6.3-PROVIDER-CONTRACT.md` and `V1.6.3-ARCHITECTURE.md`.
+Do not casually consolidate:
+
+- save wrappers and revision creation;
+- migration order;
+- archive/disposition overrides;
+- external release and receipt routing;
+- transfer application;
+- rollback transactions;
+- governance and preservation gates.
+
+These areas rely on ordered wrapping and require dedicated regression coverage before refactoring.
 
 ## Validation
 
 GitHub Actions runs:
 
 1. syntax and required-file checks;
-2. app-shell and service-worker wiring checks;
-3. cryptographic, recovery, custody, and disposable-fixture Node tests;
-4. a dedicated hosted-provider conformance job for memory and localStorage reference providers;
-5. isolated Playwright browser suites across Chromium, Firefox, and WebKit where applicable.
+2. app-shell, manifest, canon-boundary, and service-worker checks;
+3. cryptographic, recovery, custody, synchronization, transfer, and acceptance Node tests;
+4. hosted-provider conformance;
+5. browser regression, transfer acceptance, Meeting-Day, diagnostics, mobile, and portable-signature suites;
+6. Chromium, Firefox, and WebKit where applicable.
 
-Provider conformance is independent from the browser matrix, making provider failures distinguishable from rendering or browser-engine regressions. Test-only dependencies do not enter the deployed application.
+Test-only packages are installed in CI and are not deployed with the static application.
