@@ -1,0 +1,241 @@
+/* Methodz Meeting Manager v1.6.9 transfer acceptance and meeting-day presentation. */
+
+.transfer-acceptance-v169 {
+  border-top: 4px solid #8a6d1d;
+}
+
+.transfer-acceptance-header-v169,
+.meeting-day-toolbar-v169 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.transfer-acceptance-status-v169 {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #c7c7c7;
+  border-radius: 0.65rem;
+  background: #f5f5f5;
+  font-weight: 700;
+}
+
+.transfer-acceptance-status-v169.is-ready {
+  border-color: #4c7b54;
+  background: #eff8f0;
+}
+
+.transfer-acceptance-status-v169.is-warning {
+  border-color: #9b7418;
+  background: #fff8df;
+}
+
+.transfer-acceptance-status-v169.is-error,
+.transfer-acceptance-status-v169.is-critical {
+  border-color: #9b3434;
+  background: #fff0f0;
+}
+
+.transfer-acceptance-grid-v169 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.transfer-acceptance-stage-v169 {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.75rem;
+  background: #fafafa;
+}
+
+.transfer-acceptance-stage-v169 h3,
+.transfer-acceptance-stage-v169 h4 {
+  margin-top: 0;
+}
+
+.transfer-acceptance-preview-v169 {
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #d1d1d1;
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.transfer-acceptance-preview-v169.is-hidden,
+.transfer-acceptance-confirmations-v169.is-hidden {
+  display: none;
+}
+
+.transfer-acceptance-metrics-v169 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.55rem;
+  margin: 0.75rem 0;
+}
+
+.transfer-acceptance-metrics-v169 span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px solid #ddd;
+  border-radius: 0.55rem;
+  background: #f8f8f8;
+  overflow-wrap: anywhere;
+}
+
+.transfer-acceptance-list-v169 {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+
+.transfer-acceptance-list-v169 li {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem 0.8rem;
+  border-left: 4px solid #888;
+  background: #f6f6f6;
+}
+
+.transfer-acceptance-list-v169 li.is-pass {
+  border-left-color: #3f7c49;
+}
+
+.transfer-acceptance-list-v169 li.is-review {
+  border-left-color: #a67c19;
+}
+
+.transfer-acceptance-list-v169 li.is-fail {
+  border-left-color: #a83f3f;
+}
+
+.transfer-acceptance-list-v169 li span {
+  color: var(--muted, #666);
+}
+
+.transfer-acceptance-confirmations-v169,
+.transfer-rollback-confirm-v169 {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.transfer-acceptance-confirmations-v169 label,
+.transfer-rollback-confirm-v169 label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.workspace-diagnostics-v169 {
+  margin-top: 1rem;
+}
+
+.meeting-day-controls-v169 {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  border-top: 4px solid var(--accent, #d5a642);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+}
+
+.meeting-day-nav-v169 {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.65rem 0 0.15rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.meeting-day-nav-button-v169 {
+  flex: 0 0 auto;
+  min-height: 44px;
+  margin: 0;
+  white-space: nowrap;
+  background: #333;
+}
+
+.meeting-day-nav-button-v169.is-active {
+  outline: 3px solid rgba(213, 166, 66, 0.45);
+  background: #000;
+}
+
+.is-meeting-day-v169 #mainContent {
+  max-width: 900px;
+}
+
+.is-meeting-day-v169 .meeting-day-core-v169 {
+  scroll-margin-top: 11rem;
+}
+
+.is-meeting-day-v169 .meeting-day-supporting-v169 {
+  display: none;
+}
+
+.is-meeting-day-v169.meeting-day-supporting-visible-v169 .meeting-day-supporting-v169 {
+  display: block;
+}
+
+.is-meeting-day-v169 .meeting-day-controls-v169 {
+  background: #fffdf5;
+}
+
+.is-meeting-day-v169 textarea {
+  min-height: 180px;
+}
+
+.is-meeting-day-v169 #notes,
+.is-meeting-day-v169 #decisions,
+.is-meeting-day-v169 #summary {
+  min-height: 240px;
+}
+
+@media (max-width: 760px) {
+  .transfer-acceptance-grid-v169 {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-acceptance-header-v169,
+  .meeting-day-toolbar-v169 {
+    flex-direction: column;
+  }
+
+  .meeting-day-controls-v169 {
+    top: env(safe-area-inset-top, 0);
+    margin-left: -2px;
+    margin-right: -2px;
+    padding: 0.85rem;
+  }
+
+  .meeting-day-toolbar-v169 .button-row {
+    width: 100%;
+  }
+
+  .meeting-day-toolbar-v169 .button-row button {
+    min-height: 44px;
+  }
+
+  .is-meeting-day-v169 .card {
+    border-radius: 0.65rem;
+  }
+
+  .is-meeting-day-v169 .meeting-day-core-v169 {
+    scroll-margin-top: 14rem;
+  }
+}
+
+@media print {
+  .meeting-day-controls-v169,
+  .transfer-acceptance-v169 {
+    display: none !important;
+  }
+
+  .is-meeting-day-v169 .meeting-day-supporting-v169 {
+    display: block;
+  }
+}
