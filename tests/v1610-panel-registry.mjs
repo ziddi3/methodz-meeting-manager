@@ -118,6 +118,23 @@ assert.equal(JSON.stringify(valid).includes("meeting text"), false);
 assert.equal(valid.boundaries.containsMeetingContent, false);
 assert.equal(valid.boundaries.containsRecordIds, false);
 
+const reversedInformation = element(2);
+const reversedNotes = element(1);
+const reversedDocument = documentFrom(new Map([
+  ["#main", element(0)],
+  ["#meeting-information", reversedInformation],
+  ["#discussion-notes", reversedNotes],
+  ["#diagnostics", element(3)]
+]));
+const reversedOrder = Registry.validateDocument(reversedDocument, {
+  requiredCapturePanelIds: ["meeting-information", "discussion-notes"]
+});
+assert.equal(reversedOrder.valid, false, "Meeting-Day priority drift must fail closed");
+assert.equal(reversedOrder.order.matches, false);
+assert.deepEqual(reversedOrder.order.expected, ["meeting-information", "discussion-notes"]);
+assert.deepEqual(reversedOrder.order.actual, ["discussion-notes", "meeting-information"]);
+assert.ok(reversedOrder.errors.some((issue) => issue.code === "PANEL_ORDER_MISMATCH"));
+
 const missingAnchor = Registry.validateDocument(documentFrom(new Map([
   ["#meeting-information", information],
   ["#discussion-notes", notes]
