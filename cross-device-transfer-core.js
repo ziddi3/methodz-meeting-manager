@@ -76,7 +76,15 @@
     return { valid: errors.length === 0, errors };
   }
 
+  function rejectUnsafeComponent(value, operation) {
+    Contract.rejectDisallowedMaterial(value, {
+      operation,
+      providerId: "methodz-cross-device-transfer"
+    });
+  }
+
   function requireWorkspaceReport(workspacePackage, options = {}) {
+    rejectUnsafeComponent(workspacePackage, "buildCrossDeviceTransferWorkspace");
     const report = WorkspaceCore.inspectWorkspacePackage(workspacePackage, {
       storageKeys: options.storageKeys || {},
       limits: options.workspaceLimits || {},
@@ -88,6 +96,7 @@
   }
 
   function requireQueueReport(queuePackage, options = {}) {
+    rejectUnsafeComponent(queuePackage, "buildCrossDeviceTransferQueue");
     const report = QueueCore.inspectQueuePackage(queuePackage, {
       expectedTenantId: options.expectedTenantId,
       maximumEntries: options.maximumQueueEntries
@@ -98,21 +107,29 @@
   }
 
   function requireEvidenceReport(evidencePackage) {
+    rejectUnsafeComponent(evidencePackage, "buildCrossDeviceTransferEvidence");
     const report = QueueCore.inspectOperatorEvidencePackage(evidencePackage);
     if (!report.valid) throw new Error(report.errors[0] || "Operator evidence package validation failed.");
     if (!report.checksumVerified) throw new Error("The operator evidence checksum must verify before transfer.");
     return report;
   }
 
+  function assertTenantBinding(queueReport, evidencePackage) {
+    const evidenceTenantReference = typeof evidencePackage?.tenantReference === "string" ? evidencePackage.tenantReference : "";
+    if (!queueReport.tenantReference || evidenceTenantReference !== queueReport.tenantReference) {
+      throw new Error("Synchronization queue and operator evidence tenant binding validation failed.");
+    }
+    return evidenceTenantReference;
+  }
+
   function buildTransferPackage(options = {}) {
     const workspaceReport = requireWorkspaceReport(options.workspacePackage, options);
     const queueReport = requireQueueReport(options.queuePackage, options);
     const evidenceReport = requireEvidenceReport(options.operatorEvidencePackage);
+    const evidenceTenantReference = assertTenantBinding(queueReport, options.operatorEvidencePackage);
     const readinessReport = inspectReadinessReport(options.readinessReport);
     if (!readinessReport.valid) throw new Error(readinessReport.errors[0]);
-
-    Contract.rejectDisallowedMaterial(options.workspacePackage, { operation: "buildCrossDeviceTransfer", providerId: "methodz-cross-device-transfer" });
-    Contract.rejectDisallowedMaterial(options.queuePackage, { operation: "buildCrossDeviceTransfer", providerId: "methodz-cross-device-transfer" });
+    rejectUnsafeComponent(options.readinessReport, "buildCrossDeviceTransferReadiness");
 
     const generatedAt = options.generatedAt || nowIso(options.clock);
     if (!validIso(generatedAt)) throw new Error("The transfer package requires a valid generatedAt timestamp.");
@@ -145,6 +162,7 @@
         },
         operatorEvidence: {
           checksumVerified: true,
+          tenantReference: evidenceTenantReference,
           eventCount: evidenceReport.events.length
         },
         deviceReadiness: {
@@ -170,6 +188,7 @@
       }
     };
 
+    rejectUnsafeComponent(body.components, "buildCrossDeviceTransferComponents");
     return {
       ...body,
       integrity: { algorithm: INTEGRITY_ALGORITHM, value: hash(body) }
@@ -201,6 +220,19 @@
     }
 
     const components = isPlainObject(payload.components) ? payload.components : {};
+    for (const [name, value] of Object.entries({
+      Workspace: components.workspace,
+      Queue: components.synchronizationQueue,
+      "Operator evidence": components.operatorEvidence,
+      "Device readiness": components.deviceReadiness
+    })) {
+      try {
+        rejectUnsafeComponent(value, `inspectCrossDeviceTransfer${name.replace(/\s+/g, "")}`);
+      } catch (error) {
+        errors.push(`${name}: ${error.message}`);
+      }
+    }
+
     try {
       workspaceReport = WorkspaceCore.inspectWorkspacePackage(components.workspace, {
         storageKeys: options.storageKeys || {},
@@ -233,6 +265,10 @@
       errors.push(`Operator evidence: ${error.message}`);
     }
 
+    if (queueReport.tenantReference && components.operatorEvidence?.tenantReference !== queueReport.tenantReference) {
+      errors.push("Synchronization queue and operator evidence tenant binding validation failed.");
+    }
+
     readinessReport = inspectReadinessReport(components.deviceReadiness);
     if (!readinessReport.valid) errors.push(...readinessReport.errors.map((item) => `Device readiness: ${item}`));
 
@@ -247,6 +283,9 @@
     const manifest = isPlainObject(payload.manifest) ? payload.manifest : {};
     if (manifest.workspace?.checksumVerified !== true || manifest.synchronizationQueue?.checksumVerified !== true || manifest.operatorEvidence?.checksumVerified !== true) {
       errors.push("The transfer manifest does not declare verified component integrity.");
+    }
+    if (manifest.synchronizationQueue?.tenantReference !== queueReport.tenantReference || manifest.operatorEvidence?.tenantReference !== queueReport.tenantReference) {
+      errors.push("The transfer manifest tenant binding is inconsistent.");
     }
 
     return finalize(collisions);
@@ -398,7 +437,7 @@
   }
 
   function emptyQueueReport() {
-    return { valid: false, checksumVerified: false, errors: [], warnings: [], entries: [], summary: {} };
+    return { valid: false, checksumVerified: false, errors: [], warnings: [], tenantId: "", tenantReference: "", entries: [], summary: {} };
   }
 
   function emptyCollisionReport() {
