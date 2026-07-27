@@ -1,0 +1,62 @@
+{
+  "reportType": "methodz-field-rehearsal-evidence",
+  "reportVersion": "1.0.0",
+  "appShellVersion": "1.6.10",
+  "recordSchemaVersion": "1.6.0",
+  "generatedAt": "YYYY-MM-DDTHH:mm:ss.sssZ",
+  "commitSha": "",
+  "platform": {
+    "family": "Android | iOS | Tablet | Desktop",
+    "operatingSystemVersion": "",
+    "browserFamily": "",
+    "browserVersion": "",
+    "viewportClass": "phone | tablet | desktop",
+    "serviceWorkerMode": "https | localhost | direct-file"
+  },
+  "operator": {
+    "reference": "non-sensitive operator reference",
+    "witnessReference": "optional non-sensitive witness reference"
+  },
+  "results": {
+    "panelRegistry": "pass | fail | blocked | not-applicable",
+    "coreMeetingWorkflow": "pass | fail | blocked | not-applicable",
+    "meetingDayMode": "pass | fail | blocked | not-applicable",
+    "offlineReload": "pass | fail | blocked | not-applicable",
+    "printOrPdf": "pass | fail | blocked | not-applicable",
+    "transferImport": "pass | fail | blocked | not-applicable",
+    "destinationAcceptance": "pass | fail | blocked | not-applicable",
+    "preImportRollback": "pass | fail | blocked | not-applicable"
+  },
+  "aggregates": {
+    "registeredPanels": 0,
+    "resolvedPanels": 0,
+    "registryErrors": 0,
+    "registryWarnings": 0,
+    "coreWorkflowDurationMs": 0,
+    "transferDurationMs": 0,
+    "rollbackDurationMs": 0
+  },
+  "evidenceReferences": [
+    {
+      "type": "screenshot | trace | pdf | issue",
+      "reference": "external non-sensitive reference",
+      "description": ""
+    }
+  ],
+  "blockingIssues": [],
+  "operatorNotes": "Do not include meeting content, attendee names, record IDs, signatures, credentials, private keys, storage-key names, or storage values.",
+  "boundaries": {
+    "containsMeetingContent": false,
+    "containsRecordIds": false,
+    "containsAttendeeNames": false,
+    "containsSignatures": false,
+    "containsCredentials": false,
+    "containsPrivateKeyMaterial": false,
+    "containsStorageKeys": false,
+    "containsStorageValues": false,
+    "provesDeviceIdentity": false,
+    "provesDelivery": false,
+    "provesAuthorization": false,
+    "provesLegalApproval": false
+  }
+}
