@@ -2,6 +2,88 @@
 
 Release-specific notes, architecture details, and test plans are retained under `docs/`.
 
+## 1.6.9
+
+### Added
+
+- Guided post-transfer acceptance across active records, Archive Vault records, revisions, directories, templates, governance metadata, public verification keys, custody records, recovery logs, and tenant queue state.
+- Count comparisons against the latest verified v1.6.8 destination-import report.
+- Explicit per-category review, recovery-retention confirmation, and typed `ACCEPT` workflow.
+- Metadata-only acceptance reports with bounded browser-local retention.
+- No-write rollback preview and explicit restoration of the pre-import destination snapshot.
+- Pre-rollback preservation of the transferred workspace, verified writes and removals, and automatic restoration of the transferred snapshot after a rollback failure.
+- Compact Meeting-Day Mode with section navigation, phone/tablet behavior, last-section restoration, and `Alt+M` shortcut.
+- Aggregate workspace size, quota, parse-health, and timing diagnostics.
+- Node and Playwright coverage, including a two-browser-profile transfer, acceptance, and rollback rehearsal.
+
+### Changed
+
+- App-shell and service-worker cache version advance to `1.6.9`; meeting-record schema remains `1.6.0`.
+- The main entry point loads the v1.6.9 acceptance core and browser layers after the v1.6.8 transfer layer.
+- The archive entry point loads v1.6.9 configuration without loading interactive transfer or rollback modules.
+- Live meeting capture can hide supporting governance and infrastructure cards without removing access to them.
+
+### Safety notes
+
+- No production provider, endpoint, credential, authenticated account, background synchronization, framework, or build step is introduced.
+- Acceptance and rollback are explicit operator actions and do not authenticate a person or device.
+- Acceptance, rollback, and diagnostics reports exclude meeting content, raw record IDs, attendee names, signatures, credentials, private-key material, and storage-key names.
+- Service workers cache static assets only and never process queue, transfer, acceptance, or rollback work.
+- Methodz Meeting Manager remains a task-focused meeting tool and must not deploy over `hub.methodz.ca`.
+
+## 1.6.8
+
+### Added
+
+- Integrity-checked cross-device transfer bundles containing workspace, tenant queue, metadata-only operator evidence, and metadata-only Device Readiness evidence.
+- Destination collision review using opaque references.
+- No-write recovery drills and replacement-plan previews.
+- Typed `TRANSFER` approval, complete pre-import recovery packages, staged writes, read-back verification, and verified rollback after failed import.
+- Metadata-only transfer rehearsal reports and browser regression coverage.
+
+### Changed
+
+- App shell and service-worker cache advanced to `1.6.8`; record schema remained `1.6.0`.
+- Transfer remained explicit and user controlled with no production endpoint or automatic synchronization.
+
+## 1.6.7
+
+### Added
+
+- Device Readiness checks for storage access, quota, persistent-storage status, service-worker state, Web Crypto, connectivity, viewport fit, and aggregate workspace counts.
+- Mobile action dock, safe-area support, touch-target hardening, and narrow-screen overflow coverage.
+- Metadata-only readiness reports and mobile Playwright tests.
+
+### Changed
+
+- App shell and service-worker cache advanced to `1.6.7`; record schema remained `1.6.0`.
+
+## 1.6.6
+
+### Added
+
+- Portable synchronization queue packages and metadata-only operator evidence packages.
+- Queue import inspection, tenant binding, checksums, explicit replacement approval, and completed-entry compaction.
+- Reload-safe queue recovery and browser tests.
+
+### Changed
+
+- App shell and service-worker cache advanced to `1.6.6`; record schema remained `1.6.0`.
+- Imported queue work remained unprocessed until an operator explicitly pressed Process.
+
+## 1.6.5
+
+### Added
+
+- Browser-local push and pull queues, offline and reconnect controls, explicit processing, retry, discard, and conflict review.
+- Idempotent uncertain-write recovery and three-way conflict resolution options.
+- Metadata-only synchronization rehearsal reports and dedicated CI coverage.
+
+### Changed
+
+- App shell and service-worker cache advanced to `1.6.5`; record schema remained `1.6.0`.
+- Synchronization remained a disposable rehearsal with no production credentials or silent background work.
+
 ## 1.6.4
 
 ### Added
