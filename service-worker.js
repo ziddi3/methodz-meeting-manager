@@ -1,6 +1,6 @@
 /* Methodz Meeting Manager optional static app-shell service worker. */
-const CACHE_NAME = "methodz-meeting-manager-v1.6.7";
-const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.6";
+const CACHE_NAME = "methodz-meeting-manager-v1.6.8";
+const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.7";
 const APP_SHELL = [
   "./",
   "./meeting.html",
@@ -25,6 +25,7 @@ const APP_SHELL = [
   "./features-v165.css",
   "./features-v166.css",
   "./features-v167.css",
+  "./features-v168.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -38,6 +39,7 @@ const APP_SHELL = [
   "./config-v165.js",
   "./config-v166.js",
   "./config-v167.js",
+  "./config-v168.js",
   "./migrations.js",
   "./migrations-v10.js",
   "./migrations-v11.js",
@@ -58,6 +60,7 @@ const APP_SHELL = [
   "./crypto-package-core.js",
   "./key-custody-core.js",
   "./workspace-package-core.js",
+  "./cross-device-transfer-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -106,6 +109,7 @@ const APP_SHELL = [
   "./features-v165-sync-rehearsal.js",
   "./features-v166-sync-portability.js",
   "./features-v167-device-readiness.js",
+  "./features-v168-transfer-rehearsal.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
@@ -173,5 +177,6 @@ self.addEventListener("message", (event) => {
 });
 
 // PREVIOUS_CACHE_NAME documents the migration boundary. The service worker intentionally
-// has no background-sync handler and never reads or processes rehearsal queue data.
+// has no background-sync, transfer-import, or queue-processing handler and never reads
+// workspace values, transfer packages, rehearsal reports, or synchronization queue data.
 void PREVIOUS_CACHE_NAME;
