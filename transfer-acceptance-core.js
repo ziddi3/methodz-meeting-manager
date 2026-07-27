@@ -123,6 +123,7 @@
   function statusForCategory(category, expected) {
     if (category.parseErrors > 0) return { status: "fail", message: "One or more storage entries could not be parsed." };
     if (expected !== null && category.itemCount !== expected) return { status: "fail", message: `Expected ${expected}; found ${category.itemCount}.` };
+    if (category.storageEntryCount === 0 && expected === 0) return { status: "pass", message: "The verified transfer report expects zero items; no local storage entry is required." };
     if (category.required && category.storageEntryCount === 0) return { status: "fail", message: "Required storage category is missing." };
     if (category.storageEntryCount === 0) return { status: "review", message: "No local entries are present for this optional category." };
     return { status: "pass", message: expected === null ? `${category.itemCount} item(s) available.` : `Count matches the verified transfer report (${expected}).` };
@@ -195,8 +196,50 @@
     return { ...body, checksum: WorkspaceCore.hashText(WorkspaceCore.stableStringify(body)) };
   }
 
+  function rollbackPreservedKeys(options = {}) {
+    const storageKeys = options.storageKeys || {};
+    return new Set([
+      options.preRestoreKey || storageKeys.preRestoreBackup || "methodzPreRestoreBackup",
+      storageKeys.preRollbackBackup || "methodzPreRollbackBackupV169",
+      storageKeys.transferAcceptanceState || "methodzTransferAcceptanceStateV169",
+      storageKeys.transferAcceptanceReports || "methodzTransferAcceptanceReportsV169",
+      storageKeys.transferRollbackReports || "methodzTransferRollbackReportsV169",
+      storageKeys.workspaceDiagnosticsReports || "methodzWorkspaceDiagnosticsReportsV169",
+      storageKeys.crossDeviceTransferState || "methodzCrossDeviceTransferStateV168",
+      storageKeys.crossDeviceTransferReports || "methodzCrossDeviceTransferReportsV168",
+      storageKeys.meetingDayPreferences || "methodzMeetingDayPreferencesV169"
+    ].filter(Boolean).map(String));
+  }
+
+  function filterRollbackEntries(entries, preserved) {
+    return Object.fromEntries(Object.entries(isPlainObject(entries) ? entries : {})
+      .filter(([key, value]) => WorkspaceCore.isRecognizedKey(key) && !preserved.has(key) && typeof value === "string"));
+  }
+
   function buildRollbackPreview(preRestorePackage, currentEntries, options = {}) {
-    const plan = WorkspaceCore.buildRestorePlan(preRestorePackage, currentEntries, {
+    const originalReport = inspectPreRestorePackage(preRestorePackage, options);
+    const preserved = rollbackPreservedKeys(options);
+    const filteredCurrent = filterRollbackEntries(currentEntries, preserved);
+    if (!originalReport.valid || !originalReport.checksumVerified) {
+      return {
+        valid: false,
+        checksumVerified: false,
+        errors: [...(originalReport.errors || ["The pre-import recovery package could not be verified."])],
+        warnings: [...(originalReport.warnings || [])],
+        counts: { add: 0, replace: 0, unchanged: 0, remove: 0, ignored: 0 },
+        recoverySummary: { ...(originalReport.summary || {}) },
+        currentSummary: WorkspaceCore.summarizeEntries(filteredCurrent, options.storageKeys || {})
+      };
+    }
+
+    const filteredIncoming = filterRollbackEntries(originalReport.recognizedEntries, preserved);
+    const filteredPackage = buildWorkspacePackage(filteredIncoming, {
+      storageKeys: options.storageKeys || {},
+      schemaVersion: preRestorePackage.schemaVersion,
+      generatedAt: preRestorePackage.exportedAt,
+      preRestoreKey: options.preRestoreKey
+    });
+    const plan = WorkspaceCore.buildRestorePlan(filteredPackage, filteredCurrent, {
       mode: "replace",
       storageKeys: options.storageKeys || {},
       limits: options.limits || {},
@@ -209,7 +252,7 @@
       warnings: [...plan.report.warnings],
       counts: { ...plan.counts },
       recoverySummary: { ...plan.report.summary },
-      currentSummary: WorkspaceCore.summarizeEntries(isPlainObject(currentEntries) ? currentEntries : {}, options.storageKeys || {})
+      currentSummary: WorkspaceCore.summarizeEntries(filteredCurrent, options.storageKeys || {})
     };
   }
 
