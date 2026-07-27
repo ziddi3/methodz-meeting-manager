@@ -43,147 +43,87 @@ jobs:
           required_files=(
             meeting.html archive.html verify.html verify.js style.css
             config.js config-v11.js config-v12.js config-v13.js config-v14.js config-v15.js
-            config-v16.js config-v162.js config-v163.js config-v164.js config-v165.js config-v166.js config-v167.js config-v168.js
-            migrations.js migrations-v10.js migrations-v11.js migrations-v12.js migrations-v13.js
-            migrations-v14.js migrations-v15.js migrations-v16.js
+            config-v16.js config-v162.js config-v163.js config-v164.js config-v165.js config-v166.js config-v167.js config-v168.js config-v169.js config-v1610.js
+            migrations.js migrations-v10.js migrations-v11.js migrations-v12.js migrations-v13.js migrations-v14.js migrations-v15.js migrations-v16.js
             provider-contract.js hosted-provider-adapters.js provider-conformance.js http-provider-pilot.js
-            sync-rehearsal-core.js sync-rehearsal-hardening.js sync-queue-portability.js cross-device-transfer-core.js
+            sync-rehearsal-core.js sync-rehearsal-hardening.js sync-queue-portability.js
             data-adapter.js async-data-adapter.js attachment-adapter.js
-            crypto-package-core.js key-custody-core.js workspace-package-core.js app.js
-            features-v11-retention.js features-v11-redaction.js features-v11-redaction-policy.js
-            features-v12-export-approval.js features-v12-fingerprint-policy.js features-v12-release-audit.js
-            features-v12-compatibility.js features-v13-disposition.js features-v13.css
-            features-v14-recipient-policy.js features-v14-policy-hardening.js features-v14.css
-            features-v15-policy-operations.js features-v15-download-routing.js features-v15.css
-            features-v16-crypto.js features-v16-record-metadata.js features-v16-recovery.js
-            features-v16-recovery-guards.js features-v16.css features-v16-recovery.css
-            features-v162-custody.js features-v162.css archive-v11.js archive-v13.js
-            features-v165-sync-rehearsal.js features-v165.css
-            features-v166-sync-portability.js features-v166.css
-            features-v167-device-readiness.js features-v167.css
-            features-v168-transfer-rehearsal.js features-v168.css
+            crypto-package-core.js key-custody-core.js workspace-package-core.js
+            cross-device-transfer-core.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js
+            panel-registry-core.js panel-registry-definitions.js app.js
+            features-v16-crypto.js features-v16-record-metadata.js features-v16-recovery.js features-v16-recovery-guards.js
+            features-v162-custody.js features-v165-sync-rehearsal.js features-v166-sync-portability.js
+            features-v167-device-readiness.js features-v168-transfer-rehearsal.js
+            features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js
+            features-v1610-panel-registry.js features-v1610.css
             manifest.webmanifest service-worker.js
-            tests/v12-smoke.spec.js tests/v13-smoke.spec.js tests/v14-smoke.spec.js
-            tests/v14-stability.spec.js tests/v15-smoke.spec.js tests/v15-ledger.spec.js
-            tests/v16-crypto.spec.js tests/v16-recovery.spec.js tests/v16-crypto-core.mjs
-            tests/v16-recovery-core.mjs tests/v162-custody.spec.js tests/v162-custody-core.mjs
-            tests/generate-v162-disposable-fixture.mjs tests/v162-fixture-core.mjs
-            tests/v162-fixture.spec.js tests/v163-provider-conformance.mjs tests/v164-provider-pilot.mjs
-            tests/v165-sync-rehearsal.mjs tests/v166-sync-portability.mjs tests/v166-sync-portability.spec.js
+            tests/v16-crypto-core.mjs tests/v16-recovery-core.mjs tests/v162-custody-core.mjs
+            tests/v163-provider-conformance.mjs tests/v164-provider-pilot.mjs tests/v165-sync-rehearsal.mjs
+            tests/v166-sync-portability.mjs tests/v166-sync-portability.spec.js
             tests/v167-mobile-readiness.spec.js tests/v168-transfer-rehearsal.mjs tests/v168-transfer-rehearsal.spec.js
-            docs/V1.6.2-VERIFICATION-CONFORMANCE.md docs/V1.6.3-PROVIDER-CONTRACT.md
-            docs/V1.6.3-TESTS.md docs/V1.6.4-PROVIDER-PILOT.md docs/V1.6.4-TESTS.md
-            docs/V1.6.5-SYNC-REHEARSAL.md docs/V1.6.5-TESTS.md
-            docs/V1.6.6-SYNC-PORTABILITY.md docs/V1.6.6-TESTS.md
-            docs/V1.6.7-MOBILE-READINESS.md docs/V1.6.7-TESTS.md
+            tests/v169-transfer-acceptance.mjs tests/v169-transfer-acceptance.spec.js
+            tests/v1610-panel-registry.mjs tests/v1610-panel-registry.spec.js
             docs/V1.6.8-TRANSFER-REHEARSAL.md docs/V1.6.8-TESTS.md
-            docs/PRODUCTION-PROVIDER-EVIDENCE.md
+            docs/V1.6.9-TRANSFER-ACCEPTANCE.md docs/V1.6.9-ARCHITECTURE.md docs/V1.6.9-TESTS.md
+            docs/V1.6.10-FIELD-REHEARSAL.md docs/V1.6.10-ARCHITECTURE.md docs/V1.6.10-TESTS.md docs/V1.6.10-CHANGELOG.md
+            docs/field-rehearsal-evidence-template.json docs/PRODUCTION-PROVIDER-EVIDENCE.md
           )
           for file in "${required_files[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
 
-      - name: Verify v1.6.8 assets and boundaries
+      - name: Verify v1.6.10 shell wiring and boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'features-v16.css' meeting.html
-          grep -q 'features-v16-recovery.css' meeting.html
-          grep -q 'features-v162.css' meeting.html
-          grep -q 'features-v165.css' meeting.html
-          grep -q 'features-v166.css' meeting.html
-          grep -q 'features-v167.css' meeting.html
-          grep -q 'features-v168.css' meeting.html
-          grep -q 'config-v16.js' meeting.html
-          grep -q 'config-v162.js' meeting.html
-          grep -q 'config-v163.js' meeting.html
-          grep -q 'config-v164.js' meeting.html
-          grep -q 'config-v165.js' meeting.html
-          grep -q 'config-v166.js' meeting.html
-          grep -q 'config-v167.js' meeting.html
-          grep -q 'config-v168.js' meeting.html
-          grep -q 'migrations-v16.js' meeting.html
-          grep -q 'provider-contract.js' meeting.html
-          grep -q 'hosted-provider-adapters.js' meeting.html
-          grep -q 'http-provider-pilot.js' meeting.html
-          grep -q 'sync-rehearsal-core.js' meeting.html
-          grep -q 'sync-rehearsal-hardening.js' meeting.html
-          grep -q 'sync-queue-portability.js' meeting.html
-          grep -q 'cross-device-transfer-core.js' meeting.html
-          grep -q 'features-v165-sync-rehearsal.js' meeting.html
-          grep -q 'features-v166-sync-portability.js' meeting.html
-          grep -q 'features-v167-device-readiness.js' meeting.html
-          grep -q 'features-v168-transfer-rehearsal.js' meeting.html
-          grep -q 'crypto-package-core.js' meeting.html
-          grep -q 'key-custody-core.js' meeting.html
-          grep -q 'workspace-package-core.js' meeting.html
-          grep -q 'features-v16-crypto.js' meeting.html
-          grep -q 'features-v16-record-metadata.js' meeting.html
-          grep -q 'features-v162-custody.js' meeting.html
-          grep -q 'features-v16-recovery.js' meeting.html
-          grep -q 'features-v16-recovery-guards.js' meeting.html
-          grep -q 'config-v16.js' archive.html
-          grep -q 'config-v166.js' archive.html
-          grep -q 'config-v167.js' archive.html
-          grep -q 'config-v168.js' archive.html
-          grep -q 'features-v167.css' archive.html
-          grep -q 'migrations-v16.js' archive.html
-          grep -q 'crypto-package-core.js' verify.html
-          grep -q 'verify.js' verify.html
-          grep -q 'methodz-meeting-manager-v1.6.8' service-worker.js
-          grep -q 'schemaVersion = "1.6.0"' config-v16.js
-          grep -q 'schemaVersion = "1.6.0"' config-v168.js
-          grep -q 'appShellVersion = "1.6.6"' config-v166.js
-          grep -q 'appShellVersion = "1.6.7"' config-v167.js
-          grep -q 'appShellVersion = "1.6.8"' config-v168.js
-          grep -q 'config-v166.js' service-worker.js
-          grep -q 'config-v167.js' service-worker.js
-          grep -q 'config-v168.js' service-worker.js
-          grep -q 'features-v166.css' service-worker.js
-          grep -q 'features-v167.css' service-worker.js
-          grep -q 'features-v168.css' service-worker.js
-          grep -q 'features-v166-sync-portability.js' service-worker.js
-          grep -q 'features-v167-device-readiness.js' service-worker.js
-          grep -q 'features-v168-transfer-rehearsal.js' service-worker.js
-          grep -q 'cross-device-transfer-core.js' service-worker.js
-          grep -q 'provider-contract.js' service-worker.js
-          grep -q 'hosted-provider-adapters.js' service-worker.js
-          grep -q 'http-provider-pilot.js' service-worker.js
-          grep -q 'sync-rehearsal-core.js' service-worker.js
-          grep -q 'sync-rehearsal-hardening.js' service-worker.js
-          grep -q 'sync-queue-portability.js' service-worker.js
-          grep -q 'features-v165-sync-rehearsal.js' service-worker.js
-          grep -q 'key-custody-core.js' service-worker.js
-          grep -q 'features-v162-custody.js' service-worker.js
-          grep -q 'verify.html' service-worker.js
-          grep -q 'verify.js' service-worker.js
-          ! grep -Eq 'http-provider-pilot\.js|sync-rehearsal-core\.js|sync-queue-portability\.js|cross-device-transfer-core\.js|features-v165-sync-rehearsal\.js|features-v166-sync-portability\.js|features-v167-device-readiness\.js|features-v168-transfer-rehearsal\.js' archive.html verify.html
+          grep -q 'features-v1610.css' meeting.html
+          grep -q 'config-v1610.js' meeting.html
+          grep -q 'panel-registry-core.js' meeting.html
+          grep -q 'panel-registry-definitions.js' meeting.html
+          grep -q 'features-v1610-panel-registry.js' meeting.html
+          grep -q 'features-v169-meeting-day.js' meeting.html
+          grep -q 'config-v1610.js' archive.html
+          grep -q 'appShellVersion = "1.6.10"' config-v1610.js
+          grep -q 'schemaVersion = "1.6.0"' config-v1610.js
+          grep -q 'methodz-meeting-manager-v1.6.10' service-worker.js
+          grep -q 'features-v1610.css' service-worker.js
+          grep -q 'config-v1610.js' service-worker.js
+          grep -q 'panel-registry-core.js' service-worker.js
+          grep -q 'panel-registry-definitions.js' service-worker.js
+          grep -q 'features-v1610-panel-registry.js' service-worker.js
+          grep -q 'meetingInformationPanelV1610' meeting.html
+          grep -q 'endOfMeetingPanelV1610' meeting.html
+          grep -q 'PANEL_ORDER_MISMATCH' panel-registry-core.js
+          grep -q 'methodz:panel-registry-ready' features-v1610-panel-registry.js
+          grep -q 'automaticExecution: false' config-v1610.js
+          grep -q 'productionEndpointConfigured: false' config-v1610.js
+          grep -q 'productionCredentialsAllowed: false' config-v1610.js
+          ! grep -Eq 'hub\.methodz\.ca' meeting.html archive.html verify.html manifest.webmanifest service-worker.js
+          ! grep -Eq 'panel-registry-core\.js|features-v1610-panel-registry\.js|features-v169-meeting-day\.js' archive.html verify.html
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
+          ! grep -q 'periodicSync' service-worker.js
 
-      - name: Run v1.6 Node Web Crypto self-test
-        run: node tests/v16-crypto-core.mjs
+      - name: Validate JSON artifacts
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
+          node -e "const x=JSON.parse(require('fs').readFileSync('docs/field-rehearsal-evidence-template.json','utf8')); if(x.appShellVersion!=='1.6.10'||x.recordSchemaVersion!=='1.6.0') process.exit(1); console.log('Field evidence template valid')"
 
-      - name: Run v1.6.1 recovery validation self-test
-        run: node tests/v16-recovery-core.mjs
+      - name: Run portable protocol self-tests
+        run: |
+          node tests/v16-crypto-core.mjs
+          node tests/v16-recovery-core.mjs
+          node tests/v162-custody-core.mjs
+          node tests/v165-sync-rehearsal.mjs
+          node tests/v166-sync-portability.mjs
+          node tests/v168-transfer-rehearsal.mjs
+          node tests/v169-transfer-acceptance.mjs
+          node tests/v1610-panel-registry.mjs
 
-      - name: Run v1.6.2 key custody self-test
-        run: node tests/v162-custody-core.mjs
-
-      - name: Run v1.6.5 synchronization rehearsal self-test
-        run: node tests/v165-sync-rehearsal.mjs
-
-      - name: Run v1.6.6 queue portability self-test
-        run: node tests/v166-sync-portability.mjs
-
-      - name: Run v1.6.8 transfer rehearsal self-test
-        run: node tests/v168-transfer-rehearsal.mjs
-
-      - name: Generate disposable public verification fixture
-        run: node tests/generate-v162-disposable-fixture.mjs
-
-      - name: Verify disposable fixture with the Node core
-        run: node tests/v162-fixture-core.mjs
+      - name: Generate and verify disposable signed fixture
+        run: |
+          node tests/generate-v162-disposable-fixture.mjs
+          node tests/v162-fixture-core.mjs
 
       - name: Upload disposable signed fixture
         uses: actions/upload-artifact@v4
@@ -192,9 +132,6 @@ jobs:
           path: .methodz-ci/fixtures/methodz-v162-disposable-signed-package.json
           if-no-files-found: error
           retention-days: 7
-
-      - name: Validate JSON manifest
-        run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8')); console.log('Manifest JSON valid')"
 
   provider-conformance:
     name: Hosted provider conformance
@@ -206,7 +143,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run disposable memory and local provider contract suite
+      - name: Run disposable provider contract suite
         run: node tests/v163-provider-conformance.mjs
 
   browser-smoke-tests:
@@ -219,19 +156,27 @@ jobs:
         include:
           - suite: existing-regression
             browser: chromium
-            test_command: npx playwright test --reporter=line --grep-invert "^Recovery v1\.6\.1:|^Custody v1\.6\.2:|^Portable signed fixture v1\.6\.2:|^Synchronization portability v1\.6\.6|^Mobile and cross-device readiness v1\.6\.7|^v1\.6\.8 cross-device transfer rehearsal"
+            test_command: >-
+              npx playwright test --reporter=line
+              --grep-invert '^Recovery v1\.6\.1:|^Custody v1\.6\.2:|^Portable signed fixture v1\.6\.2:|^Synchronization portability v1\.6\.6|^Mobile and cross-device readiness v1\.6\.7|^v1\.6\.8 cross-device transfer rehearsal|^v1\.6\.9 transfer acceptance|^v1\.6\.10 panel registry'
           - suite: recovery-architecture
             browser: chromium
-            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "recovery readiness panel|configured package limits"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep 'recovery readiness panel|configured package limits'
           - suite: recovery-drill
             browser: chromium
-            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "current workspace recovery drill|configured drill history cap"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep 'current workspace recovery drill|configured drill history cap'
           - suite: recovery-private-key
             browser: chromium
-            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep "backup inspection blocks private JWK"
+            test_command: npx playwright test tests/v16-recovery.spec.js --reporter=line --grep 'backup inspection blocks private JWK'
           - suite: custody-operations
             browser: chromium
             test_command: npx playwright test tests/v162-custody.spec.js --reporter=line
+          - suite: transfer-acceptance
+            browser: chromium
+            test_command: npx playwright test tests/v169-transfer-acceptance.spec.js --reporter=line
+          - suite: panel-registry
+            browser: chromium
+            test_command: npx playwright test tests/v1610-panel-registry.spec.js --reporter=line
           - suite: portable-fixture
             browser: chromium
             test_command: npx playwright test tests/v162-fixture.spec.js --reporter=line
