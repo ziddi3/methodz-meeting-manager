@@ -21,24 +21,21 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check v1.6.5 synchronization syntax
+      - name: Check synchronization and current-shell syntax
         run: |
           node --check config-v165.js
           node --check sync-rehearsal-core.js
           node --check sync-rehearsal-hardening.js
           node --check features-v165-sync-rehearsal.js
           node --check tests/v165-sync-rehearsal.mjs
-
-      - name: Check v1.6.6 portability syntax
-        run: |
           node --check config-v166.js
           node --check sync-queue-portability.js
           node --check features-v166-sync-portability.js
           node --check tests/v166-sync-portability.mjs
           node --check tests/v166-sync-portability.spec.js
-
-      - name: Check v1.6.7 shell syntax
-        run: node --check config-v167.js
+          node --check config-v167.js
+          node --check config-v168.js
+          node --check config-v169.js
 
       - name: Verify synchronization wiring and boundaries
         shell: bash
@@ -47,21 +44,29 @@ jobs:
           test -f features-v165.css
           test -f features-v166.css
           test -f features-v167.css
+          test -f features-v168.css
+          test -f features-v169.css
           grep -q 'features-v165.css' meeting.html
           grep -q 'features-v166.css' meeting.html
           grep -q 'features-v167.css' meeting.html
+          grep -q 'features-v168.css' meeting.html
+          grep -q 'features-v169.css' meeting.html
           grep -q 'config-v165.js' meeting.html
           grep -q 'config-v166.js' meeting.html
           grep -q 'config-v167.js' meeting.html
+          grep -q 'config-v168.js' meeting.html
+          grep -q 'config-v169.js' meeting.html
           grep -q 'http-provider-pilot.js' meeting.html
           grep -q 'sync-rehearsal-core.js' meeting.html
           grep -q 'sync-rehearsal-hardening.js' meeting.html
           grep -q 'sync-queue-portability.js' meeting.html
           grep -q 'features-v165-sync-rehearsal.js' meeting.html
           grep -q 'features-v166-sync-portability.js' meeting.html
-          grep -q 'methodz-meeting-manager-v1.6.7' service-worker.js
+          grep -q 'methodz-meeting-manager-v1.6.9' service-worker.js
           grep -q 'appShellVersion = "1.6.6"' config-v166.js
           grep -q 'appShellVersion = "1.6.7"' config-v167.js
+          grep -q 'appShellVersion = "1.6.8"' config-v168.js
+          grep -q 'appShellVersion = "1.6.9"' config-v169.js
           grep -q 'automaticBackgroundSync: false' config-v166.js
           grep -q 'serviceWorkerQueueProcessing: false' config-v166.js
           grep -q 'productionCredentialsAllowed: false' config-v166.js
