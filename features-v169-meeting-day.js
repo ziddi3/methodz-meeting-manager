@@ -174,7 +174,7 @@
 
   function installKeyboardShortcut() {
     global.addEventListener("keydown", (event) => {
-      if (event.altKey && event.key.toLowerCase() === "m") {
+      if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "m") {
         event.preventDefault();
         toggleMeetingDayV169();
       }
