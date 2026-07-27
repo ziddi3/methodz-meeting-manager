@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const Contract = require("../provider-contract.js");
 const WorkspaceCore = require("../workspace-package-core.js");
 const QueueCore = require("../sync-queue-portability.js");
 const TransferCore = require("../cross-device-transfer-core.js");
@@ -35,23 +36,27 @@ function workspacePackage(overrides = {}) {
   return { ...body, checksum: WorkspaceCore.hashText(WorkspaceCore.stableStringify(body)) };
 }
 
-function queuePackage() {
+function queueEntry(id = "queue-entry-1") {
+  return {
+    id,
+    version: "1.0.0",
+    tenantId: TENANT,
+    operation: "push",
+    state: "pending",
+    recordId: "record-active-1",
+    idempotencyKey: `idempotency-${id}`,
+    attempts: 0,
+    createdAt: NOW,
+    updatedAt: NOW
+  };
+}
+
+function queuePackage(entries = [queueEntry()]) {
   return QueueCore.buildQueuePackage({
     tenantId: TENANT,
     providerId: "disposable-http-pilot",
     generatedAt: NOW,
-    entries: [{
-      id: "queue-entry-1",
-      version: "1.0.0",
-      tenantId: TENANT,
-      operation: "push",
-      state: "pending",
-      recordId: "record-active-1",
-      idempotencyKey: "idempotency-1",
-      attempts: 0,
-      createdAt: NOW,
-      updatedAt: NOW
-    }]
+    entries
   });
 }
 
@@ -86,6 +91,23 @@ function readinessReport() {
   };
 }
 
+function recomputeTransfer(payload) {
+  const body = { ...payload };
+  delete body.integrity;
+  payload.integrity = {
+    algorithm: "fnv1a32-canonical-json",
+    value: Contract.fnv1a32(Contract.canonicalStringify(body))
+  };
+  return payload;
+}
+
+function recomputeWorkspace(payload) {
+  const body = { ...payload };
+  delete body.checksum;
+  body.summary = WorkspaceCore.summarizeEntries(body.entries, storageKeys);
+  return { ...body, checksum: WorkspaceCore.hashText(WorkspaceCore.stableStringify(body)) };
+}
+
 const transfer = TransferCore.buildTransferPackage({
   workspacePackage: workspacePackage(),
   queuePackage: queuePackage(),
@@ -107,6 +129,7 @@ assert.equal(transfer.packageVersion, "1.0.0");
 assert.equal(transfer.boundaries.includesPrivateSigningKeys, false);
 assert.equal(transfer.manifest.workspace.checksumVerified, true);
 assert.equal(transfer.manifest.synchronizationQueue.summary.entryCount, 1);
+assert.equal(transfer.manifest.operatorEvidence.tenantReference, transfer.manifest.synchronizationQueue.tenantReference);
 
 const currentEntries = {
   methodzMeetingRecords: JSON.stringify([{ id: "record-active-1" }]),
@@ -162,6 +185,32 @@ const tamperedInspection = TransferCore.inspectTransferPackage(tampered, { stora
 assert.equal(tamperedInspection.valid, false);
 assert.equal(tamperedInspection.checksumVerified, false);
 assert.ok(tamperedInspection.errors.some((message) => message.includes("integrity validation failed")));
+
+const maliciousCredential = structuredClone(transfer);
+maliciousCredential.components.workspace.entries.methodzUnsafeFixture = JSON.stringify({ accessToken: "recomputed-secret" });
+maliciousCredential.components.workspace = recomputeWorkspace(maliciousCredential.components.workspace);
+maliciousCredential.manifest.workspace.summary = structuredClone(maliciousCredential.components.workspace.summary);
+maliciousCredential.manifest.workspace.recognizedEntryCount = Object.keys(maliciousCredential.components.workspace.entries).length;
+recomputeTransfer(maliciousCredential);
+const maliciousInspection = TransferCore.inspectTransferPackage(maliciousCredential, { storageKeys, expectedTenantId: TENANT });
+assert.equal(maliciousInspection.checksumVerified, true);
+assert.equal(maliciousInspection.workspaceReport.checksumVerified, true);
+assert.equal(maliciousInspection.valid, false);
+assert.ok(maliciousInspection.errors.some((message) => /credential field|accessToken/i.test(message)));
+
+const mismatchedTenant = structuredClone(transfer);
+mismatchedTenant.components.operatorEvidence.tenantReference = QueueCore.tenantReference("different-tenant");
+const evidenceBody = { ...mismatchedTenant.components.operatorEvidence };
+delete evidenceBody.integrity;
+mismatchedTenant.components.operatorEvidence.integrity = {
+  algorithm: "fnv1a32-canonical-json",
+  value: Contract.fnv1a32(Contract.canonicalStringify(evidenceBody))
+};
+mismatchedTenant.manifest.operatorEvidence.tenantReference = mismatchedTenant.components.operatorEvidence.tenantReference;
+recomputeTransfer(mismatchedTenant);
+const tenantInspection = TransferCore.inspectTransferPackage(mismatchedTenant, { storageKeys, expectedTenantId: TENANT });
+assert.equal(tenantInspection.valid, false);
+assert.ok(tenantInspection.errors.some((message) => /tenant binding|tenant isolation/i.test(message)));
 
 const unsafeWorkspace = workspacePackage({
   methodzUnsafeFixture: JSON.stringify({ privateJwk: { kty: "EC", crv: "P-256", d: "private-secret" } })
