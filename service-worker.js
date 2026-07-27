@@ -1,7 +1,8 @@
 /* Methodz Meeting Manager optional static app-shell service worker. */
-const CACHE_NAME = "methodz-meeting-manager-v1.6.9";
-const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.8";
+const CACHE_NAME = "methodz-meeting-manager-v1.6.10";
+const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.9";
 const HISTORICAL_CACHE_NAMES = Object.freeze([
+  "methodz-meeting-manager-v1.6.8",
   "methodz-meeting-manager-v1.6.7",
   "methodz-meeting-manager-v1.6.6",
   "methodz-meeting-manager-v1.6.5",
@@ -37,6 +38,7 @@ const APP_SHELL = [
   "./features-v167.css",
   "./features-v168.css",
   "./features-v169.css",
+  "./features-v1610.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -52,6 +54,7 @@ const APP_SHELL = [
   "./config-v167.js",
   "./config-v168.js",
   "./config-v169.js",
+  "./config-v1610.js",
   "./migrations.js",
   "./migrations-v10.js",
   "./migrations-v11.js",
@@ -75,6 +78,8 @@ const APP_SHELL = [
   "./cross-device-transfer-core.js",
   "./transfer-acceptance-core.js",
   "./transfer-acceptance-summary-filter.js",
+  "./panel-registry-core.js",
+  "./panel-registry-definitions.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -126,6 +131,7 @@ const APP_SHELL = [
   "./features-v168-transfer-rehearsal.js",
   "./features-v169-transfer-acceptance.js",
   "./features-v169-rollback-stability.js",
+  "./features-v1610-panel-registry.js",
   "./features-v169-meeting-day.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
@@ -194,8 +200,7 @@ self.addEventListener("message", (event) => {
 });
 
 // Historical workflow contract: no background-sync, transfer-import, or queue-processing handler.
-// The service worker also has no acceptance, rollback, workspace-diagnostics, or workspace-data handler
-// and never reads workspace values, transfer packages, acceptance reports, rollback packages,
-// diagnostics reports, or synchronization queue data.
+// The service worker also has no panel-registry data, acceptance, rollback, workspace-diagnostics,
+// field-rehearsal evidence, or workspace-data handler and never reads browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;
