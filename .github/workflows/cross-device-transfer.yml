@@ -21,45 +21,64 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate v1.6.8 syntax and wiring
+      - name: Validate transfer syntax and current shell wiring
         shell: bash
         run: |
           set -euo pipefail
           node --check config-v168.js
+          node --check config-v169.js
           node --check cross-device-transfer-core.js
+          node --check transfer-acceptance-core.js
           node --check features-v168-transfer-rehearsal.js
+          node --check features-v169-transfer-acceptance.js
           node --check tests/v168-transfer-rehearsal.mjs
           node --check tests/v168-transfer-rehearsal.spec.js
+          node --check tests/v169-transfer-acceptance.mjs
           grep -q 'features-v168.css' meeting.html
+          grep -q 'features-v169.css' meeting.html
           grep -q 'config-v168.js' meeting.html
+          grep -q 'config-v169.js' meeting.html
           grep -q 'cross-device-transfer-core.js' meeting.html
+          grep -q 'transfer-acceptance-core.js' meeting.html
           grep -q 'features-v168-transfer-rehearsal.js' meeting.html
+          grep -q 'features-v169-transfer-acceptance.js' meeting.html
           grep -q 'config-v168.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.6.8' service-worker.js
+          grep -q 'config-v169.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.6.9' service-worker.js
           grep -q 'features-v168.css' service-worker.js
+          grep -q 'features-v169.css' service-worker.js
           grep -q 'config-v168.js' service-worker.js
+          grep -q 'config-v169.js' service-worker.js
           grep -q 'cross-device-transfer-core.js' service-worker.js
+          grep -q 'transfer-acceptance-core.js' service-worker.js
           grep -q 'features-v168-transfer-rehearsal.js' service-worker.js
+          grep -q 'features-v169-transfer-acceptance.js' service-worker.js
           grep -q 'appShellVersion = "1.6.8"' config-v168.js
+          grep -q 'appShellVersion = "1.6.9"' config-v169.js
           grep -q 'schemaVersion = "1.6.0"' config-v168.js
+          grep -q 'schemaVersion = "1.6.0"' config-v169.js
 
       - name: Verify offline and service-worker boundaries
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v168.js cross-device-transfer-core.js features-v168-transfer-rehearsal.js
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v168.js config-v169.js cross-device-transfer-core.js transfer-acceptance-core.js features-v168-transfer-rehearsal.js features-v169-transfer-acceptance.js
           grep -q 'automaticImport: false' config-v168.js
           grep -q 'automaticSynchronization: false' config-v168.js
           grep -q 'productionEndpointConfigured: false' config-v168.js
           grep -q 'productionCredentialsAllowed: false' config-v168.js
           grep -q 'privateKeyMaterialAllowed: false' config-v168.js
-          grep -q 'no background-sync, transfer-import, or queue-processing handler' service-worker.js
+          grep -q 'automaticAcceptance: false' config-v169.js
+          grep -q 'automaticRollback: false' config-v169.js
+          grep -q 'no background-sync, transfer-import, rollback, acceptance, or queue-processing handler' service-worker.js
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
           ! grep -q 'periodicSync' service-worker.js
 
       - name: Run transfer core checks
-        run: node tests/v168-transfer-rehearsal.mjs
+        run: |
+          node tests/v168-transfer-rehearsal.mjs
+          node tests/v169-transfer-acceptance.mjs
 
   transfer-browser:
     runs-on: ubuntu-latest
@@ -96,13 +115,13 @@ jobs:
       - name: Run transfer browser checks
         env:
           METHODZ_BROWSER: chromium
-        run: npx playwright test tests/v168-transfer-rehearsal.spec.js --reporter=line
+        run: npx playwright test tests/v168-transfer-rehearsal.spec.js tests/v169-transfer-acceptance.spec.js --reporter=line
 
       - name: Upload traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-v168-transfer-traces
+          name: methodz-v169-transfer-traces
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
