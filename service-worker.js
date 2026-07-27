@@ -124,6 +124,7 @@ const APP_SHELL = [
   "./features-v167-device-readiness.js",
   "./features-v168-transfer-rehearsal.js",
   "./features-v169-transfer-acceptance.js",
+  "./features-v169-rollback-stability.js",
   "./features-v169-meeting-day.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
