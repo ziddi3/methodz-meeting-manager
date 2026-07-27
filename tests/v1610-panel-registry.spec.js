@@ -28,7 +28,7 @@ test.describe("v1.6.10 panel registry and field shell", () => {
     await page.getByRole("button", { name: "Enter Meeting-Day Mode" }).click();
     await expect(page.locator("body")).toHaveClass(/methodz-meeting-day-mode-v169/);
     await page.locator('[data-meeting-day-target-v169="meetingInformationPanelV1610"]').click();
-    await expect(page.locator("#meetingInformationPanelV1610")).toBeFocused();
+    await expect(page.locator("#meetingTitle")).toBeFocused();
   });
 
   test("fails visibly when a required capture panel disappears and never hides controls", async ({ page }) => {
