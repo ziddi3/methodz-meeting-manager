@@ -25,6 +25,11 @@
       "url": "./meeting.html"
     },
     {
+      "name": "Meeting-Day Mode",
+      "short_name": "Meeting Day",
+      "url": "./meeting.html#meetingDayControlsV169"
+    },
+    {
       "name": "Meeting Archive",
       "short_name": "Archive",
       "url": "./meeting.html#archiveVaultV08"
