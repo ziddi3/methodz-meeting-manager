@@ -6,30 +6,27 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, and rec
 
 ## Current release
 
-**App shell 1.6.8 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Synchronization queue package 1.0.0 · Transfer rehearsal package 1.0.0**
+**App shell 1.6.9 · Record schema 1.6.0 · Hosted-provider contract 1.0.0 · Synchronization queue package 1.0.0 · Transfer rehearsal package 1.0.0**
 
-The application remains a static HTML, CSS, and JavaScript system with no runtime package dependencies and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to an ordinary static host.
+The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to any ordinary static host.
 
-Version 1.6.8 adds an explicit cross-device transfer rehearsal on top of the completed workspace recovery, queue portability, operator evidence, and Device Readiness layers:
+Version 1.6.9 completes the operator workflow around the v1.6.8 cross-device transfer layer and sharpens live meeting usability:
 
-- one integrity-checked bundle containing the workspace package, tenant queue package, metadata-only operator evidence, and metadata-only Device Readiness report;
-- independent component validation plus a top-level transfer checksum;
-- destination collision review across active records, Archive Vault entries, revisions, public verification keys, and queue entries;
-- opaque collision references instead of raw identifiers;
-- a no-write recovery drill and replacement mutation preview;
-- explicit destination confirmations, typed `TRANSFER` approval, and final confirmation;
-- a complete pre-import recovery package;
-- staged writes followed by read-back verification;
-- automatic restoration of the original destination snapshot when a staged import cannot be verified;
-- bounded metadata-only rehearsal reports;
-- no backend, credential, framework, build step, production provider, automatic import, or background synchronization.
+- post-transfer acceptance checklist for active records, Archive Vault records, revisions, directories, templates, governance metadata, public verification keys, custody records, recovery logs, and tenant queue state;
+- bounded metadata-only acceptance evidence;
+- explicit pre-import rollback rehearsal with checksum validation, no-write preview, typed `ROLLBACK` approval, recovery creation, exact read-back verification, and automatic restoration after failed writes;
+- aggregate large-workspace diagnostics without meeting content, storage values, storage-key names, or raw identifiers;
+- compact Meeting-Day Mode with section navigation and state restoration for phone and tablet use;
+- two-browser-profile automated transfer, acceptance, diagnostics, and rollback coverage;
+- documented script-order audit and safe future consolidation path;
+- no backend, credential, framework, build step, production provider, automatic acceptance, automatic rollback, or background synchronization.
 
-The record schema remains `1.6.0`.
+The meeting-record schema remains `1.6.0`.
 
 ## Entry points
 
 ```text
-meeting.html   Main meeting workspace
+meeting.html   Main meeting and operator workspace
 archive.html   Dedicated detail and print view
 verify.html    Standalone signed-package verifier
 ```
@@ -46,41 +43,80 @@ verify.html    Standalone signed-package verifier
 - Reopen, revise, compare, archive, restore, search, and filter records.
 - Preserve governed source records while creating controlled external copies.
 
-## Cross-device transfer rehearsal
+## Meeting-Day Mode
+
+Meeting-Day Mode keeps the live capture route in front:
+
+```text
+Meeting Information
+Organizations / Representatives Present
+Attendance
+Agenda
+Notes
+Decisions
+Tasks
+Summary
+Save
+```
+
+Supporting governance, recovery, provider, synchronization, and transfer panels are collapsed rather than removed. **Show Tools** reopens them at any time. The last meeting section and mode preference are restored locally after reload.
+
+The section navigator is optimized for narrow screens with touch-sized controls and horizontal scrolling. `Alt+M` toggles Meeting-Day Mode when focus is outside a form field.
+
+## Cross-device transfer and acceptance
 
 ### Source
 
 1. Save current meeting work.
 2. Keep private signing keys separate.
 3. Run Device Readiness.
-4. Build and download the transfer bundle.
+4. Build and download the v1.6.8 transfer bundle.
 5. Store it outside the browser and source device.
-6. Keep the source workspace unchanged until destination verification is complete.
+6. Keep the source unchanged until destination verification and acceptance are complete.
 
-### Destination
+### Destination import
 
-1. Run Device Readiness in the destination browser profile.
+1. Run Device Readiness.
 2. Choose the transfer bundle.
 3. Verify transfer, workspace, queue, evidence, and readiness integrity.
 4. Review collision counts.
 5. Run the no-write recovery drill.
-6. Review the add, replace, unchanged, remove, and ignored plan.
+6. Review the replacement plan.
 7. Complete every destination confirmation.
 8. Type `TRANSFER` and approve the final dialog.
 9. Reload only after post-write verification succeeds.
-10. Retain the pre-import recovery package until the transfer is accepted.
-11. Export a fresh destination workspace backup.
+
+### Destination acceptance
+
+1. Open **Transfer Acceptance & Rollback**.
+2. Refresh the aggregate destination review.
+3. Compare all ten component groups with the expected source.
+4. Review every checklist item.
+5. Complete acceptance and retain the metadata-only report.
+6. Run aggregate workspace diagnostics.
+7. Export a fresh destination workspace backup.
+8. Keep the pre-import package until the transfer has been accepted in actual use.
+
+### Rollback rehearsal
+
+1. Press **Preview Rollback**.
+2. Verify the pre-import package and review add, replace, unchanged, remove, and ignored counts.
+3. Confirm review and type `ROLLBACK`.
+4. Approve the final replacement dialog.
+5. The current destination is preserved as a separate rollback-recovery package.
+6. The pre-import snapshot is restored and read back.
+7. Reload only after verification succeeds.
 
 The transfer bundle contains meeting and workspace values. Protect it like a complete business backup.
 
-The rehearsal report is metadata-only. It excludes meeting content, raw record IDs, attendee names, signatures, credentials, queue payloads, and private-key material.
+Acceptance, diagnostics, rollback, readiness, and rehearsal reports are metadata-only. They exclude meeting content, raw record identifiers, attendee names, signatures, credentials, queue payloads, and private-key material.
 
 See:
 
 - `docs/V1.6.8-TRANSFER-REHEARSAL.md`
-- `docs/V1.6.8-ARCHITECTURE.md`
-- `docs/V1.6.8-TESTS.md`
-- `docs/V1.6.8-CHANGELOG.md`
+- `docs/V1.6.9-TRANSFER-ACCEPTANCE.md`
+- `docs/V1.6.9-ARCHITECTURE.md`
+- `docs/V1.6.9-TESTS.md`
 
 ## Mobile and Device Readiness
 
@@ -97,12 +133,7 @@ The Device Readiness panel checks:
 
 A **Ready** result is a capability snapshot, not proof that a protected backup exists or recovery will succeed.
 
-The phone interface includes 44-pixel touch targets, 16-pixel mobile form controls, safe-area support, narrow-screen overflow protection, and a Save / New / Records / Device action dock.
-
-See:
-
-- `docs/V1.6.7-MOBILE-READINESS.md`
-- `docs/V1.6.7-TESTS.md`
+The phone interface includes touch-sized controls, mobile-safe form sizing, safe-area support, narrow-screen overflow protection, an action dock, Meeting-Day Mode, and a section navigator.
 
 ## Core principles
 
@@ -117,11 +148,11 @@ See:
 - External downloads require matching approval metadata.
 - Recipient allow-lists apply only after redaction.
 - Typed signatures require consent and remain excluded from external copies.
-- Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, or signed packages.
-- Workspace and transfer imports are revalidated immediately before mutation.
-- Recovery, readiness, and transfer reports exclude meeting and workspace values.
+- Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, or reports.
+- Workspace, transfer, acceptance, and rollback operations are revalidated immediately before mutation.
+- Recovery and operational reports exclude meeting and workspace values.
 - Synchronization and transfer rehearsals never substitute for approval, identity, delivery, or remote audit.
-- Service workers cache static assets only and never process queue or transfer work.
+- Service workers cache static assets only and never process workspace, queue, transfer, acceptance, or rollback work.
 - Infrastructure supports the meeting workflow rather than replacing it.
 
 ## Architecture
@@ -129,7 +160,7 @@ See:
 ```text
 Configuration
   config.js
-  config-v11.js through config-v168.js
+  config-v11.js through config-v169.js
 
 Schema and migration
   migrations.js
@@ -144,28 +175,29 @@ Record and provider boundaries
   provider-conformance.js
   http-provider-pilot.js
 
-Synchronization rehearsal and portability
+Synchronization and queue portability
   sync-rehearsal-core.js
   sync-rehearsal-hardening.js
   sync-queue-portability.js
   features-v165-sync-rehearsal.js
   features-v166-sync-portability.js
 
-Device and transfer readiness
-  config-v167.js
+Device, transfer, and acceptance
   features-v167-device-readiness.js
-  config-v168.js
   cross-device-transfer-core.js
   features-v168-transfer-rehearsal.js
+  transfer-acceptance-core.js
+  features-v169-transfer-acceptance.js
+  features-v169-meeting-day.js
 
-Package, custody, and recovery boundaries
+Package, custody, and recovery
   crypto-package-core.js
   key-custody-core.js
   workspace-package-core.js
 
 Core workspace
   app.js
-  features-v03*.js through features-v168*.js
+  features-v03*.js through features-v169*.js
 
 Archive and verification
   archive.js
@@ -179,53 +211,23 @@ Static app shell
   service-worker.js
 ```
 
-Later feature layers intentionally wrap stable functions created by earlier layers. Script order in the HTML entry points is part of the runtime contract.
+Later layers intentionally extend stable functions created by earlier layers. Script order in the HTML entry points is part of the runtime contract. See `docs/V1.6.9-SCRIPT-ORDER-AUDIT.md`.
 
 ## Synchronization rehearsal
 
-The synchronization workspace uses a disposable, browser-local HTTP-style provider simulator. It supports explicit enqueue, preview, process, retry, discard, reconnect, conflict resolution, queue-package export/import, and completed-entry compaction.
+The synchronization workspace uses a disposable, browser-local HTTP-style provider simulator. It supports explicit enqueue, preview, process, retry, discard, reconnect, conflict resolution, queue-package export/import, completed-entry compaction, and transfer rehearsal.
 
-It does **not** provide:
+It does **not** provide a production endpoint, authenticated users, server-side permissions, durable remote audit, background synchronization, production credentials, or automatic conflict resolution.
 
-- a production endpoint;
-- authenticated users;
-- server-side permissions;
-- durable remote audit;
-- background synchronization;
-- production credentials;
-- automatic conflict resolution.
-
-Queue import remains a no-write preview followed by explicit approval. Imported work remains unprocessed until an operator presses **Process**. Cross-device import preserves queue state but does not process it.
-
-See:
-
-- `docs/V1.6.5-SYNC-REHEARSAL.md`
-- `docs/V1.6.6-SYNC-PORTABILITY.md`
-- `docs/V1.6.6-TESTS.md`
+Queue import remains a no-write preview followed by explicit approval. Imported work remains unprocessed until an operator presses **Process**.
 
 ## Hosted-provider boundary
 
 A conforming provider implements Promise-returning list, read, upsert, archive, restore, permanent-delete, export, and health operations with conflict tokens and idempotent replay.
 
-Providers must preserve active and archived separation, revisions, unknown fields, attachment references, integrity metadata, retention, holds, disposition, redaction, approval, receipts, signatures, custody, recovery, queue portability, and transfer metadata.
-
-Private JWK material, credentials, embedded binary fields, and data URLs are rejected before provider writes and exports.
-
 Passing conformance proves client-contract compatibility only. A production provider still requires authentication, server-enforced authorization, tenant isolation, encryption, durable audit, retention enforcement, backup, recovery, residency review, and incident response.
 
-See:
-
-- `docs/V1.6.3-PROVIDER-CONTRACT.md`
-- `docs/V1.6.4-PROVIDER-PILOT.md`
-- `docs/PRODUCTION-PROVIDER-EVIDENCE.md`
-
-## Recovery readiness
-
-Recovery Readiness provides fail-closed package inspection and dry recovery drills. It validates package type, checksum, entry and byte limits, unsupported keys, private JWK material, summary counts, and proposed storage mutations.
-
-Cross-device transfer uses the same recovery boundary, creates a complete pre-import recovery package, and verifies written values before reporting success.
-
-See `docs/V1.6.1-RECOVERY-HARDENING.md`.
+No production provider is active in this release.
 
 ## Signing and verification
 
@@ -235,14 +237,9 @@ Private signing keys exist only in current page memory and may be downloaded onl
 
 A valid signature confirms integrity relative to the matching public key. It does not independently prove human identity, authority, recipient identity, approval legitimacy, delivery, or legal compliance.
 
-See:
-
-- `docs/KEY-CUSTODY-OPERATIONS.md`
-- `docs/V1.6.2-VERIFICATION-CONFORMANCE.md`
-
 ## Static deployment
 
-Supported deployment modes include:
+Supported modes include:
 
 - direct `file:` use for core meeting workflows;
 - localhost;
@@ -266,18 +263,16 @@ GitHub Actions covers:
 - cryptographic signing and tamper tests;
 - recovery-package validation;
 - public-key custody operations;
-- hosted-provider conformance;
-- serialized network-fault pilot scenarios;
+- hosted-provider conformance and network-fault pilots;
 - synchronization rehearsal and queue portability;
-- cross-device transfer integrity, collisions, recovery drills, import, rollback, and metadata exclusion;
+- cross-device transfer integrity, collisions, import, and rollback;
+- v1.6.9 acceptance, diagnostics, and pre-import restoration;
 - Chromium, Firefox, and WebKit verification coverage;
-- phone-viewport overflow, touch-target, navigation, and metadata-exclusion tests.
+- phone viewport, touch target, navigation, and metadata-exclusion tests.
 
 Playwright and other test packages are installed only in CI and are not deployed runtime dependencies.
 
-## Documentation
-
-Primary current documents:
+## Current documentation
 
 ```text
 docs/ARCHITECTURE.md
@@ -292,23 +287,23 @@ docs/V1.6.5-SYNC-REHEARSAL.md
 docs/V1.6.6-SYNC-PORTABILITY.md
 docs/V1.6.7-MOBILE-READINESS.md
 docs/V1.6.8-TRANSFER-REHEARSAL.md
-docs/V1.6.8-ARCHITECTURE.md
-docs/V1.6.8-TESTS.md
+docs/V1.6.9-TRANSFER-ACCEPTANCE.md
+docs/V1.6.9-ARCHITECTURE.md
+docs/V1.6.9-TESTS.md
+docs/V1.6.9-SCRIPT-ORDER-AUDIT.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
-
-Earlier version-specific documents remain under `docs/` as historical engineering context.
 
 ## Roadmap
 
 ### 1.x hardening
 
 - complete real-device Android and iOS regression testing;
-- complete the documented two-device transfer and rollback rehearsal;
-- consolidate older feature layers without breaking direct-file compatibility;
-- improve direct meeting capture and meeting-day usability;
-- improve large-workspace performance and bounded-storage reporting;
+- execute the documented physical two-device transfer, acceptance, and rollback rehearsal;
+- introduce a non-breaking panel registry before consolidating older feature layers;
+- improve live meeting capture and follow-up review;
+- continue large-workspace performance and bounded-storage testing;
 - evaluate production-provider candidates against the evidence gate;
 - keep synchronization explicit and user-controlled;
 - preserve browser-local storage as the default until a hosted provider is explicitly approved.
