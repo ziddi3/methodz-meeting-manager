@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           required_files=(
-            config-v169.js transfer-acceptance-core.js
+            config-v169.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js
             features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js features-v169.css
             tests/v169-transfer-acceptance.mjs tests/v169-transfer-acceptance.spec.js
             docs/V1.6.9-TRANSFER-ACCEPTANCE.md docs/V1.6.9-ARCHITECTURE.md
@@ -38,6 +38,7 @@ jobs:
           done
           node --check config-v169.js
           node --check transfer-acceptance-core.js
+          node --check transfer-acceptance-summary-filter.js
           node --check features-v169-transfer-acceptance.js
           node --check features-v169-rollback-stability.js
           node --check features-v169-meeting-day.js
@@ -46,6 +47,7 @@ jobs:
           grep -q 'features-v169.css' meeting.html
           grep -q 'config-v169.js' meeting.html
           grep -q 'transfer-acceptance-core.js' meeting.html
+          grep -q 'transfer-acceptance-summary-filter.js' meeting.html
           grep -q 'features-v169-transfer-acceptance.js' meeting.html
           grep -q 'features-v169-rollback-stability.js' meeting.html
           grep -q 'features-v169-meeting-day.js' meeting.html
@@ -54,6 +56,7 @@ jobs:
           grep -q 'features-v169.css' service-worker.js
           grep -q 'config-v169.js' service-worker.js
           grep -q 'transfer-acceptance-core.js' service-worker.js
+          grep -q 'transfer-acceptance-summary-filter.js' service-worker.js
           grep -q 'features-v169-transfer-acceptance.js' service-worker.js
           grep -q 'features-v169-rollback-stability.js' service-worker.js
           grep -q 'features-v169-meeting-day.js' service-worker.js
@@ -64,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v169.js transfer-acceptance-core.js features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v169.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js
           grep -q 'automaticAcceptance: false' config-v169.js
           grep -q 'automaticRollback: false' config-v169.js
           grep -q 'automaticSynchronization: false' config-v169.js
