@@ -1,0 +1,123 @@
+name: Transfer Acceptance and Meeting-Day Workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate v1.6.9 syntax and wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            config-v169.js transfer-acceptance-core.js
+            features-v169-transfer-acceptance.js features-v169-meeting-day.js features-v169.css
+            tests/v169-transfer-acceptance.mjs tests/v169-transfer-acceptance.spec.js
+            docs/V1.6.9-TRANSFER-ACCEPTANCE.md docs/V1.6.9-ARCHITECTURE.md
+            docs/V1.6.9-TESTS.md docs/V1.6.9-SCRIPT-ORDER-AUDIT.md docs/V1.6.9-CHANGELOG.md
+          )
+          for file in "${required_files[@]}"; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
+          node --check config-v169.js
+          node --check transfer-acceptance-core.js
+          node --check features-v169-transfer-acceptance.js
+          node --check features-v169-meeting-day.js
+          node --check tests/v169-transfer-acceptance.mjs
+          node --check tests/v169-transfer-acceptance.spec.js
+          grep -q 'features-v169.css' meeting.html
+          grep -q 'config-v169.js' meeting.html
+          grep -q 'transfer-acceptance-core.js' meeting.html
+          grep -q 'features-v169-transfer-acceptance.js' meeting.html
+          grep -q 'features-v169-meeting-day.js' meeting.html
+          grep -q 'config-v169.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.6.9' service-worker.js
+          grep -q 'features-v169.css' service-worker.js
+          grep -q 'config-v169.js' service-worker.js
+          grep -q 'transfer-acceptance-core.js' service-worker.js
+          grep -q 'features-v169-transfer-acceptance.js' service-worker.js
+          grep -q 'features-v169-meeting-day.js' service-worker.js
+          grep -q 'appShellVersion = "1.6.9"' config-v169.js
+          grep -q 'schemaVersion = "1.6.0"' config-v169.js
+
+      - name: Verify static and operator-controlled boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v169.js transfer-acceptance-core.js features-v169-transfer-acceptance.js features-v169-meeting-day.js
+          grep -q 'automaticAcceptance: false' config-v169.js
+          grep -q 'automaticRollback: false' config-v169.js
+          grep -q 'automaticSynchronization: false' config-v169.js
+          grep -q 'productionEndpointConfigured: false' config-v169.js
+          grep -q 'productionCredentialsAllowed: false' config-v169.js
+          grep -q 'privateKeyMaterialAllowed: false' config-v169.js
+          grep -q 'serviceWorkerWorkspaceAccess: false' config-v169.js
+          grep -q 'recordSchemaChange: false' config-v169.js
+          ! grep -q 'addEventListener("sync"' service-worker.js
+          ! grep -q "addEventListener('sync'" service-worker.js
+          ! grep -q 'periodicSync' service-worker.js
+
+      - name: Run metadata-only acceptance core checks
+        run: node tests/v169-transfer-acceptance.mjs
+
+  acceptance-browser:
+    runs-on: ubuntu-latest
+    needs: acceptance-core
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --silent @playwright/test@1.53.2
+          npx playwright install --with-deps chromium
+
+      - name: Start static server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-v169-http.log 2>&1 &
+          echo $! > /tmp/methodz-v169-http.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/meeting.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/methodz-v169-http.log
+          exit 1
+
+      - name: Run two-profile acceptance, rollback, and meeting-day checks
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/v169-transfer-acceptance.spec.js --reporter=line
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: methodz-v169-acceptance-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
