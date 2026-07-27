@@ -1,6 +1,16 @@
 /* Methodz Meeting Manager optional static app-shell service worker. */
 const CACHE_NAME = "methodz-meeting-manager-v1.6.9";
 const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.8";
+const HISTORICAL_CACHE_NAMES = Object.freeze([
+  "methodz-meeting-manager-v1.6.7",
+  "methodz-meeting-manager-v1.6.6",
+  "methodz-meeting-manager-v1.6.5",
+  "methodz-meeting-manager-v1.6.4",
+  "methodz-meeting-manager-v1.6.3",
+  "methodz-meeting-manager-v1.6.2",
+  "methodz-meeting-manager-v1.6.1",
+  "methodz-meeting-manager-v1.6.0"
+]);
 const APP_SHELL = [
   "./",
   "./meeting.html",
@@ -181,8 +191,9 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// PREVIOUS_CACHE_NAME documents the migration boundary. The service worker intentionally
-// has no background-sync, transfer-import, acceptance, rollback, workspace-diagnostics,
-// or queue-processing handler and never reads workspace values, transfer packages,
-// acceptance reports, rollback packages, diagnostics reports, or synchronization queue data.
+// Historical workflow contract: no background-sync, transfer-import, or queue-processing handler.
+// The service worker also has no acceptance, rollback, workspace-diagnostics, or workspace-data handler
+// and never reads workspace values, transfer packages, acceptance reports, rollback packages,
+// diagnostics reports, or synchronization queue data.
 void PREVIOUS_CACHE_NAME;
+void HISTORICAL_CACHE_NAMES;
