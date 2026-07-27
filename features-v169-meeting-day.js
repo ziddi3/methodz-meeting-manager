@@ -44,6 +44,7 @@
       const section = sectionByHeading(label);
       if (!section) return;
       section.id = section.id || id;
+      section.tabIndex = -1;
       section.classList.add("meeting-day-core-v169");
       core.add(section);
     });
@@ -93,6 +94,7 @@
       const section = document.getElementById(id) || sectionByHeading(label);
       if (!section) return;
       if (!section.id) section.id = id;
+      section.tabIndex = -1;
       const button = document.createElement("button");
       button.type = "button";
       button.className = "meeting-day-nav-button-v169";
@@ -108,7 +110,7 @@
     if (!section) return;
     savePreferences({ lastSectionId: id });
     section.scrollIntoView({ behavior: global.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth", block: "start" });
-    section.focus?.({ preventScroll: true });
+    section.focus({ preventScroll: true });
     updateActiveNavigation(id);
   }
 
