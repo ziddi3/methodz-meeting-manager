@@ -74,6 +74,7 @@ const APP_SHELL = [
   "./workspace-package-core.js",
   "./cross-device-transfer-core.js",
   "./transfer-acceptance-core.js",
+  "./transfer-acceptance-summary-filter.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
