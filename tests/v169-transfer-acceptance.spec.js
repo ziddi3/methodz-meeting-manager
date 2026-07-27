@@ -123,7 +123,7 @@ async function buildSourceBundle(page) {
       generatedAt: now,
       events: [operatorEvent]
     });
-    const readinessReport = await window.collectDeviceReadinessV167();
+    const { report: readinessReport } = await window.collectDeviceReadinessV167();
     return transfer.buildTransferPackage({
       workspacePackage,
       queuePackage,
