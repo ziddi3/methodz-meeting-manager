@@ -22,52 +22,71 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validate v1.6.9 syntax and wiring
+      - name: Validate acceptance syntax and current-shell wiring
         shell: bash
         run: |
           set -euo pipefail
           required_files=(
-            config-v169.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js
+            config-v169.js config-v1610.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js
+            panel-registry-core.js panel-registry-definitions.js
             features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js features-v169.css
+            features-v1610-panel-registry.js features-v1610.css
             tests/v169-transfer-acceptance.mjs tests/v169-transfer-acceptance.spec.js
+            tests/v1610-panel-registry.mjs tests/v1610-panel-registry.spec.js
             docs/V1.6.9-TRANSFER-ACCEPTANCE.md docs/V1.6.9-ARCHITECTURE.md
             docs/V1.6.9-TESTS.md docs/V1.6.9-SCRIPT-ORDER-AUDIT.md docs/V1.6.9-CHANGELOG.md
+            docs/V1.6.10-FIELD-REHEARSAL.md docs/V1.6.10-ARCHITECTURE.md docs/V1.6.10-TESTS.md
           )
           for file in "${required_files[@]}"; do
             test -f "$file" || { echo "Missing required file: $file"; exit 1; }
           done
           node --check config-v169.js
+          node --check config-v1610.js
           node --check transfer-acceptance-core.js
           node --check transfer-acceptance-summary-filter.js
+          node --check panel-registry-core.js
+          node --check panel-registry-definitions.js
           node --check features-v169-transfer-acceptance.js
           node --check features-v169-rollback-stability.js
           node --check features-v169-meeting-day.js
+          node --check features-v1610-panel-registry.js
           node --check tests/v169-transfer-acceptance.mjs
           node --check tests/v169-transfer-acceptance.spec.js
+          node --check tests/v1610-panel-registry.mjs
           grep -q 'features-v169.css' meeting.html
+          grep -q 'features-v1610.css' meeting.html
           grep -q 'config-v169.js' meeting.html
+          grep -q 'config-v1610.js' meeting.html
           grep -q 'transfer-acceptance-core.js' meeting.html
           grep -q 'transfer-acceptance-summary-filter.js' meeting.html
+          grep -q 'panel-registry-core.js' meeting.html
+          grep -q 'panel-registry-definitions.js' meeting.html
           grep -q 'features-v169-transfer-acceptance.js' meeting.html
           grep -q 'features-v169-rollback-stability.js' meeting.html
+          grep -q 'features-v1610-panel-registry.js' meeting.html
           grep -q 'features-v169-meeting-day.js' meeting.html
           grep -q 'config-v169.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.6.9' service-worker.js
+          grep -q 'config-v1610.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.6.10' service-worker.js
           grep -q 'features-v169.css' service-worker.js
+          grep -q 'features-v1610.css' service-worker.js
           grep -q 'config-v169.js' service-worker.js
+          grep -q 'config-v1610.js' service-worker.js
           grep -q 'transfer-acceptance-core.js' service-worker.js
-          grep -q 'transfer-acceptance-summary-filter.js' service-worker.js
+          grep -q 'panel-registry-core.js' service-worker.js
           grep -q 'features-v169-transfer-acceptance.js' service-worker.js
-          grep -q 'features-v169-rollback-stability.js' service-worker.js
+          grep -q 'features-v1610-panel-registry.js' service-worker.js
           grep -q 'features-v169-meeting-day.js' service-worker.js
           grep -q 'appShellVersion = "1.6.9"' config-v169.js
+          grep -q 'appShellVersion = "1.6.10"' config-v1610.js
           grep -q 'schemaVersion = "1.6.0"' config-v169.js
+          grep -q 'schemaVersion = "1.6.0"' config-v1610.js
 
       - name: Verify static and operator-controlled boundaries
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v169.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js
+          ! grep -Eiq "https://[^[:space:]\"']*(firebase|supabase)" config-v169.js config-v1610.js transfer-acceptance-core.js transfer-acceptance-summary-filter.js features-v169-transfer-acceptance.js features-v169-rollback-stability.js features-v169-meeting-day.js panel-registry-core.js features-v1610-panel-registry.js
           grep -q 'automaticAcceptance: false' config-v169.js
           grep -q 'automaticRollback: false' config-v169.js
           grep -q 'automaticSynchronization: false' config-v169.js
@@ -76,12 +95,15 @@ jobs:
           grep -q 'privateKeyMaterialAllowed: false' config-v169.js
           grep -q 'serviceWorkerWorkspaceAccess: false' config-v169.js
           grep -q 'recordSchemaChange: false' config-v169.js
+          grep -q 'automaticExecution: false' config-v1610.js
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
           ! grep -q 'periodicSync' service-worker.js
 
-      - name: Run metadata-only acceptance core checks
-        run: node tests/v169-transfer-acceptance.mjs
+      - name: Run metadata-only acceptance and registry core checks
+        run: |
+          node tests/v169-transfer-acceptance.mjs
+          node tests/v1610-panel-registry.mjs
 
   acceptance-browser:
     runs-on: ubuntu-latest
@@ -123,13 +145,13 @@ jobs:
           cat /tmp/methodz-v169-http.log
           exit 1
 
-      - name: Run two-profile acceptance, rollback, and meeting-day checks
+      - name: Run acceptance, rollback, Meeting-Day, and panel-registry checks
         shell: bash
         env:
           METHODZ_BROWSER: chromium
         run: |
           set -o pipefail
-          npx playwright test tests/v169-transfer-acceptance.spec.js --reporter=line 2>&1 | tee /tmp/v169-playwright.log
+          npx playwright test tests/v169-transfer-acceptance.spec.js tests/v1610-panel-registry.spec.js --reporter=line 2>&1 | tee /tmp/v169-playwright.log
 
       - name: Publish concise failure diagnostic
         if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -140,10 +162,10 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          marker="<!-- methodz-ci-diagnostic:v169-transfer-acceptance -->"
+          marker="<!-- methodz-ci-diagnostic:v1610-transfer-acceptance -->"
           {
             echo "$marker"
-            echo '### v1.6.9 transfer acceptance browser checks failed'
+            echo '### v1.6.10 transfer acceptance and panel-registry browser checks failed'
             echo
             echo "Commit: \`${GITHUB_SHA}\`"
             echo
@@ -162,7 +184,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-v169-acceptance-traces
+          name: methodz-v1610-acceptance-registry-traces
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
