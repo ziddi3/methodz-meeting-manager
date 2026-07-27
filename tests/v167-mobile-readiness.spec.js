@@ -44,7 +44,7 @@ test.describe("Mobile and cross-device readiness v1.6.7", () => {
     const serialized = JSON.stringify(report);
 
     expect(report.type).toBe("methodz-device-readiness-report");
-    expect(report.appShellVersion).toBe("1.6.8");
+    expect(report.appShellVersion).toBe("1.6.9");
     expect(report.recordSchemaVersion).toBe("1.6.0");
     expect(report.workspaceCounts.queuedSyncRehearsals).toBe(1);
     expect(report.boundaries.containsMeetingContent).toBe(false);
