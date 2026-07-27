@@ -83,6 +83,18 @@
     });
   }
 
+  function decodeStoredValue(value) {
+    if (typeof value !== "string") return value;
+    try { return JSON.parse(value); } catch (error) { return value; }
+  }
+
+  function rejectUnsafeWorkspaceEntries(entries, operation) {
+    if (!isPlainObject(entries)) return;
+    Object.entries(entries).forEach(([key, value]) => {
+      rejectUnsafeComponent(decodeStoredValue(value), `${operation}:${key}`);
+    });
+  }
+
   function requireWorkspaceReport(workspacePackage, options = {}) {
     rejectUnsafeComponent(workspacePackage, "buildCrossDeviceTransferWorkspace");
     const report = WorkspaceCore.inspectWorkspacePackage(workspacePackage, {
@@ -90,6 +102,7 @@
       limits: options.workspaceLimits || {},
       preRestoreKey: options.preRestoreKey
     });
+    rejectUnsafeWorkspaceEntries(report.recognizedEntries, "buildCrossDeviceTransferWorkspaceEntry");
     if (!report.valid) throw new Error(report.errors[0] || "Workspace package validation failed.");
     if (!report.checksumVerified) throw new Error("The workspace package checksum must verify before transfer.");
     return report;
@@ -239,6 +252,7 @@
         limits: options.workspaceLimits || {},
         preRestoreKey: options.preRestoreKey
       });
+      rejectUnsafeWorkspaceEntries(workspaceReport.recognizedEntries, "inspectCrossDeviceTransferWorkspaceEntry");
       if (!workspaceReport.valid) errors.push(...workspaceReport.errors.map((item) => `Workspace: ${item}`));
       if (!workspaceReport.checksumVerified) errors.push("Workspace: checksum verification is required.");
     } catch (error) {
