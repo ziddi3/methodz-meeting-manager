@@ -16,6 +16,7 @@
     { heading: "Meeting Summary", id: "meetingDaySummaryV169", label: "Summary" },
     { heading: "End of Meeting", id: "meetingDaySaveV169", label: "Save" }
   ]);
+  const previousSecondaryVisibility = new WeakMap();
   let state = {
     enabled: settings.defaultEnabled === true,
     toolsOpen: false,
@@ -62,6 +63,23 @@
       .find((card) => card.querySelector(":scope > h2")?.textContent.trim() === heading);
   }
 
+  function secondaryCards() {
+    return Array.from(document.querySelectorAll(".meeting-day-secondary-v169"));
+  }
+
+  function captureSecondaryVisibility() {
+    secondaryCards().forEach((card) => {
+      if (card.dataset.meetingDayHiddenByModeV169 === "true") return;
+      previousSecondaryVisibility.set(card, card.hidden === true);
+    });
+  }
+
+  function restoreSecondaryVisibility(card) {
+    if (card.dataset.meetingDayHiddenByModeV169 !== "true") return;
+    card.hidden = previousSecondaryVisibility.get(card) === true;
+    delete card.dataset.meetingDayHiddenByModeV169;
+  }
+
   function markSections() {
     const hero = document.querySelector("#mainContent > .hero-card");
     const quickActions = document.querySelector("#mainContent > .quick-actions");
@@ -84,6 +102,7 @@
         card.classList.add("meeting-day-secondary-v169");
       }
     });
+    captureSecondaryVisibility();
   }
 
   function installControl() {
@@ -139,11 +158,21 @@
     const toggle = document.getElementById("meetingDayToggleV169");
     const toolsToggle = document.getElementById("meetingDayToolsToggleV169");
     const status = document.getElementById("meetingDayStatusV169");
+    const collapseTools = settings.collapseSecondaryTools !== false;
+    const shouldCollapse = collapseTools && state.enabled && !state.toolsOpen;
     body.classList.toggle("methodz-meeting-day-mode-v169", state.enabled);
-    body.classList.toggle("methodz-meeting-day-tools-open-v169", state.enabled && state.toolsOpen);
+    body.classList.toggle("methodz-meeting-day-tools-open-v169", state.enabled && (state.toolsOpen || !collapseTools));
 
-    document.querySelectorAll(".meeting-day-secondary-v169").forEach((card) => {
-      card.hidden = state.enabled && !state.toolsOpen;
+    secondaryCards().forEach((card) => {
+      if (shouldCollapse) {
+        if (card.dataset.meetingDayHiddenByModeV169 !== "true") {
+          previousSecondaryVisibility.set(card, card.hidden === true);
+          card.dataset.meetingDayHiddenByModeV169 = "true";
+        }
+        card.hidden = true;
+      } else {
+        restoreSecondaryVisibility(card);
+      }
     });
 
     if (toggle) {
@@ -151,13 +180,15 @@
       toggle.textContent = state.enabled ? "Exit Meeting-Day Mode" : "Enter Meeting-Day Mode";
     }
     if (toolsToggle) {
-      toolsToggle.hidden = !state.enabled;
-      toolsToggle.setAttribute("aria-expanded", String(state.toolsOpen));
+      toolsToggle.hidden = !state.enabled || !collapseTools;
+      toolsToggle.setAttribute("aria-expanded", String(state.toolsOpen || !collapseTools));
       toolsToggle.textContent = state.toolsOpen ? "Hide Tools" : "Show Tools";
     }
     if (status) {
       status.textContent = state.enabled
-        ? `Meeting-day mode active. ${state.toolsOpen ? "Supporting tools are expanded." : "Supporting tools are collapsed but available through Show Tools."}`
+        ? (!collapseTools
+          ? "Meeting-day mode active. Supporting tools remain visible by configuration."
+          : `Meeting-day mode active. ${state.toolsOpen ? "Supporting tools retain their previous visibility." : "Supporting tools are collapsed but available through Show Tools."}`)
         : "Standard workspace mode.";
     }
     updateActiveNavigation();
@@ -168,13 +199,15 @@
   }
 
   function toggleMeetingDayModeV169() {
+    if (!state.enabled) captureSecondaryVisibility();
     state.enabled = !state.enabled;
     if (!state.enabled) state.toolsOpen = false;
     applyState();
   }
 
   function toggleMeetingDayToolsV169() {
-    if (!state.enabled) return;
+    if (!state.enabled || settings.collapseSecondaryTools === false) return;
+    if (state.toolsOpen) captureSecondaryVisibility();
     state.toolsOpen = !state.toolsOpen;
     applyState();
   }
