@@ -9,6 +9,8 @@
   if (!core || typeof originalPrepare !== "function" || typeof originalApply !== "function") return;
 
   const storageKeys = config.storageKeys || {};
+  const transferStateKey = storageKeys.crossDeviceTransferState || "methodzCrossDeviceTransferStateV168";
+  const acceptanceStateKey = storageKeys.transferAcceptanceState || "methodzTransferAcceptanceStateV169";
   const volatileKeys = new Set([
     storageKeys.draft,
     storageKeys.transferAcceptanceState,
@@ -22,6 +24,10 @@
 
   function isWorkspaceKey(key) {
     return typeof key === "string" && (key.startsWith("methodz") || key === "meetingRecords");
+  }
+
+  function parseJson(raw, fallback) {
+    try { return raw ? JSON.parse(raw) : fallback; } catch (error) { return fallback; }
   }
 
   function collectStableEntries() {
@@ -42,6 +48,25 @@
   function rollbackPreviewVerified() {
     const preview = document.getElementById("transferRollbackPreviewV169");
     return Boolean(preview && !preview.classList.contains("has-error") && preview.textContent.includes("Verified Rollback Preview"));
+  }
+
+  function transitionVerifiedTransferAfterRollback() {
+    const acceptanceState = parseJson(global.localStorage.getItem(acceptanceStateKey), {});
+    if (acceptanceState.stage !== "rollback-rehearsal-completed") return false;
+
+    const previousTransferState = parseJson(global.localStorage.getItem(transferStateKey), {});
+    global.localStorage.setItem(transferStateKey, JSON.stringify({
+      stage: "rolled-back-to-pre-import",
+      rolledBackAt: acceptanceState.completedAt || new Date().toISOString(),
+      previousStage: previousTransferState.stage || "unknown",
+      previousTransferReportChecksum: previousTransferState.transferReportChecksum || "",
+      rollbackReportChecksum: acceptanceState.reportChecksum || "",
+      appShellVersion: config.appShellVersion,
+      recordSchemaVersion: config.schemaVersion,
+      acceptanceRequiredForCurrentWorkspace: true
+    }));
+    reviewedWorkspaceFingerprint = "";
+    return true;
   }
 
   global.prepareTransferRollbackV169 = function prepareStableTransferRollbackV169() {
@@ -74,6 +99,8 @@
       if (refreshedPhrase) refreshedPhrase.value = phrase;
     }
 
-    return originalApply.apply(this, arguments);
+    const result = originalApply.apply(this, arguments);
+    transitionVerifiedTransferAfterRollback();
+    return result;
   };
 })(window);
