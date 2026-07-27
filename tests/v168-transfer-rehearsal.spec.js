@@ -1,5 +1,4 @@
 const { test, expect } = require("@playwright/test");
-const Contract = require("../provider-contract.js");
 const WorkspaceCore = require("../workspace-package-core.js");
 const QueueCore = require("../sync-queue-portability.js");
 const TransferCore = require("../cross-device-transfer-core.js");
