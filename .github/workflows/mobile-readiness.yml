@@ -27,22 +27,42 @@ jobs:
           set -euo pipefail
           node --check config-v167.js
           node --check config-v168.js
+          node --check config-v169.js
+          node --check config-v1610.js
           node --check features-v167-device-readiness.js
+          node --check features-v169-meeting-day.js
+          node --check panel-registry-core.js
+          node --check features-v1610-panel-registry.js
           node --check tests/v167-mobile-readiness.spec.js
+          node --check tests/v1610-panel-registry.spec.js
           grep -q 'features-v167.css' meeting.html
+          grep -q 'features-v1610.css' meeting.html
           grep -q 'config-v167.js' meeting.html
           grep -q 'config-v168.js' meeting.html
+          grep -q 'config-v169.js' meeting.html
+          grep -q 'config-v1610.js' meeting.html
           grep -q 'features-v167-device-readiness.js' meeting.html
+          grep -q 'features-v169-meeting-day.js' meeting.html
+          grep -q 'features-v1610-panel-registry.js' meeting.html
           grep -q 'config-v167.js' archive.html
           grep -q 'config-v168.js' archive.html
-          grep -q 'methodz-meeting-manager-v1.6.8' service-worker.js
+          grep -q 'config-v169.js' archive.html
+          grep -q 'config-v1610.js' archive.html
+          grep -q 'methodz-meeting-manager-v1.6.10' service-worker.js
           grep -q 'features-v167.css' service-worker.js
+          grep -q 'features-v1610.css' service-worker.js
           grep -q 'config-v167.js' service-worker.js
           grep -q 'config-v168.js' service-worker.js
+          grep -q 'config-v169.js' service-worker.js
+          grep -q 'config-v1610.js' service-worker.js
           grep -q 'features-v167-device-readiness.js' service-worker.js
+          grep -q 'features-v169-meeting-day.js' service-worker.js
+          grep -q 'features-v1610-panel-registry.js' service-worker.js
           grep -q 'appShellVersion = "1.6.7"' config-v167.js
           grep -q 'appShellVersion = "1.6.8"' config-v168.js
-          grep -q 'schemaVersion = "1.6.0"' config-v168.js
+          grep -q 'appShellVersion = "1.6.9"' config-v169.js
+          grep -q 'appShellVersion = "1.6.10"' config-v1610.js
+          grep -q 'schemaVersion = "1.6.0"' config-v1610.js
           grep -q 'sync-queue-portability.js' meeting.html
           grep -q 'features-v166-sync-portability.js' meeting.html
           node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest', 'utf8'))"
@@ -69,16 +89,18 @@ jobs:
           cat /tmp/methodz-mobile-http.log
           exit 1
 
-      - name: Run mobile readiness browser tests
+      - name: Run mobile readiness and registry browser tests
         env:
           METHODZ_BROWSER: chromium
-        run: npx playwright test tests/v167-mobile-readiness.spec.js --reporter=line
+        run: |
+          npx playwright test tests/v167-mobile-readiness.spec.js --reporter=line
+          npx playwright test tests/v1610-panel-registry.spec.js --grep 'narrow-phone overflow|Meeting-Day navigation' --reporter=line
 
       - name: Upload traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-v167-mobile-readiness-traces
+          name: methodz-v1610-mobile-readiness-traces
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
