@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const Contract = require("../provider-contract.js");
 const WorkspaceCore = require("../workspace-package-core.js");
 const QueueCore = require("../sync-queue-portability.js");
 const TransferCore = require("../cross-device-transfer-core.js");
