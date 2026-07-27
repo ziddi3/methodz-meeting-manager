@@ -136,11 +136,21 @@
       }
     });
 
-    const expected = resolved.map((item) => item.panel).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
-    const actual = [...resolved].sort((a, b) => compareDomOrder(a.element, b.element)).map((item) => item.panel.id);
-    const expectedPresent = expected.map((panel) => panel.id);
-    const orderMatches = expectedPresent.length === actual.length && expectedPresent.every((id, index) => actual[index] === id);
-    if (!orderMatches) warnings.push({ code: "PANEL_ORDER_MISMATCH", panelId: null, message: "Registered panel order differs from the current document order." });
+    const orderedWorkflowPanels = resolved.filter((item) => item.panel.meetingDayPriority !== null);
+    const expected = [...orderedWorkflowPanels]
+      .sort((a, b) => a.panel.meetingDayPriority - b.panel.meetingDayPriority || a.panel.order - b.panel.order)
+      .map((item) => item.panel.id);
+    const actual = [...orderedWorkflowPanels]
+      .sort((a, b) => compareDomOrder(a.element, b.element))
+      .map((item) => item.panel.id);
+    const orderMatches = expected.length === actual.length && expected.every((id, index) => actual[index] === id);
+    if (!orderMatches) {
+      errors.push({
+        code: "PANEL_ORDER_MISMATCH",
+        panelId: null,
+        message: "Registered Meeting-Day panel priority differs from the current document order. Panel collapsing is blocked until the shell order is repaired."
+      });
+    }
 
     const scriptEntries = typeof performance !== "undefined" && typeof performance.getEntriesByType === "function"
       ? performance.getEntriesByType("resource").filter((entry) => entry.initiatorType === "script")
@@ -168,7 +178,7 @@
       },
       order: {
         matches: orderMatches,
-        expected: expectedPresent,
+        expected,
         actual
       },
       missingPanelIds: [...missing],
