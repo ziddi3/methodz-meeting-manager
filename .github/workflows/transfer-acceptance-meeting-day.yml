@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   acceptance-core:
@@ -89,9 +90,17 @@ jobs:
           node-version: 22
 
       - name: Install Playwright Chromium
+        shell: bash
         run: |
-          npm install --no-save --silent @playwright/test@1.53.2
-          npx playwright install --with-deps chromium
+          set -euo pipefail
+          npm install --no-save --silent @playwright/test@1.53.2 > /tmp/v169-npm.log 2>&1 || {
+            tail -n 200 /tmp/v169-npm.log
+            exit 1
+          }
+          npx playwright install --with-deps chromium > /tmp/v169-browser-install.log 2>&1 || {
+            tail -n 200 /tmp/v169-browser-install.log
+            exit 1
+          }
 
       - name: Start static server
         shell: bash
@@ -109,9 +118,39 @@ jobs:
           exit 1
 
       - name: Run two-profile acceptance, rollback, and meeting-day checks
+        shell: bash
         env:
           METHODZ_BROWSER: chromium
-        run: npx playwright test tests/v169-transfer-acceptance.spec.js --reporter=line
+        run: |
+          set -o pipefail
+          npx playwright test tests/v169-transfer-acceptance.spec.js --reporter=line 2>&1 | tee /tmp/v169-playwright.log
+
+      - name: Publish concise failure diagnostic
+        if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          marker="<!-- methodz-ci-diagnostic:v169-transfer-acceptance -->"
+          {
+            echo "$marker"
+            echo '### v1.6.9 transfer acceptance browser checks failed'
+            echo
+            echo "Commit: \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            tail -n 220 /tmp/v169-playwright.log
+            echo '```'
+          } > /tmp/v169-ci-comment.md
+          comment_id="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate --jq ".[] | select(.body | contains(\"${marker}\")) | .id" | tail -n 1)"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" --field body=@/tmp/v169-ci-comment.md >/dev/null
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --field body=@/tmp/v169-ci-comment.md >/dev/null
+          fi
 
       - name: Upload traces on failure
         if: failure()
