@@ -94,18 +94,20 @@ async function completeTransferApproval(page) {
 }
 
 test.describe("v1.6.9 transfer acceptance and meeting-day workflow", () => {
-  test("meeting-day mode keeps capture sections available, collapses tools, and restores state", async ({ page }) => {
+  test("meeting-day mode keeps capture sections available and preserves tool visibility", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE_URL}/meeting.html`);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
     await expect(page.locator("#meetingDayControlV169")).toBeVisible();
+    await expect(page.locator("#minutesPreview")).toBeHidden();
     await page.locator("#meetingDayToggleV169").click();
     await expect(page.locator("body")).toHaveClass(/methodz-meeting-day-mode-v169/);
     await expect(page.locator("#meetingDayInformationV169")).toBeVisible();
     await expect(page.locator("#meetingDayNotesV169")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Saved Meeting Records" })).toBeHidden();
+    await expect(page.locator("#minutesPreview")).toBeHidden();
 
     await page.getByRole("button", { name: "Notes", exact: true }).click();
     const preferences = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingDayPreferencesV169") || "{}"));
@@ -117,12 +119,30 @@ test.describe("v1.6.9 transfer acceptance and meeting-day workflow", () => {
     await expect(page.locator('[data-meeting-day-target-v169="meetingDayNotesV169"]')).toHaveAttribute("aria-current", "location");
     await page.locator("#meetingDayToolsToggleV169").click();
     await expect(page.getByRole("heading", { name: "Saved Meeting Records" })).toBeVisible();
+    await expect(page.locator("#minutesPreview")).toBeHidden();
+
+    await page.locator("#meetingDayToggleV169").click();
+    await expect(page.locator("body")).not.toHaveClass(/methodz-meeting-day-mode-v169/);
+    await expect(page.locator("#minutesPreview")).toBeHidden();
 
     const viewport = await page.evaluate(() => ({
       width: window.innerWidth,
       scrollWidth: document.documentElement.scrollWidth
     }));
     expect(viewport.scrollWidth).toBeLessThanOrEqual(viewport.width + 2);
+  });
+
+  test("meeting-day collapse can be disabled by configuration", async ({ page }) => {
+    await page.goto(`${BASE_URL}/meeting.html`);
+    await page.evaluate(() => {
+      localStorage.clear();
+      window.METHODZ_MEETING_CONFIG.meetingDay.collapseSecondaryTools = false;
+    });
+    await page.locator("#meetingDayToggleV169").click();
+    await expect(page.locator("body")).toHaveClass(/methodz-meeting-day-mode-v169/);
+    await expect(page.getByRole("heading", { name: "Saved Meeting Records" })).toBeVisible();
+    await expect(page.locator("#meetingDayToolsToggleV169")).toBeHidden();
+    await expect(page.locator("#meetingDayStatusV169")).toContainText("remain visible by configuration");
   });
 
   test("two browser profiles transfer, accept, diagnose, and restore the destination", async ({ browser }) => {
@@ -199,6 +219,10 @@ test.describe("v1.6.9 transfer acceptance and meeting-day workflow", () => {
     expect(JSON.stringify(evidence.diagnostics)).not.toContain("Disposable source meeting");
     expect(JSON.stringify(evidence.diagnostics)).not.toContain("methodzMeetingRecords");
 
+    await destinationPage.reload();
+    await expect(destinationPage.locator("#transferAcceptanceStatusV169")).toContainText("completed acceptance report");
+    await expect(destinationPage.locator("[data-acceptance-check-v169]:checked")).toHaveCount(10);
+
     await destinationPage.getByRole("button", { name: "Preview Rollback" }).click();
     await expect(destinationPage.locator("#transferRollbackPreviewV169")).toContainText("Verified Rollback Preview");
     await destinationPage.locator("#transferRollbackReviewedV169").check();
@@ -210,13 +234,19 @@ test.describe("v1.6.9 transfer acceptance and meeting-day workflow", () => {
     const restored = await destinationPage.evaluate(() => ({
       records: JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]"),
       rollbackRecovery: localStorage.getItem("methodzTransferRollbackRecoveryV169"),
-      reports: JSON.parse(localStorage.getItem("methodzTransferAcceptanceReportsV169") || "[]")
+      reports: JSON.parse(localStorage.getItem("methodzTransferAcceptanceReportsV169") || "[]"),
+      transferState: JSON.parse(localStorage.getItem("methodzCrossDeviceTransferStateV168") || "{}")
     }));
     expect(restored.records[0].id).toBe("destination-active");
     expect(restored.rollbackRecovery).toBeTruthy();
     expect(restored.reports.at(-1).reportType).toBe("methodz-transfer-rollback-rehearsal-report");
     expect(restored.reports.at(-1).readBackVerified).toBe(true);
+    expect(restored.transferState.stage).toBe("rolled-back-to-pre-import");
     expect(JSON.stringify(restored.reports.at(-1))).not.toContain("Destination before transfer");
+
+    await destinationPage.reload();
+    await expect(destinationPage.locator("#transferAcceptanceTransferStateV169")).toContainText("No verified destination transfer state");
+    await expect(destinationPage.locator("#transferAcceptanceStatusV169")).toContainText("Acceptance is blocked");
 
     await sourceContext.close();
     await destinationContext.close();
