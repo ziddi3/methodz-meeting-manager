@@ -6,6 +6,10 @@
   const settings = config.crossDeviceTransfer || {};
   const storageKeys = config.storageKeys || {};
   const preRestoreKey = storageKeys.preRestoreBackup || "methodzPreRestoreBackup";
+  const transferStateKey = storageKeys.crossDeviceTransferState || "methodzCrossDeviceTransferStateV168";
+  const transferReportsKey = storageKeys.crossDeviceTransferReports || "methodzCrossDeviceTransferReportsV168";
+  const queueBaseKey = storageKeys.syncRehearsalQueue || "methodzSyncRehearsalQueueV165";
+  const evidenceBaseKey = storageKeys.syncRehearsalOperatorEvents || "methodzSyncRehearsalOperatorEventsV166";
   let pendingTransfer = null;
   let recoveryDrill = null;
   let lastReport = null;
@@ -14,6 +18,7 @@
     if (!global.MethodzCrossDeviceTransferV168) throw new Error("The v1.6.8 transfer rehearsal core is unavailable.");
     if (!global.MethodzWorkspacePackageCore) throw new Error("The workspace package core is unavailable.");
     if (!global.MethodzSyncQueuePortabilityV166) throw new Error("The queue portability core is unavailable.");
+    if (!global.MethodzHostedProviderContract) throw new Error("The hosted-provider contract is unavailable.");
     return global.MethodzCrossDeviceTransferV168;
   }
 
@@ -35,11 +40,7 @@
   }
 
   function preservedControlKeys() {
-    return new Set([
-      preRestoreKey,
-      storageKeys.crossDeviceTransferState,
-      storageKeys.crossDeviceTransferReports
-    ].filter(Boolean));
+    return new Set([preRestoreKey, transferStateKey, transferReportsKey].filter(Boolean));
   }
 
   function collectWorkspaceEntries() {
@@ -69,13 +70,11 @@
   }
 
   function currentQueueEntries() {
-    const coordinator = currentCoordinator();
-    return coordinator?.listQueue?.() || [];
+    return currentCoordinator()?.listQueue?.() || [];
   }
 
   function currentOperatorEvents(tenantId) {
-    const base = storageKeys.syncRehearsalOperatorEvents || "methodzSyncRehearsalOperatorEventsV166";
-    return parseJson(global.localStorage.getItem(`${base}:${tenantHash(tenantId)}`), []);
+    return parseJson(global.localStorage.getItem(`${evidenceBaseKey}:${tenantHash(tenantId)}`), []);
   }
 
   function workspaceLimits() {
@@ -95,6 +94,53 @@
       maximumQueueEntries: config.syncRehearsal?.maximumImportedQueueEntries || config.syncRehearsal?.maximumQueueEntries || 250,
       currentWorkspaceEntries: collectWorkspaceEntries(),
       currentQueueEntries: currentQueueEntries()
+    };
+  }
+
+  function destinationFingerprint() {
+    return global.MethodzHostedProviderContract.fnv1a32(
+      global.MethodzHostedProviderContract.canonicalStringify({ entries: collectWorkspaceEntries() })
+    );
+  }
+
+  function collisionFingerprint(inspection) {
+    return global.MethodzHostedProviderContract.fnv1a32(
+      global.MethodzHostedProviderContract.canonicalStringify(inspection?.collisions || {})
+    );
+  }
+
+  function boundStorageKeys(inspection) {
+    const tenantId = inspection?.queueReport?.tenantId;
+    if (!tenantId) throw new Error("The inspected synchronization queue does not identify its rehearsal tenant.");
+    const hash = tenantHash(tenantId);
+    return {
+      queueKey: `${queueBaseKey}:${hash}`,
+      evidenceKey: `${evidenceBaseKey}:${hash}`
+    };
+  }
+
+  function buildBoundEntries(payload, inspection) {
+    const entries = { ...(inspection?.workspaceReport?.recognizedEntries || {}) };
+    Object.keys(entries).forEach((key) => {
+      if (key === queueBaseKey || key.startsWith(`${queueBaseKey}:`) || key === evidenceBaseKey || key.startsWith(`${evidenceBaseKey}:`)) {
+        delete entries[key];
+      }
+    });
+    const { queueKey, evidenceKey } = boundStorageKeys(inspection);
+    entries[queueKey] = JSON.stringify(inspection.queueReport.entries || []);
+    entries[evidenceKey] = JSON.stringify(inspection.operatorEvidenceReport.events || []);
+    return entries;
+  }
+
+  function buildBoundWorkspacePackage(payload, inspection) {
+    const original = payload.components.workspace;
+    const entries = buildBoundEntries(payload, inspection);
+    const body = { ...original, entries };
+    delete body.checksum;
+    body.summary = global.MethodzWorkspacePackageCore.summarizeEntries(entries, storageKeys);
+    return {
+      ...body,
+      checksum: global.MethodzWorkspacePackageCore.hashText(global.MethodzWorkspacePackageCore.stableStringify(body))
     };
   }
 
@@ -120,6 +166,15 @@
     global.announceMethodzStatus?.(message);
   }
 
+  function resetApprovals() {
+    ["transferDestinationReadyV168", "transferCollisionReviewedV168", "transferSourceUnchangedV168", "transferImportApprovedV168"].forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) element.checked = false;
+    });
+    const phrase = document.getElementById("transferApprovalPhraseV168");
+    if (phrase) phrase.value = "";
+  }
+
   function installPanel() {
     if (document.getElementById("crossDeviceTransferPanelV168")) return;
     const anchor = document.getElementById("deviceReadinessV167") || document.getElementById("workspaceBackupPanelV08");
@@ -132,26 +187,19 @@
     panel.tabIndex = -1;
     panel.innerHTML = `
       <div class="section-subheader transfer-header-v168">
-        <div>
-          <p class="eyebrow">Guided Recovery Rehearsal</p>
-          <h2>Cross-Device Transfer</h2>
-        </div>
+        <div><p class="eyebrow">Guided Recovery Rehearsal</p><h2>Cross-Device Transfer</h2></div>
         <span class="status-pill">v1.6.8</span>
       </div>
       <p class="helper-text">Build one integrity-checked rehearsal bundle, inspect it on the destination, run a no-write recovery drill, review collisions, and apply only after explicit approval. The source workspace remains unchanged.</p>
       <div id="transferStatusV168" class="transfer-status-v168 is-ready" aria-live="polite">Transfer rehearsal is ready. Nothing moves automatically.</div>
-
       <div class="transfer-grid-v168">
         <section class="transfer-stage-v168">
           <h3>1. Source Package</h3>
           <label class="transfer-check-v168"><input id="transferSourceSavedV168" type="checkbox" /> Current meeting and pending edits are saved.</label>
           <label class="transfer-check-v168"><input id="transferKeysSeparatedV168" type="checkbox" /> Private signing keys are stored separately and will not be included.</label>
-          <div class="button-row">
-            <button type="button" onclick="buildCrossDeviceTransferV168()">Build & Download Transfer Bundle</button>
-          </div>
+          <div class="button-row"><button type="button" onclick="buildCrossDeviceTransferV168()">Build & Download Transfer Bundle</button></div>
           <p class="helper-text">The bundle contains workspace values and queue entries. Protect it like a complete business backup.</p>
         </section>
-
         <section class="transfer-stage-v168">
           <h3>2. Destination Inspection</h3>
           <label class="button-like" for="transferImportFileV168">Choose Transfer Bundle</label>
@@ -159,7 +207,6 @@
           <div id="transferInspectionV168" class="transfer-preview-v168 is-hidden" aria-live="polite"></div>
         </section>
       </div>
-
       <section class="transfer-stage-v168 transfer-approval-v168">
         <h3>3. Recovery Drill & Controlled Import</h3>
         <div class="button-row">
@@ -220,21 +267,16 @@
         expectedTenantId: tenantId,
         appShellVersion: config.appShellVersion,
         recordSchemaVersion: config.schemaVersion,
-        checkpoints: {
-          sourceWorkspaceSaved: true,
-          privateKeysSeparated: true,
-          sourceKeptUnchanged: true
-        }
+        checkpoints: { sourceWorkspaceSaved: true, privateKeysSeparated: true, sourceKeptUnchanged: true }
       });
       downloadJson(payload, `methodz-cross-device-transfer-${new Date().toISOString().slice(0, 10)}.json`);
-      const state = {
+      global.localStorage.setItem(transferStateKey, JSON.stringify({
         stage: "source-exported",
         generatedAt: payload.generatedAt,
         sourceSessionReference: payload.sourceSessionReference,
         workspaceSummary: payload.manifest.workspace.summary,
         queueSummary: payload.manifest.synchronizationQueue.summary
-      };
-      global.localStorage.setItem(storageKeys.crossDeviceTransferState, JSON.stringify(state));
+      }));
       lastReport = api().buildRehearsalReport({
         stage: "source-exported",
         appShellVersion: config.appShellVersion,
@@ -263,25 +305,28 @@
     const preview = document.getElementById("transferInspectionV168");
     pendingTransfer = null;
     recoveryDrill = null;
+    resetApprovals();
     resetDrillPreview();
     if (!file || !preview) return;
     try {
       const payload = JSON.parse(await file.text());
       const inspection = api().inspectTransferPackage(payload, inspectionOptions());
       if (!inspection.valid) throw new Error(inspection.errors.join(" ") || "Transfer package validation failed.");
-      pendingTransfer = { payload, inspection, filename: file.name };
-      preview.classList.remove("is-hidden", "has-error");
-      preview.innerHTML = renderInspection(inspection, file.name);
+      pendingTransfer = {
+        payload,
+        inspection,
+        filename: file.name,
+        destinationFingerprint: destinationFingerprint(),
+        collisionFingerprint: collisionFingerprint(inspection),
+        boundWorkspacePackage: buildBoundWorkspacePackage(payload, inspection)
+      };
+      renderInspection(inspection, file.name);
       lastReport = api().buildRehearsalReport({
         stage: "destination-inspected",
         inspection,
         appShellVersion: config.appShellVersion,
         recordSchemaVersion: config.schemaVersion,
-        checkpoints: {
-          ...inspection.checkpoints,
-          destinationReadinessRun: false,
-          packageInspected: true
-        }
+        checkpoints: { ...inspection.checkpoints, destinationReadinessRun: false, packageInspected: true }
       });
       persistReport(lastReport);
       setStatus(inspection.collisions.total ? `Package verified. ${inspection.collisions.total} opaque destination collision reference(s) require review before import.` : "Package verified. No destination identifier collisions were found.", inspection.collisions.total ? "warning" : "ready");
@@ -294,11 +339,14 @@
   }
 
   function renderInspection(inspection, filename) {
+    const preview = document.getElementById("transferInspectionV168");
+    if (!preview) return;
     const collisionRows = Object.entries(inspection.collisions.counts)
       .filter(([, count]) => count > 0)
       .map(([name, count]) => `<li><strong>${escapeHtml(humanize(name))}</strong>: ${count}</li>`)
       .join("");
-    return `
+    preview.classList.remove("is-hidden", "has-error");
+    preview.innerHTML = `
       <h4>Verified Destination Preview</h4>
       <p><strong>${escapeHtml(filename)}</strong></p>
       <div class="transfer-metrics-v168">
@@ -314,53 +362,64 @@
     `;
   }
 
+  function refreshPendingInspection(freshInspection, message) {
+    pendingTransfer.inspection = freshInspection;
+    pendingTransfer.destinationFingerprint = destinationFingerprint();
+    pendingTransfer.collisionFingerprint = collisionFingerprint(freshInspection);
+    pendingTransfer.boundWorkspacePackage = buildBoundWorkspacePackage(pendingTransfer.payload, freshInspection);
+    recoveryDrill = null;
+    renderInspection(freshInspection, pendingTransfer.filename);
+    resetDrillPreview();
+    resetApprovals();
+    setStatus(message, "warning");
+  }
+
   function runCrossDeviceRecoveryDrillV168() {
     try {
       if (!pendingTransfer?.inspection?.valid) throw new Error("Choose and verify a transfer bundle first.");
-      const current = collectWorkspaceEntries();
+      const freshInspection = api().inspectTransferPackage(pendingTransfer.payload, inspectionOptions());
+      if (!freshInspection.valid) throw new Error(freshInspection.errors.join(" ") || "The transfer package no longer validates.");
+      pendingTransfer.inspection = freshInspection;
+      pendingTransfer.destinationFingerprint = destinationFingerprint();
+      pendingTransfer.collisionFingerprint = collisionFingerprint(freshInspection);
+      pendingTransfer.boundWorkspacePackage = buildBoundWorkspacePackage(pendingTransfer.payload, freshInspection);
+      renderInspection(freshInspection, pendingTransfer.filename);
+      resetApprovals();
+
       const plan = global.MethodzWorkspacePackageCore.buildRestorePlan(
-        pendingTransfer.payload.components.workspace,
-        current,
-        {
-          mode: "replace",
-          storageKeys,
-          limits: workspaceLimits(),
-          preRestoreKey
-        }
+        pendingTransfer.boundWorkspacePackage,
+        collectWorkspaceEntries(),
+        { mode: "replace", storageKeys, limits: workspaceLimits(), preRestoreKey }
       );
-      if (!plan.report.valid || !plan.report.checksumVerified) throw new Error("The no-write recovery drill could not verify the workspace package.");
+      if (!plan.report.valid || !plan.report.checksumVerified) throw new Error("The no-write recovery drill could not verify the bound workspace package.");
       recoveryDrill = {
         passed: true,
         generatedAt: new Date().toISOString(),
         counts: plan.counts,
-        collisionCount: pendingTransfer.inspection.collisions.total
+        collisionCount: freshInspection.collisions.total,
+        destinationFingerprint: pendingTransfer.destinationFingerprint,
+        collisionFingerprint: pendingTransfer.collisionFingerprint
       };
       const preview = document.getElementById("transferDrillV168");
       preview?.classList.remove("is-hidden", "has-error");
       if (preview) preview.innerHTML = `
         <h4>No-Write Recovery Drill Passed</h4>
         <div class="transfer-metrics-v168">
-          <span><strong>${plan.counts.add || 0}</strong> add</span>
-          <span><strong>${plan.counts.replace || 0}</strong> replace</span>
-          <span><strong>${plan.counts.unchanged || 0}</strong> unchanged</span>
-          <span><strong>${plan.counts.remove || 0}</strong> remove</span>
+          <span><strong>${plan.counts.add || 0}</strong> add</span><span><strong>${plan.counts.replace || 0}</strong> replace</span>
+          <span><strong>${plan.counts.unchanged || 0}</strong> unchanged</span><span><strong>${plan.counts.remove || 0}</strong> remove</span>
           <span><strong>${plan.counts.ignored || 0}</strong> ignored</span>
         </div>
-        <p class="helper-text">No browser storage value was changed. The package was revalidated and a replacement mutation plan was generated.</p>
+        <p class="helper-text">No browser storage value was changed. The independently inspected queue and operator evidence are bound into the replacement plan.</p>
       `;
       lastReport = api().buildRehearsalReport({
         stage: "recovery-drill-passed",
-        inspection: pendingTransfer.inspection,
+        inspection: freshInspection,
         appShellVersion: config.appShellVersion,
         recordSchemaVersion: config.schemaVersion,
-        checkpoints: {
-          ...pendingTransfer.inspection.checkpoints,
-          packageInspected: true,
-          recoveryDrillPassed: true
-        }
+        checkpoints: { ...freshInspection.checkpoints, packageInspected: true, recoveryDrillPassed: true }
       });
       persistReport(lastReport);
-      setStatus("No-write recovery drill passed. Review collisions and complete every destination confirmation before import.", "ready");
+      setStatus("No-write recovery drill passed. Review the current collision preview and complete every destination confirmation before import.", "ready");
       return true;
     } catch (error) {
       recoveryDrill = null;
@@ -389,6 +448,20 @@
 
       const freshInspection = api().inspectTransferPackage(pendingTransfer.payload, inspectionOptions());
       if (!freshInspection.valid) throw new Error(freshInspection.errors.join(" ") || "Transfer package revalidation failed immediately before mutation.");
+      const currentDestinationFingerprint = destinationFingerprint();
+      const freshCollisionFingerprint = collisionFingerprint(freshInspection);
+      if (currentDestinationFingerprint !== recoveryDrill.destinationFingerprint || freshCollisionFingerprint !== recoveryDrill.collisionFingerprint) {
+        refreshPendingInspection(freshInspection, "Destination workspace or collision state changed after the drill. The updated collision preview is shown. Review it and run the no-write recovery drill again.");
+        return;
+      }
+
+      const boundWorkspacePackage = buildBoundWorkspacePackage(pendingTransfer.payload, freshInspection);
+      const boundReport = global.MethodzWorkspacePackageCore.inspectWorkspacePackage(boundWorkspacePackage, {
+        storageKeys,
+        limits: workspaceLimits(),
+        preRestoreKey
+      });
+      if (!boundReport.valid || !boundReport.checksumVerified) throw new Error("The queue-bound workspace package failed final validation.");
       if (!global.confirm("Replace destination Methodz workspace data with this verified transfer package? A complete local pre-import recovery package will be created first.")) return;
 
       const beforeEntries = collectWorkspaceEntries();
@@ -397,13 +470,18 @@
       recoveryCreated = true;
 
       try {
-        applyEntriesTransaction(freshInspection.workspaceReport.recognizedEntries, beforeEntries);
-        verifyAppliedEntries(freshInspection.workspaceReport.recognizedEntries);
+        applyEntriesTransaction(boundReport.recognizedEntries, beforeEntries);
+        verifyAppliedEntries(boundReport.recognizedEntries);
         mutationApplied = true;
-      } catch (error) {
-        restoreSnapshot(beforeEntries);
-        rollbackApplied = true;
-        throw error;
+      } catch (mutationError) {
+        try {
+          restoreSnapshot(beforeEntries);
+          verifySnapshot(beforeEntries);
+          rollbackApplied = true;
+        } catch (rollbackError) {
+          throw new Error(`Import failed and automatic rollback could not be verified. Use the pre-import recovery package. Import error: ${mutationError.message}. Rollback error: ${rollbackError.message}.`);
+        }
+        throw mutationError;
       }
 
       const checkpoints = {
@@ -426,13 +504,13 @@
         rollbackApplied
       });
       persistReport(lastReport);
-      global.localStorage.setItem(storageKeys.crossDeviceTransferState, JSON.stringify({
+      global.localStorage.setItem(transferStateKey, JSON.stringify({
         stage: "destination-import-verified",
         completedAt: new Date().toISOString(),
         sourceSessionReference: freshInspection.sourceSessionReference,
         reportChecksum: lastReport.checksum
       }));
-      setStatus("Verified transfer applied. The imported storage values match the package and a pre-import recovery package is available. Reload to activate the destination workspace.", "ready");
+      setStatus("Verified transfer applied. The imported storage values match the inspected components and a pre-import recovery package is available. Reload to activate the destination workspace.", "ready");
       renderReloadAction();
     } catch (error) {
       lastReport = pendingTransfer?.inspection ? api().buildRehearsalReport({
@@ -471,8 +549,7 @@
 
   function restoreSnapshot(beforeEntries) {
     const preserve = preservedControlKeys();
-    const current = collectWorkspaceEntries();
-    Object.keys(current).forEach((key) => {
+    Object.keys(collectWorkspaceEntries()).forEach((key) => {
       if (!preserve.has(key)) global.localStorage.removeItem(key);
     });
     Object.entries(beforeEntries).forEach(([key, value]) => {
@@ -480,18 +557,25 @@
     });
   }
 
+  function verifySnapshot(beforeEntries) {
+    const preserve = preservedControlKeys();
+    for (const [key, value] of Object.entries(beforeEntries)) {
+      if (preserve.has(key)) continue;
+      if (global.localStorage.getItem(key) !== value) throw new Error(`Rollback verification failed for storage entry ${key}.`);
+    }
+  }
+
   function persistReport(report) {
     if (!report) return;
-    const key = storageKeys.crossDeviceTransferReports || "methodzCrossDeviceTransferReportsV168";
-    const reports = parseJson(global.localStorage.getItem(key), []);
+    const reports = parseJson(global.localStorage.getItem(transferReportsKey), []);
     const next = (Array.isArray(reports) ? reports : []).concat(report).slice(-(Number(settings.maximumReports) || 50));
-    global.localStorage.setItem(key, JSON.stringify(next));
+    global.localStorage.setItem(transferReportsKey, JSON.stringify(next));
   }
 
   function downloadCrossDeviceTransferReportV168() {
     try {
       if (!lastReport) {
-        const reports = parseJson(global.localStorage.getItem(storageKeys.crossDeviceTransferReports), []);
+        const reports = parseJson(global.localStorage.getItem(transferReportsKey), []);
         lastReport = Array.isArray(reports) ? reports.at(-1) : null;
       }
       if (!lastReport) throw new Error("No transfer rehearsal report is available yet.");
@@ -514,12 +598,7 @@
       inspection.classList.remove("has-error");
     }
     resetDrillPreview();
-    ["transferDestinationReadyV168", "transferCollisionReviewedV168", "transferSourceUnchangedV168", "transferImportApprovedV168"].forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) element.checked = false;
-    });
-    const phrase = document.getElementById("transferApprovalPhraseV168");
-    if (phrase) phrase.value = "";
+    resetApprovals();
     setStatus("Transfer rehearsal cancelled. Destination workspace data was not changed.", "ready");
   }
 
