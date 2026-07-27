@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="features-v167.css" />
   <link rel="stylesheet" href="features-v168.css" />
   <link rel="stylesheet" href="features-v169.css" />
+  <link rel="stylesheet" href="features-v1610.css" />
 </head>
 <body>
   <header class="app-header">
@@ -40,7 +41,7 @@
   </header>
 
   <main class="app-shell" id="mainContent" tabindex="-1">
-    <section class="card hero-card">
+    <section class="card hero-card" id="meetingHeroPanelV1610">
       <div>
         <p class="eyebrow">Offline Meeting Record</p>
         <h2 id="meetingNumberLabel">Meeting #001</h2>
@@ -52,7 +53,7 @@
       </div>
     </section>
 
-    <section class="card quick-actions" aria-label="Meeting quick actions">
+    <section class="card quick-actions" id="meetingQuickActionsPanelV1610" aria-label="Meeting quick actions">
       <button type="button" onclick="saveMeeting()">Save Record</button>
       <button type="button" onclick="downloadMeetingText()">Download TXT</button>
       <button type="button" onclick="downloadMeetingJson()">Download JSON</button>
@@ -60,7 +61,7 @@
       <button type="button" onclick="toggleKeyboardHelpV08()">Keyboard Help</button>
     </section>
 
-    <section class="card">
+    <section class="card" id="meetingInformationPanelV1610">
       <h2>Meeting Information</h2>
 
       <input id="editingRecordId" type="hidden" />
@@ -87,47 +88,47 @@
       <input id="meetingChair" type="text" placeholder="Who is leading the meeting?" />
     </section>
 
-    <section class="card">
+    <section class="card" id="organizationsPresentPanelV1610">
       <h2>Organizations / Representatives Present</h2>
       <p class="helper-text">Select the organizations or representative groups present. Methodz is treated as a brand identity, not a company.</p>
 
       <div class="checkbox-grid" id="organizationList"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="attendanceSignOnPanelV1610">
       <h2>Attendance Sign-On</h2>
       <p class="helper-text">Attendees type their full name as a digital signature and explicitly record consent for this meeting record.</p>
       <div id="attendeeList"></div>
       <button type="button" onclick="addAttendee()">Add Attendee</button>
     </section>
 
-    <section class="card">
+    <section class="card" id="agendaChecklistPanelV1610">
       <h2>Agenda Checklist</h2>
       <div id="agendaList" class="agenda-list"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="discussionNotesPanelV1610">
       <h2>Discussion Notes</h2>
       <textarea id="notes" placeholder="Enter meeting notes here..."></textarea>
     </section>
 
-    <section class="card">
+    <section class="card" id="decisionsMadePanelV1610">
       <h2>Decisions Made</h2>
       <textarea id="decisions" placeholder="Record final decisions here..."></textarea>
     </section>
 
-    <section class="card">
+    <section class="card" id="followUpTasksPanelV1610">
       <h2>Follow-Up Tasks</h2>
       <div id="taskList"></div>
       <button type="button" onclick="addTask()">Add Task</button>
     </section>
 
-    <section class="card">
+    <section class="card" id="meetingSummaryPanelV1610">
       <h2>Meeting Summary</h2>
       <textarea id="summary" placeholder="Brief summary of the meeting outcome..."></textarea>
     </section>
 
-    <section class="card controls">
+    <section class="card controls" id="endOfMeetingPanelV1610">
       <h2>End of Meeting</h2>
       <div class="button-row">
         <button type="button" onclick="saveMeeting()">Save Record</button>
@@ -139,7 +140,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="savedRecordsPanelV1610">
       <h2>Saved Meeting Records</h2>
       <div class="records-toolbar">
         <label for="recordSearch">Search Saved Records</label>
@@ -173,6 +174,7 @@
   <script src="config-v167.js"></script>
   <script src="config-v168.js"></script>
   <script src="config-v169.js"></script>
+  <script src="config-v1610.js"></script>
   <script src="migrations.js"></script>
   <script src="migrations-v10.js"></script>
   <script src="migrations-v11.js"></script>
@@ -196,6 +198,8 @@
   <script src="cross-device-transfer-core.js"></script>
   <script src="transfer-acceptance-core.js"></script>
   <script src="transfer-acceptance-summary-filter.js"></script>
+  <script src="panel-registry-core.js"></script>
+  <script src="panel-registry-definitions.js"></script>
   <script src="app.js"></script>
   <script src="features-v03.js"></script>
   <script src="features-v03-startup.js"></script>
@@ -242,6 +246,7 @@
   <script src="features-v168-transfer-rehearsal.js"></script>
   <script src="features-v169-transfer-acceptance.js"></script>
   <script src="features-v169-rollback-stability.js"></script>
+  <script src="features-v1610-panel-registry.js"></script>
   <script src="features-v169-meeting-day.js"></script>
 </body>
 </html>
