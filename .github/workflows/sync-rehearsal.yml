@@ -21,24 +21,23 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check v1.6.5 synchronization syntax
+      - name: Check synchronization and current-shell syntax
         run: |
           node --check config-v165.js
           node --check sync-rehearsal-core.js
           node --check sync-rehearsal-hardening.js
           node --check features-v165-sync-rehearsal.js
           node --check tests/v165-sync-rehearsal.mjs
-
-      - name: Check v1.6.6 portability syntax
-        run: |
           node --check config-v166.js
           node --check sync-queue-portability.js
           node --check features-v166-sync-portability.js
           node --check tests/v166-sync-portability.mjs
           node --check tests/v166-sync-portability.spec.js
-
-      - name: Check v1.6.7 shell syntax
-        run: node --check config-v167.js
+          node --check config-v167.js
+          node --check config-v168.js
+          node --check config-v169.js
+          node --check config-v1610.js
+          node --check panel-registry-core.js
 
       - name: Verify synchronization wiring and boundaries
         shell: bash
@@ -47,35 +46,45 @@ jobs:
           test -f features-v165.css
           test -f features-v166.css
           test -f features-v167.css
+          test -f features-v168.css
+          test -f features-v169.css
+          test -f features-v1610.css
           grep -q 'features-v165.css' meeting.html
           grep -q 'features-v166.css' meeting.html
           grep -q 'features-v167.css' meeting.html
+          grep -q 'features-v168.css' meeting.html
+          grep -q 'features-v169.css' meeting.html
+          grep -q 'features-v1610.css' meeting.html
           grep -q 'config-v165.js' meeting.html
           grep -q 'config-v166.js' meeting.html
           grep -q 'config-v167.js' meeting.html
+          grep -q 'config-v168.js' meeting.html
+          grep -q 'config-v169.js' meeting.html
+          grep -q 'config-v1610.js' meeting.html
           grep -q 'http-provider-pilot.js' meeting.html
           grep -q 'sync-rehearsal-core.js' meeting.html
           grep -q 'sync-rehearsal-hardening.js' meeting.html
           grep -q 'sync-queue-portability.js' meeting.html
+          grep -q 'panel-registry-core.js' meeting.html
           grep -q 'features-v165-sync-rehearsal.js' meeting.html
           grep -q 'features-v166-sync-portability.js' meeting.html
-          grep -q 'methodz-meeting-manager-v1.6.7' service-worker.js
-          grep -q 'appShellVersion = "1.6.6"' config-v166.js
-          grep -q 'appShellVersion = "1.6.7"' config-v167.js
+          grep -q 'methodz-meeting-manager-v1.6.10' service-worker.js
+          grep -q 'appShellVersion = "1.6.10"' config-v1610.js
           grep -q 'automaticBackgroundSync: false' config-v166.js
           grep -q 'serviceWorkerQueueProcessing: false' config-v166.js
           grep -q 'productionCredentialsAllowed: false' config-v166.js
           grep -q 'explicitUserActionRequired: true' config-v166.js
           grep -q 'sync-queue-portability.js' service-worker.js
           grep -q 'features-v166-sync-portability.js' service-worker.js
+          grep -q 'panel-registry-core.js' service-worker.js
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
 
-      - name: Run synchronization rehearsal contract
-        run: node tests/v165-sync-rehearsal.mjs
-
-      - name: Run synchronization queue portability contract
-        run: node tests/v166-sync-portability.mjs
+      - name: Run synchronization rehearsal contracts
+        run: |
+          node tests/v165-sync-rehearsal.mjs
+          node tests/v166-sync-portability.mjs
+          node tests/v1610-panel-registry.mjs
 
   sync-portability-browser:
     runs-on: ubuntu-latest
@@ -110,26 +119,16 @@ jobs:
           cat /tmp/methodz-http.log
           exit 1
 
-      - name: Test queue import preview and no automatic processing
-        run: npx playwright test tests/v166-sync-portability.spec.js --grep "queue import requires preview and approval and never auto-processes" --retries=0 --workers=1 --reporter=line
-
-      - name: Test tenant isolation and reload recovery
-        run: npx playwright test tests/v166-sync-portability.spec.js --grep "tenant queues remain isolated and recover after reload" --retries=0 --workers=1 --reporter=line
-
-      - name: Test instrumentation after remote reset
-        run: npx playwright test tests/v166-sync-portability.spec.js --grep "operator event instrumentation survives remote reset and classifies failures" --retries=0 --workers=1 --reporter=line
-
-      - name: Test uncertain-write replay and conflict metadata
-        run: npx playwright test tests/v166-sync-portability.spec.js --grep "response-loss retry preserves returned conflict metadata" --retries=0 --workers=1 --reporter=line
-
-      - name: Test archived remote pull envelope
-        run: npx playwright test tests/v166-sync-portability.spec.js --grep "archived remote pulls retain the Archive Vault envelope" --retries=0 --workers=1 --reporter=line
+      - name: Test queue portability and current registry shell
+        run: |
+          npx playwright test tests/v166-sync-portability.spec.js --retries=0 --workers=1 --reporter=line
+          npx playwright test tests/v1610-panel-registry.spec.js --grep 'preserves existing archive' --retries=0 --workers=1 --reporter=line
 
       - name: Upload browser traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: methodz-v166-sync-portability-browser-results
+          name: methodz-v1610-sync-portability-browser-results
           path: test-results/
           if-no-files-found: ignore
           retention-days: 7
