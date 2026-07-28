@@ -1,4 +1,4 @@
-/* Methodz Meeting Manager v1.6.10 panel registry binding and startup diagnostics. */
+/* Methodz Meeting Manager v1.6.11 panel registry binding and startup diagnostics. */
 (function initializePanelRegistryV1610(global) {
   "use strict";
 
@@ -136,6 +136,8 @@
     if (settings.enabled === false) return;
     installDiagnosticsPanel();
     refreshPanelRegistryV1610({ announce: false });
+    // A zero-delay second pass binds panels created by later DOMContentLoaded listeners without hiding controls during startup.
+    global.setTimeout(() => refreshPanelRegistryV1610({ announce: false }), 0);
   }
 
   global.refreshPanelRegistryV1610 = refreshPanelRegistryV1610;
