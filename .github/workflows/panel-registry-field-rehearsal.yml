@@ -1,0 +1,107 @@
+name: Panel Registry and Field Rehearsal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  panel-registry-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate registry assets and boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            config-v1610.js panel-registry-core.js panel-registry-definitions.js
+            features-v1610-panel-registry.js features-v1610.css
+            tests/v1610-panel-registry.mjs tests/v1610-panel-registry.spec.js
+            docs/V1.6.10-ARCHITECTURE.md docs/V1.6.10-TESTS.md
+            docs/V1.6.10-FIELD-REHEARSAL.md docs/field-rehearsal-evidence-template.json
+          )
+          for file in "${required_files[@]}"; do test -f "$file" || exit 1; done
+          node --check config-v1610.js
+          node --check panel-registry-core.js
+          node --check panel-registry-definitions.js
+          node --check features-v1610-panel-registry.js
+          node --check features-v169-meeting-day.js
+          node --check tests/v1610-panel-registry.mjs
+          node --check tests/v1610-panel-registry.spec.js
+          grep -q 'appShellVersion = "1.6.10"' config-v1610.js
+          grep -q 'schemaVersion = "1.6.0"' config-v1610.js
+          grep -q 'PANEL_ORDER_MISMATCH' panel-registry-core.js
+          grep -q 'panel-registry-core.js' meeting.html
+          grep -q 'panel-registry-definitions.js' meeting.html
+          grep -q 'features-v1610-panel-registry.js' meeting.html
+          grep -q 'features-v169-meeting-day.js' meeting.html
+          grep -q 'methodz-meeting-manager-v1.6.10' service-worker.js
+          grep -q 'panel-registry-core.js' service-worker.js
+          grep -q 'features-v1610-panel-registry.js' service-worker.js
+          ! grep -Eq 'panel-registry-core\.js|features-v1610-panel-registry\.js|features-v169-meeting-day\.js' archive.html verify.html
+          ! grep -Eq 'hub\.methodz\.ca' meeting.html archive.html verify.html manifest.webmanifest service-worker.js
+          ! grep -q 'addEventListener("sync"' service-worker.js
+          ! grep -q "addEventListener('sync'" service-worker.js
+          ! grep -q 'periodicSync' service-worker.js
+          node -e "const x=JSON.parse(require('fs').readFileSync('docs/field-rehearsal-evidence-template.json','utf8')); if(x.reportType!=='methodz-field-rehearsal-evidence'||x.appShellVersion!=='1.6.10') process.exit(1)"
+
+      - name: Run registry contract tests
+        run: node tests/v1610-panel-registry.mjs
+
+  panel-registry-browser:
+    runs-on: ubuntu-latest
+    needs: panel-registry-core
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --silent @playwright/test@1.53.2
+          npx playwright install --with-deps chromium
+
+      - name: Start static server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-v1610-http.log 2>&1 &
+          echo $! > /tmp/methodz-v1610-http.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/meeting.html > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/methodz-v1610-http.log
+          exit 1
+
+      - name: Run registry and Meeting-Day browser checks
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/v1610-panel-registry.spec.js --reporter=line
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: methodz-v1610-panel-registry-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
