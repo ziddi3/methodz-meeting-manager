@@ -104,19 +104,19 @@ test.describe("v1.6.9 transfer acceptance and meeting-day workflow", () => {
     await expect(page.locator("#minutesPreview")).toBeHidden();
     await page.locator("#meetingDayToggleV169").click();
     await expect(page.locator("body")).toHaveClass(/methodz-meeting-day-mode-v169/);
-    await expect(page.locator("#meetingDayInformationV169")).toBeVisible();
-    await expect(page.locator("#meetingDayNotesV169")).toBeVisible();
+    await expect(page.locator("#meetingInformationPanelV1610")).toBeVisible();
+    await expect(page.locator("#discussionNotesPanelV1610")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Saved Meeting Records" })).toBeHidden();
     await expect(page.locator("#minutesPreview")).toBeHidden();
 
     await page.getByRole("button", { name: "Notes", exact: true }).click();
     const preferences = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingDayPreferencesV169") || "{}"));
     expect(preferences.enabled).toBe(true);
-    expect(preferences.lastSectionId).toBe("meetingDayNotesV169");
+    expect(preferences.lastSectionId).toBe("discussionNotesPanelV1610");
 
     await page.reload();
     await expect(page.locator("body")).toHaveClass(/methodz-meeting-day-mode-v169/);
-    await expect(page.locator('[data-meeting-day-target-v169="meetingDayNotesV169"]')).toHaveAttribute("aria-current", "location");
+    await expect(page.locator('[data-meeting-day-target-v169="discussionNotesPanelV1610"]')).toHaveAttribute("aria-current", "location");
     await page.locator("#meetingDayToolsToggleV169").click();
     await expect(page.getByRole("heading", { name: "Saved Meeting Records" })).toBeVisible();
     await expect(page.locator("#minutesPreview")).toBeHidden();
