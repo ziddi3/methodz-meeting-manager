@@ -1,4 +1,4 @@
-/* Methodz Meeting Manager v1.6.7 mobile and cross-device readiness. */
+/* Methodz Meeting Manager v1.6.11 mobile and cross-device readiness compatibility layer. */
 (function initializeDeviceReadinessV167(global) {
   "use strict";
 
@@ -7,30 +7,17 @@
   const storageKeys = config.storageKeys || {};
   let resizeTimer = 0;
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+  const escapeHtml = (value) => String(value ?? "")
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
   function safeStorageGet(key) {
     if (!key) return null;
-    try {
-      return global.localStorage.getItem(key);
-    } catch (error) {
-      return null;
-    }
+    try { return global.localStorage.getItem(key); } catch (error) { return null; }
   }
 
   function safeParse(value, fallback) {
-    try {
-      return value ? JSON.parse(value) : fallback;
-    } catch (error) {
-      return fallback;
-    }
+    try { return value ? JSON.parse(value) : fallback; } catch (error) { return fallback; }
   }
 
   function countArray(key) {
@@ -88,8 +75,7 @@
         usage: Number.isFinite(usage) ? usage : null,
         quota: Number.isFinite(quota) ? quota : null,
         percent: Number.isFinite(usage) && Number.isFinite(quota) && quota > 0
-          ? Math.round((usage / quota) * 1000) / 10
-          : null
+          ? Math.round((usage / quota) * 1000) / 10 : null
       };
     } catch (error) {
       return { supported: true, usage: null, quota: null, percent: null };
@@ -98,27 +84,20 @@
 
   async function persistenceState() {
     if (!global.navigator.storage?.persisted) return { supported: false, granted: null };
-    try {
-      return { supported: true, granted: await global.navigator.storage.persisted() };
-    } catch (error) {
-      return { supported: true, granted: null };
-    }
+    try { return { supported: true, granted: await global.navigator.storage.persisted() }; }
+    catch (error) { return { supported: true, granted: null }; }
   }
 
   function activeQueueCount() {
     try {
       const coordinator = global.MethodzSyncRehearsalWorkspaceV165?.getCoordinator?.();
       if (coordinator && typeof coordinator.listQueue === "function") return coordinator.listQueue().length;
-
       const tenantId = document.getElementById("syncTenantV165")?.value.trim()
-        || config.syncRehearsal?.defaultTenantId
-        || "methodz-rehearsal";
+        || config.syncRehearsal?.defaultTenantId || "methodz-rehearsal";
       const hash = global.MethodzHostedProviderContract?.fnv1a32?.(tenantId);
       const baseKey = storageKeys.syncRehearsalQueue || "methodzSyncRehearsalQueueV165";
       return hash ? countArray(`${baseKey}:${hash}`) : countArray(baseKey);
-    } catch (error) {
-      return 0;
-    }
+    } catch (error) { return 0; }
   }
 
   function workspaceCounts() {
@@ -134,10 +113,7 @@
     };
   }
 
-  function check(id, label, status, value, detail) {
-    return { id, label, status, value, detail };
-  }
-
+  const check = (id, label, status, value, detail) => ({ id, label, status, value, detail });
   function overallStatus(checks) {
     if (checks.some((item) => item.status === "limited")) return "Limited";
     if (checks.some((item) => item.status === "review")) return "Review";
@@ -176,43 +152,32 @@
       overall: overallStatus(checks),
       environment: {
         protocol: global.location.protocol.replace(":", "") || "unknown",
-        displayMode: displayMode(),
-        viewportBucket: viewportBucket(),
-        online
+        displayMode: displayMode(), viewportBucket: viewportBucket(), online
       },
       workspaceCounts: counts,
       storageEstimate: {
-        supported: estimate.supported,
-        usageBytes: estimate.usage,
-        quotaBytes: estimate.quota,
-        percentUsed: estimate.percent,
-        persistentStorageSupported: persistence.supported,
+        supported: estimate.supported, usageBytes: estimate.usage, quotaBytes: estimate.quota,
+        percentUsed: estimate.percent, persistentStorageSupported: persistence.supported,
         persistentStorageGranted: persistence.granted
       },
       checks: checks.map(({ id, label, status, value }) => ({ id, label, status, value })),
       boundaries: {
-        containsMeetingContent: false,
-        containsRecordIds: false,
-        containsAttendeeNames: false,
-        containsSignatures: false,
-        containsCredentials: false,
-        containsKeyMaterial: false,
-        provesBackupExists: false,
-        provesRecoveryWillSucceed: false
+        containsMeetingContent: false, containsRecordIds: false, containsAttendeeNames: false,
+        containsSignatures: false, containsCredentials: false, containsKeyMaterial: false,
+        provesBackupExists: false, provesRecoveryWillSucceed: false
       }
     };
 
     try {
       global.localStorage.setItem(storageKeys.deviceReadinessState, JSON.stringify({ generatedAt: report.generatedAt, overall: report.overall }));
     } catch (error) { /* readiness still works when storage is blocked */ }
-
     return { report, checks };
   }
 
-  function renderCheck(item) {
+  const renderCheck = (item) => {
     const statusText = item.status === "ready" ? "Ready" : item.status === "limited" ? "Limited" : "Review";
     return `<article class="device-check-v167 is-${escapeHtml(item.status)}"><div class="device-check-heading-v167"><h3>${escapeHtml(item.label)}</h3><span>${statusText}</span></div><p class="device-check-value-v167">${escapeHtml(item.value)}</p><p class="helper-text">${escapeHtml(item.detail)}</p></article>`;
-  }
+  };
 
   async function refreshDeviceReadinessV167() {
     const message = document.getElementById("deviceReadinessMessageV167");
@@ -234,9 +199,7 @@
   function download(filename, content, type) {
     const url = URL.createObjectURL(new Blob([content], { type }));
     const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
+    anchor.href = url; anchor.download = filename; anchor.click();
     global.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -292,7 +255,7 @@
   function scrollTo(selector) {
     const target = document.querySelector(selector);
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior: global.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ? "auto" : "smooth", block: "start" });
     target.focus?.({ preventScroll: true });
   }
 
@@ -311,8 +274,8 @@
 
   function createMobileDock() {
     if (document.getElementById("mobileActionDockV167")) return;
-    const savedHeading = [...document.querySelectorAll("h2")].find((heading) => heading.textContent.trim() === "Saved Meeting Records");
-    const savedSection = savedHeading?.closest("section");
+    const savedSection = document.getElementById("savedRecordsPanelV1610")
+      || [...document.querySelectorAll("h2")].find((heading) => heading.textContent.trim() === "Saved Meeting Records")?.closest("section");
     if (savedSection && !savedSection.id) savedSection.id = "savedRecordsSectionV167";
     const dock = document.createElement("nav");
     dock.id = "mobileActionDockV167";
@@ -323,7 +286,7 @@
       const action = event.target.closest("button")?.dataset.action;
       if (action === "save") global.saveMeeting?.();
       if (action === "new") global.startNewMeeting?.();
-      if (action === "records") scrollTo("#savedRecordsSectionV167");
+      if (action === "records") scrollTo("#savedRecordsPanelV1610, #savedRecordsSectionV167");
       if (action === "device") scrollTo("#deviceReadinessV167");
     });
     document.body.appendChild(dock);
@@ -331,9 +294,7 @@
 
   function start() {
     if (readinessConfig.enabled === false) return;
-    createPanel();
-    createMobileDock();
-    refreshDeviceReadinessV167();
+    createPanel(); createMobileDock(); refreshDeviceReadinessV167();
     global.addEventListener("online", refreshDeviceReadinessV167);
     global.addEventListener("offline", refreshDeviceReadinessV167);
     global.navigator.serviceWorker?.addEventListener("controllerchange", refreshDeviceReadinessV167);
