@@ -1,0 +1,89 @@
+/* Methodz Meeting Manager v1.6.10 panel registry and field-rehearsal presentation. */
+
+.panel-registry-diagnostics-v1610 {
+  border-top: 4px solid #8a6d1d;
+}
+
+.panel-registry-diagnostics-v1610.has-errors {
+  border-color: #9b3434;
+  background: #fff7f7;
+}
+
+.panel-registry-diagnostics-v1610.has-warnings {
+  border-color: #9b7418;
+  background: #fffdf5;
+}
+
+.panel-registry-status-v1610 {
+  margin: 0.75rem 0 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border, #ddd);
+  border-radius: 0.65rem;
+  background: #f7f7f7;
+  font-weight: 700;
+}
+
+.panel-registry-metrics-v1610 {
+  margin-top: 1rem;
+}
+
+.panel-registry-issues-v1610 {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel-registry-issues-v1610 li {
+  padding: 0.7rem 0.8rem;
+  border-left: 4px solid #9b3434;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+[data-methodz-panel-print="exclude"] {
+  --methodz-panel-print-behavior: exclude;
+}
+
+.methodz-panel-registry-invalid-v1610 #meetingDayToolsToggleV169 {
+  display: none;
+}
+
+.methodz-panel-registry-invalid-v1610 #meetingDayStatusV169 {
+  color: #8a1f1f;
+  font-weight: 700;
+}
+
+.field-rehearsal-evidence-v1610 {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field-rehearsal-evidence-v1610 label {
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  [data-methodz-panel-group="capture"] {
+    scroll-margin-top: 12rem;
+  }
+
+  .panel-registry-diagnostics-v1610 .button-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .panel-registry-diagnostics-v1610 button,
+  .panel-registry-diagnostics-v1610 .button-like {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
+@media print {
+  [data-methodz-panel-print="exclude"],
+  .panel-registry-diagnostics-v1610 {
+    display: none !important;
+  }
+}

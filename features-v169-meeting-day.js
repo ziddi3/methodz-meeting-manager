@@ -1,11 +1,11 @@
-/* Methodz Meeting Manager v1.6.9 compact meeting-day mode and section navigation. */
+/* Methodz Meeting Manager v1.6.9 compact meeting-day mode, migrated to the v1.6.10 panel registry. */
 (function initializeMeetingDayModeV169(global) {
   "use strict";
 
   const config = global.METHODZ_MEETING_CONFIG || {};
   const settings = config.meetingDay || {};
   const preferencesKey = config.storageKeys?.meetingDayPreferences || "methodzMeetingDayPreferencesV169";
-  const CORE_SECTIONS = Object.freeze([
+  const FALLBACK_SECTIONS = Object.freeze([
     { heading: "Meeting Information", id: "meetingDayInformationV169", label: "Info" },
     { heading: "Organizations / Representatives Present", id: "meetingDayOrganizationsV169", label: "Organizations" },
     { heading: "Attendance Sign-On", id: "meetingDayAttendanceV169", label: "Attendance" },
@@ -20,22 +20,58 @@
   let state = {
     enabled: settings.defaultEnabled === true,
     toolsOpen: false,
-    lastSectionId: "meetingDayInformationV169"
+    lastSectionId: "meetingInformationPanelV1610"
   };
 
   function parseJson(raw, fallback) {
     try { return raw ? JSON.parse(raw) : fallback; } catch (error) { return fallback; }
   }
 
+  function registryApi() {
+    return global.MethodzPanelRegistryV1610 || null;
+  }
+
+  function registryReady() {
+    const diagnostics = registryApi()?.diagnostics?.();
+    return diagnostics?.valid === true;
+  }
+
+  function findCardByHeading(heading) {
+    return Array.from(document.querySelectorAll("#mainContent > section.card"))
+      .find((card) => card.querySelector(":scope > h2")?.textContent.trim() === heading);
+  }
+
+  function meetingDaySections() {
+    const api = registryApi();
+    if (api) {
+      const registered = api.getMeetingDayPanels(document).map((entry) => ({
+        id: entry.element.id,
+        label: entry.meetingDayLabel,
+        element: entry.element,
+        panelId: entry.id,
+        source: "registry"
+      }));
+      if (registered.length) return registered;
+    }
+    return FALLBACK_SECTIONS.map((section) => {
+      const element = document.getElementById(section.id) || findCardByHeading(section.heading);
+      if (element && !element.id) element.id = section.id;
+      return { ...section, element, panelId: null, source: "heading-fallback" };
+    }).filter((section) => section.element);
+  }
+
+  function defaultSectionId() {
+    return meetingDaySections()[0]?.id || "meetingInformationPanelV1610";
+  }
+
   function loadState() {
     if (settings.restorePreferences === false) return;
     const saved = parseJson(global.localStorage.getItem(preferencesKey), {});
+    const validIds = new Set(meetingDaySections().map((section) => section.id));
     state = {
       enabled: saved.enabled === true,
       toolsOpen: saved.toolsOpen === true,
-      lastSectionId: CORE_SECTIONS.some((section) => section.id === saved.lastSectionId)
-        ? saved.lastSectionId
-        : "meetingDayInformationV169"
+      lastSectionId: validIds.has(saved.lastSectionId) ? saved.lastSectionId : defaultSectionId()
     };
   }
 
@@ -45,7 +81,8 @@
       toolsOpen: state.toolsOpen,
       lastSectionId: state.lastSectionId,
       updatedAt: new Date().toISOString(),
-      appShellVersion: config.appShellVersion
+      appShellVersion: config.appShellVersion,
+      navigationSource: registryReady() ? "panel-registry" : "compatibility-fallback"
     }));
   }
 
@@ -56,11 +93,6 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
-  }
-
-  function findCardByHeading(heading) {
-    return Array.from(document.querySelectorAll("#mainContent > section.card"))
-      .find((card) => card.querySelector(":scope > h2")?.textContent.trim() === heading);
   }
 
   function secondaryCards() {
@@ -81,34 +113,35 @@
   }
 
   function markSections() {
-    const hero = document.querySelector("#mainContent > .hero-card");
-    const quickActions = document.querySelector("#mainContent > .quick-actions");
+    document.querySelectorAll("#mainContent > section.card").forEach((card) => {
+      delete card.dataset.meetingDayCoreV169;
+      card.classList.remove("meeting-day-secondary-v169");
+    });
+
+    const hero = document.getElementById("meetingHeroPanelV1610") || document.querySelector("#mainContent > .hero-card");
+    const quickActions = document.getElementById("meetingQuickActionsPanelV1610") || document.querySelector("#mainContent > .quick-actions");
     [hero, quickActions, document.getElementById("meetingDayControlV169")].forEach((element) => {
       if (element) element.dataset.meetingDayCoreV169 = "true";
     });
 
-    CORE_SECTIONS.forEach((section) => {
-      const card = findCardByHeading(section.heading);
+    meetingDaySections().forEach((section) => {
+      const card = section.element;
       if (!card) return;
-      card.id = section.id;
       card.dataset.meetingDayCoreV169 = "true";
       card.dataset.meetingDayLabelV169 = section.label;
+      card.dataset.meetingDaySourceV1610 = section.source;
     });
 
     document.querySelectorAll("#mainContent > section.card").forEach((card) => {
-      if (card.dataset.meetingDayCoreV169 === "true") {
-        card.classList.remove("meeting-day-secondary-v169");
-      } else {
-        card.classList.add("meeting-day-secondary-v169");
-      }
+      if (card.dataset.meetingDayCoreV169 !== "true") card.classList.add("meeting-day-secondary-v169");
     });
     captureSecondaryVisibility();
   }
 
   function installControl() {
     if (document.getElementById("meetingDayControlV169")) return;
-    const quickActions = document.querySelector("#mainContent > .quick-actions");
-    const hero = document.querySelector("#mainContent > .hero-card");
+    const quickActions = document.getElementById("meetingQuickActionsPanelV1610") || document.querySelector("#mainContent > .quick-actions");
+    const hero = document.getElementById("meetingHeroPanelV1610") || document.querySelector("#mainContent > .hero-card");
     const anchor = quickActions || hero;
     if (!anchor) return;
 
@@ -121,7 +154,7 @@
         <div>
           <p class="eyebrow">Live Meeting Workspace</p>
           <h2>Meeting-Day Mode</h2>
-          <p class="helper-text">Keep the capture path in front and collapse infrastructure panels without removing access to them.</p>
+          <p class="helper-text">Keep the capture path in front and collapse registered infrastructure panels without removing access to them.</p>
         </div>
         <div class="button-row meeting-day-actions-v169">
           <button id="meetingDayToggleV169" type="button" aria-pressed="false" onclick="toggleMeetingDayModeV169()">Enter Meeting-Day Mode</button>
@@ -137,10 +170,7 @@
   function renderNavigation() {
     const nav = document.getElementById("meetingDayNavV169");
     if (!nav) return;
-    nav.innerHTML = CORE_SECTIONS.map((section) => {
-      const available = Boolean(document.getElementById(section.id));
-      return `<button type="button" data-meeting-day-target-v169="${escapeHtml(section.id)}" ${available ? "" : "disabled"} onclick="navigateMeetingDayV169('${escapeHtml(section.id)}')">${escapeHtml(section.label)}</button>`;
-    }).join("");
+    nav.innerHTML = meetingDaySections().map((section) => `<button type="button" data-meeting-day-target-v169="${escapeHtml(section.id)}" onclick="navigateMeetingDayV169('${escapeHtml(section.id)}')">${escapeHtml(section.label)}</button>`).join("");
     updateActiveNavigation();
   }
 
@@ -159,9 +189,10 @@
     const toolsToggle = document.getElementById("meetingDayToolsToggleV169");
     const status = document.getElementById("meetingDayStatusV169");
     const collapseTools = settings.collapseSecondaryTools !== false;
-    const shouldCollapse = collapseTools && state.enabled && !state.toolsOpen;
+    const registryAllowsCollapse = registryReady();
+    const shouldCollapse = collapseTools && registryAllowsCollapse && state.enabled && !state.toolsOpen;
     body.classList.toggle("methodz-meeting-day-mode-v169", state.enabled);
-    body.classList.toggle("methodz-meeting-day-tools-open-v169", state.enabled && (state.toolsOpen || !collapseTools));
+    body.classList.toggle("methodz-meeting-day-tools-open-v169", state.enabled && (state.toolsOpen || !collapseTools || !registryAllowsCollapse));
 
     secondaryCards().forEach((card) => {
       if (shouldCollapse) {
@@ -180,21 +211,25 @@
       toggle.textContent = state.enabled ? "Exit Meeting-Day Mode" : "Enter Meeting-Day Mode";
     }
     if (toolsToggle) {
-      toolsToggle.hidden = !state.enabled || !collapseTools;
-      toolsToggle.setAttribute("aria-expanded", String(state.toolsOpen || !collapseTools));
+      toolsToggle.hidden = !state.enabled || !collapseTools || !registryAllowsCollapse;
+      toolsToggle.setAttribute("aria-expanded", String(state.toolsOpen || !collapseTools || !registryAllowsCollapse));
       toolsToggle.textContent = state.toolsOpen ? "Hide Tools" : "Show Tools";
     }
     if (status) {
-      status.textContent = state.enabled
-        ? (!collapseTools
-          ? "Meeting-day mode active. Supporting tools remain visible by configuration."
-          : `Meeting-day mode active. ${state.toolsOpen ? "Supporting tools retain their previous visibility." : "Supporting tools are collapsed but available through Show Tools."}`)
-        : "Standard workspace mode.";
+      status.textContent = !registryAllowsCollapse
+        ? "Panel registry validation is blocked. Meeting controls remain visible and no supporting panel will be collapsed."
+        : state.enabled
+          ? (!collapseTools
+            ? "Meeting-day mode active. Supporting tools remain visible by configuration."
+            : `Meeting-day mode active. ${state.toolsOpen ? "Supporting tools retain their previous visibility." : "Registered supporting tools are collapsed but available through Show Tools."}`)
+          : "Standard workspace mode.";
     }
     updateActiveNavigation();
     saveState();
     if (options.announce !== false) {
-      global.announceMethodzStatus?.(state.enabled ? "Meeting-day mode active." : "Standard workspace mode active.");
+      global.announceMethodzStatus?.(registryAllowsCollapse
+        ? (state.enabled ? "Meeting-day mode active." : "Standard workspace mode active.")
+        : "Meeting-day navigation is available, but panel collapsing is disabled by registry errors.");
     }
   }
 
@@ -206,7 +241,7 @@
   }
 
   function toggleMeetingDayToolsV169() {
-    if (!state.enabled || settings.collapseSecondaryTools === false) return;
+    if (!state.enabled || settings.collapseSecondaryTools === false || !registryReady()) return;
     if (state.toolsOpen) captureSecondaryVisibility();
     state.toolsOpen = !state.toolsOpen;
     applyState();
@@ -226,7 +261,7 @@
   }
 
   function resumeMeetingDaySectionV169() {
-    navigateMeetingDayV169(state.lastSectionId || "meetingDayInformationV169");
+    navigateMeetingDayV169(state.lastSectionId || defaultSectionId());
   }
 
   function handleKeyboardShortcut(event) {
@@ -238,14 +273,21 @@
     toggleMeetingDayModeV169();
   }
 
-  function start() {
-    if (settings.enabled === false) return;
-    loadState();
-    installControl();
+  function refreshFromRegistry() {
     markSections();
+    const validIds = new Set(meetingDaySections().map((section) => section.id));
+    if (!validIds.has(state.lastSectionId)) state.lastSectionId = defaultSectionId();
     renderNavigation();
     applyState({ announce: false });
+  }
+
+  function start() {
+    if (settings.enabled === false) return;
+    installControl();
+    loadState();
+    refreshFromRegistry();
     document.addEventListener("keydown", handleKeyboardShortcut);
+    global.addEventListener("methodz:panel-registry-ready", refreshFromRegistry);
   }
 
   global.toggleMeetingDayModeV169 = toggleMeetingDayModeV169;
