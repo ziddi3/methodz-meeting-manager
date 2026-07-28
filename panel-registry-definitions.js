@@ -1,5 +1,5 @@
-/* Methodz Meeting Manager v1.6.10 static panel metadata. */
-(function registerMethodzPanelsV1610(global) {
+/* Methodz Meeting Manager v1.6.11 static panel metadata. */
+(function registerMethodzPanelsV1611(global) {
   "use strict";
 
   const registry = global.MethodzPanelRegistryV1610;
@@ -24,6 +24,7 @@
   registry.registerMany([
     panel("meeting-hero", "Meeting workspace summary", "shell", "#meetingHeroPanelV1610", 10, { required: true, printBehavior: "summary" }),
     panel("quick-actions", "Meeting quick actions", "shell", "#meetingQuickActionsPanelV1610", 20, { required: true, printBehavior: "exclude" }),
+    panel("meeting-pulse", "Meeting Pulse", "shell", "#meetingPulsePanelV1611", 30, { meetingDayPriority: 5, meetingDayLabel: "Pulse", printBehavior: "exclude" }),
     panel("meeting-information", "Meeting Information", "capture", "#meetingInformationPanelV1610", 100, { required: true, meetingDayPriority: 10, meetingDayLabel: "Info", compatibilityHeading: "Meeting Information" }),
     panel("organizations-present", "Organizations / Representatives Present", "capture", "#organizationsPresentPanelV1610", 110, { required: true, meetingDayPriority: 20, meetingDayLabel: "Organizations", compatibilityHeading: "Organizations / Representatives Present" }),
     panel("attendance-sign-on", "Attendance Sign-On", "capture", "#attendanceSignOnPanelV1610", 120, { required: true, meetingDayPriority: 30, meetingDayLabel: "Attendance", compatibilityHeading: "Attendance Sign-On" }),
@@ -34,6 +35,7 @@
     panel("meeting-summary", "Meeting Summary", "capture", "#meetingSummaryPanelV1610", 170, { required: true, meetingDayPriority: 80, meetingDayLabel: "Summary", compatibilityHeading: "Meeting Summary" }),
     panel("end-of-meeting", "End of Meeting", "capture", "#endOfMeetingPanelV1610", 180, { required: true, meetingDayPriority: 90, meetingDayLabel: "Save", compatibilityHeading: "End of Meeting" }),
     panel("saved-records", "Saved Meeting Records", "records", "#savedRecordsPanelV1610", 190),
+    panel("follow-up-review", "Follow-Up Review", "records", "#followUpReviewPanelV1611", 200, { printBehavior: "exclude" }),
     panel("archive-vault", "Archive Vault", "archive", "#archiveVaultV08", 400, { defaultVisibility: "collapsed" }),
     panel("record-governance", "Record Roles & Policy", "governance", "#recordGovernancePanelV10", 500, { defaultVisibility: "collapsed", printBehavior: "summary" }),
     panel("data-adapter", "Data Adapter", "provider", "#dataAdapterPanelV07", 600, { defaultVisibility: "collapsed", printBehavior: "exclude" }),

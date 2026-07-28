@@ -2,31 +2,33 @@
 
 ## Product identity
 
-Methodz Meeting Manager is a task-focused, offline-first meeting preparation, capture, analysis, archive, recovery, transfer, and records application for Canadian Soft Water Corporation, Method HVAC Inc., and future partner organizations.
+Methodz Meeting Manager is a task-focused, offline-first meeting preparation, capture, analysis, archive, recovery, transfer, follow-up, and records application for Canadian Soft Water Corporation, Method HVAC Inc., and future partner organizations.
 
 Methodz is a shared brand identity and operating ecosystem, not a separate company.
 
 This repository is not Method Hub, Nexus Hub, a storefront, a business container, the Cathedral, or a Cathedral wing. Never deploy it over `hub.methodz.ca`.
 
+Read the canonical governance documents in `ziddi3/methodz-nexus-canon` before architectural work. Do not invent ecosystem boundaries when a local canon snapshot is absent.
+
 ## Deployment contract
 
-Maintain the application with:
+Maintain:
 
-- semantic HTML5;
-- CSS3;
-- vanilla JavaScript;
+- semantic HTML5, CSS3, and vanilla JavaScript;
 - browser `localStorage` as the default provider;
 - no runtime framework;
 - no required build command;
-- no required network connection.
+- no required network connection;
+- direct-file core meeting operation through `meeting.html`.
 
-Core meeting operation must continue by opening `meeting.html` directly. Hosted PWA behavior may activate only on HTTPS or localhost. CI-only dependencies must not enter the deployed runtime.
+Hosted PWA behavior may activate only on HTTPS or localhost. CI-only dependencies must not enter the deployed runtime.
 
 ## Current release boundary
 
 ```text
-App shell:                   1.6.10
+App shell:                   1.6.11
 Record schema:               1.6.0
+Meeting review core:         1.0.0
 Hosted-provider contract:    1.0.0
 Synchronization queue:       1.0.0
 Transfer package:            1.0.0
@@ -41,7 +43,7 @@ Do not change the record schema merely because the app shell advances.
 - `meeting.html`: main meeting workspace.
 - `archive.html`: record detail and print surface.
 - `verify.html`: standalone signed-package verifier.
-- `config.js` through `config-v1610.js`: ordered configuration layers.
+- `config.js` through `config-v1611.js`: ordered configuration layers.
 - `migrations.js` through `migrations-v16.js`: ordered record migrations.
 - `data-adapter.js`: active browser-local provider.
 - `async-data-adapter.js`: Promise compatibility layer.
@@ -52,20 +54,23 @@ Do not change the record schema merely because the app shell advances.
 - synchronization, signing, custody, recovery, transfer, and acceptance cores.
 - `panel-registry-core.js`: portable shell metadata and validation.
 - `panel-registry-definitions.js`: current panel declarations.
+- `meeting-review-core.js`: side-effect-free pulse and follow-up derivation.
+- `features-v1611-follow-up-review.js`: browser review workspace.
 - `features-v1610-panel-registry.js`: browser binding and visible diagnostics.
 - `app.js`: stable meeting form and record workflow.
 - ordered `features-*` layers: additive browser behavior.
 - `manifest.webmanifest` and `service-worker.js`: optional static app shell.
 
-Script order is part of the runtime contract. Do not reorder modules because they look independent.
+Script order is part of the runtime contract. Do not reorder modules because they appear independent.
 
-Required v1.6.10 order:
+Required v1.6.11 order:
 
-1. `config-v1610.js` after `config-v169.js`;
-2. `panel-registry-core.js` and `panel-registry-definitions.js` before browser features;
-3. earlier feature layers create their dynamic panels;
-4. `features-v1610-panel-registry.js` binds the completed shell;
-5. `features-v169-meeting-day.js` uses registry metadata last.
+1. `config-v1611.js` after `config-v1610.js`;
+2. portable cores before browser features;
+3. earlier feature layers create historical dynamic panels;
+4. `features-v1611-follow-up-review.js` creates Meeting Pulse and Follow-Up Review;
+5. `features-v1610-panel-registry.js` binds the completed shell and performs a deferred compatibility pass;
+6. `features-v169-meeting-day.js` consumes registry metadata last.
 
 No feature module may require a network connection or mutate records during ordinary startup.
 
@@ -89,17 +94,17 @@ order
 
 Required behavior:
 
-- reject duplicate IDs;
-- reject invalid groups, visibility, and print behavior;
+- reject duplicate IDs and invalid metadata;
 - require stable selectors and insertion anchors;
 - register every direct capture panel;
 - fail visibly if a required capture panel is missing;
 - fail closed when Meeting-Day priority differs from DOM order;
 - never hide meeting or recovery controls after registry failure;
 - keep diagnostics metadata-only;
-- use headings only as a compatibility fallback.
+- use headings only as a compatibility fallback;
+- rebind after dynamic startup panels are available.
 
-Do not move business logic into the registry. It is shell metadata and validation, not a record provider, router, permission system, or backend.
+The registry is shell metadata and validation, not a record provider, router, permission system, or backend.
 
 ## Required product capabilities
 
@@ -110,6 +115,8 @@ Preserve:
 - attendance, explicit consent, and typed signatures;
 - agenda, notes, decisions, tasks, and summary;
 - **Assigned To** responsibility labels;
+- read-only Meeting Pulse and next-incomplete navigation;
+- explicit saved-record Follow-Up Review and source-meeting opening;
 - templates, directories, and attachment references;
 - draft restore, search, import, export, and print;
 - revisions and non-destructive Archive Vault;
@@ -125,38 +132,13 @@ Preserve:
 
 ## Terminology
 
-Use:
+Use **Organizations / Representatives Present**, **Meeting Facilitator**, **Follow-Up Tasks**, **Assigned To**, **Methodz Brand Mark**, **Controlled Source Record**, **Redacted External Copy**, **Preservation Hold**, **Recipient-Specific Export Policy**, **External Release Receipt**, **Conflict Token**, **Idempotency Key**, **Transfer Bundle**, **Destination Acceptance**, **Pre-Import Recovery Package**, **Pre-Rollback Recovery Package**, **Meeting-Day Mode**, **Meeting Pulse**, **Follow-Up Review**, and **Panel Registry**.
 
-- Organizations / Representatives Present
-- Meeting Facilitator
-- Follow-Up Tasks
-- Assigned To
-- Methodz Brand Mark
-- Controlled Source Record
-- Redacted External Copy
-- Preservation Hold
-- Recipient-Specific Export Policy
-- External Release Receipt
-- Conflict Token
-- Idempotency Key
-- Transfer Bundle
-- Destination Acceptance
-- Pre-Import Recovery Package
-- Pre-Rollback Recovery Package
-- Meeting-Day Mode
-- Panel Registry
-
-Avoid:
-
-- Owner for task responsibility;
-- Methodz company;
-- Company logo for Methodz;
-- calling a checksum a digital signature;
-- claiming local workflow metadata proves identity, authority, delivery, legal approval, device identity, or production durability.
+Avoid “Owner” for task responsibility, “Methodz company,” “Company logo” for Methodz, calling a checksum a digital signature, or claiming browser-local workflow metadata proves identity, authority, delivery, approval, device identity, or production durability.
 
 ## Governance and signature rules
 
-Browser-local roles, approvals, policies, receipts, typed signatures, custody events, readiness results, transfer reports, acceptance reports, rollback reports, registry diagnostics, and field evidence are workflow safeguards, not authentication.
+Browser-local roles, approvals, policies, receipts, typed signatures, custody events, readiness results, transfer reports, acceptance reports, rollback reports, review reports, registry diagnostics, and field evidence are workflow safeguards, not authentication.
 
 - Preserve governance metadata through save, revision, archive, backup, merge, restore, provider, synchronization, transfer, acceptance, and rollback.
 - Do not bypass edit, export, hold, approval, review, receipt, signature, recovery, transfer, acceptance, rollback, or disposition gates without an explicit replacement policy.
@@ -167,20 +149,28 @@ Browser-local roles, approvals, policies, receipts, typed signatures, custody ev
 - Never include typed signatures or verification data in external copies.
 - Private signing material must never enter storage, providers, backups, transfer packages, reports, fixtures, logs, or service-worker caches.
 
+## Review rules
+
+- `meeting-review-core.js` must remain portable, deterministic, and side-effect free.
+- Pulse rendering must never save, change status, or mutate a meeting.
+- Follow-up classification must use strict date-only validation.
+- Opening a source meeting requires an explicit operator action.
+- Review exports require an explicit action and must exclude signatures, consent details, credentials, private keys, provider secrets, queue payloads, and hidden governance metadata.
+- Do not send reminders, contact assignees, update task status, or synchronize review data automatically.
+
 ## Package, transfer, and rollback rules
 
-- Prefer SHA-256 through Web Crypto where available.
-- Label compatibility checksums accurately.
+- Prefer SHA-256 through Web Crypto where available and label compatibility checksums accurately.
 - Preserve unknown fields.
 - Preserve a verified recovery package before replacement restore, merge, transfer import, or rollback.
 - Validate packages immediately before mutation.
 - Keep source work unchanged until destination verification and acceptance complete.
 - Transfer requires typed `TRANSFER` approval and final confirmation.
 - Acceptance requires matching counts, per-category review, recovery retention, and typed `ACCEPT`.
-- Rollback requires a verified preview, explicit understanding, typed `ROLLBACK`, final confirmation, and a pre-rollback package.
+- Rollback requires verified preview, explicit understanding, typed `ROLLBACK`, final confirmation, and a pre-rollback package.
 - Verify every rollback write and required removal.
 - Restore and verify the transferred snapshot after rollback failure.
-- Never move queue, transfer, acceptance, rollback, registry, or field-rehearsal work into the service worker.
+- Never move queue, transfer, acceptance, rollback, registry, review, or field-rehearsal work into the service worker.
 
 ## Hosted-provider rules
 
@@ -198,14 +188,15 @@ A conforming provider implements Promise-returning list, get, upsert, archive, r
 
 Passing conformance does not establish authentication, authorization, tenant isolation, encryption, durable audit, residency, or legal compliance.
 
-## Meeting-Day and accessibility rules
+## Accessibility and mobile rules
 
 - Use the existing meeting form and data model.
 - Resolve core sections through the registry when available.
 - Supporting panels may collapse only after valid registry diagnostics.
-- Registry failure must be visible and must leave controls accessible.
+- Registry failure must be visible and leave controls accessible.
 - Dynamic targets must be keyboard focusable.
-- Navigation must work at phone and tablet widths without page-level overflow.
+- Navigation must use stable panel IDs with compatibility fallbacks.
+- Phone and tablet widths must not create page-level overflow.
 - Respect reduced-motion preferences.
 - Keep controls keyboard reachable, visibly focused, labeled, and touch friendly.
 
@@ -222,4 +213,4 @@ For material changes:
 - document product and security boundaries;
 - update README, project specification, architecture, test plan, changelog, and field-rehearsal materials when the shell advances.
 
-Do not merge with failing provider, recovery, custody, signing, synchronization, transfer, acceptance, rollback, panel-registry, mobile, or browser checks.
+Do not merge with failing provider, recovery, custody, signing, synchronization, transfer, acceptance, rollback, review, panel-registry, mobile, or browser checks.

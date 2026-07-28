@@ -44,7 +44,7 @@ test.describe("Mobile and cross-device readiness v1.6.7", () => {
     const serialized = JSON.stringify(report);
 
     expect(report.type).toBe("methodz-device-readiness-report");
-    expect(report.appShellVersion).toBe("1.6.9");
+    expect(report.appShellVersion).toBe("1.6.11");
     expect(report.recordSchemaVersion).toBe("1.6.0");
     expect(report.workspaceCounts.queuedSyncRehearsals).toBe(1);
     expect(report.boundaries.containsMeetingContent).toBe(false);
@@ -58,7 +58,7 @@ test.describe("Mobile and cross-device readiness v1.6.7", () => {
 
   test("readiness actions remain explicit and mobile navigation reaches records", async ({ page }) => {
     await page.locator("#mobileActionDockV167 button[data-action='records']").click();
-    await expect(page.locator("#savedRecordsSectionV167")).toBeInViewport();
+    await expect(page.locator("#savedRecordsPanelV1610")).toBeInViewport();
 
     await page.locator("#mobileActionDockV167 button[data-action='device']").click();
     await expect(page.locator("#deviceReadinessV167")).toBeInViewport();
