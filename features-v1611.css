@@ -1,0 +1,64 @@
+/* Methodz Meeting Manager v1.6.11 live meeting pulse and follow-up review presentation. */
+.meeting-pulse-v1611 { border-top: 4px solid #1d6f78; }
+.meeting-pulse-grid-v1611,
+.follow-up-metrics-v1611 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.follow-up-metric-v1611 {
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--border, #d7d7d7);
+  border-radius: 0.75rem;
+  background: #f7f9f9;
+}
+.follow-up-metric-v1611 strong { display: block; font-size: 1.25rem; line-height: 1.2; }
+.meeting-pulse-progress-v1611 { width: 100%; height: 0.8rem; margin: 0.35rem 0 0.8rem; }
+.meeting-pulse-sections-v1611,
+.follow-up-tags-v1611 { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 1rem; }
+.meeting-pulse-section-v1611,
+.follow-up-tag-v1611 {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border, #d7d7d7);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.82rem;
+}
+.meeting-pulse-section-v1611.is-complete { border-color: #2f7d4b; background: #eef8f1; }
+.follow-up-review-v1611 { border-top: 4px solid #8a6d1d; }
+.follow-up-toolbar-v1611 {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 2fr) auto auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 1rem 0;
+}
+.follow-up-toolbar-v1611 label { margin: 0; }
+.follow-up-list-v1611 { display: grid; gap: 0.75rem; }
+.follow-up-item-v1611 {
+  padding: 0.9rem;
+  border: 1px solid var(--border, #d7d7d7);
+  border-left: 5px solid #777;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+.follow-up-item-v1611[data-primary="overdue"] { border-left-color: #a12f2f; background: #fff8f8; }
+.follow-up-item-v1611[data-primary="due-soon"] { border-left-color: #a46e12; background: #fffaf0; }
+.follow-up-item-v1611[data-primary="completed"] { border-left-color: #2f7d4b; background: #f4fbf6; }
+.follow-up-item-heading-v1611 { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.follow-up-item-heading-v1611 h3 { margin: 0; overflow-wrap: anywhere; }
+.follow-up-meta-v1611 { margin: 0.45rem 0 0; color: var(--muted, #555); overflow-wrap: anywhere; }
+.follow-up-tag-v1611 { background: #ececec; font-size: 0.78rem; font-weight: 700; }
+@media (max-width: 760px) {
+  .follow-up-toolbar-v1611 { grid-template-columns: 1fr; }
+  .follow-up-toolbar-v1611 button,
+  .follow-up-review-v1611 .button-row button,
+  .meeting-pulse-v1611 button { width: 100%; min-height: 44px; }
+  .follow-up-item-heading-v1611 { display: grid; }
+}
+@media print {
+  .meeting-pulse-v1611,
+  .follow-up-review-v1611 { display: none !important; }
+}
