@@ -1,5 +1,5 @@
-/* Methodz Meeting Manager v1.6.11 static panel metadata. */
-(function registerMethodzPanelsV1611(global) {
+/* Methodz Meeting Manager v1.6.12 static panel metadata. */
+(function registerMethodzPanelsV1612(global) {
   "use strict";
 
   const registry = global.MethodzPanelRegistryV1610;
@@ -42,6 +42,7 @@
     panel("workspace-recovery", "Recovery Readiness", "recovery", "#workspaceRecoveryPanelV16", 700, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
     panel("synchronization-rehearsal", "Synchronization Rehearsal", "synchronization", "#syncRehearsalPanelV165", 800, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
     panel("device-readiness", "Device Readiness", "diagnostics", "#deviceReadinessV167", 900, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
+    panel("workspace-capacity", "Workspace Capacity", "diagnostics", "#workspaceCapacityPanelV1612", 910, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
     panel("cross-device-transfer", "Cross-Device Transfer Rehearsal", "transfer", "#crossDeviceTransferPanelV168", 1000, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
     panel("transfer-acceptance", "Transfer Acceptance & Rollback", "acceptance", "#transferAcceptancePanelV169", 1010, { defaultVisibility: "collapsed", printBehavior: "exclude" }),
     panel("meeting-day-control", "Meeting-Day Mode", "shell", "#meetingDayControlV169", 1020, { printBehavior: "exclude" }),
