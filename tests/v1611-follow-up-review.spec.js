@@ -18,11 +18,12 @@ test.describe("v1.6.11 live meeting pulse and follow-up review", () => {
       diagnostics: window.MethodzPanelRegistryV1610.diagnostics(),
       panels: window.MethodzPanelRegistryV1610.list().map((panel) => panel.id)
     }));
-    expect(snapshot.appShellVersion).toBe("1.6.11");
+    expect(snapshot.appShellVersion).toBe("1.6.12");
     expect(snapshot.schemaVersion).toBe("1.6.0");
     expect(snapshot.diagnostics.valid).toBe(true);
     expect(snapshot.panels).toContain("meeting-pulse");
     expect(snapshot.panels).toContain("follow-up-review");
+    expect(snapshot.panels).toContain("workspace-capacity");
     await expect(page.locator('[data-meeting-day-target-v169="meetingPulsePanelV1611"]')).toHaveText("Pulse");
   });
 

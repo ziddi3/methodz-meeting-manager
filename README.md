@@ -6,19 +6,18 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, transfe
 
 ## Current release
 
-**App shell 1.6.11 · Record schema 1.6.0 · Meeting review core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.0.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
 
 The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to any ordinary static host.
 
-Version 1.6.11 adds:
+Version 1.6.12 adds:
 
-- a read-only **Meeting Pulse** showing live capture readiness;
-- navigation to the next incomplete capture section;
-- a cross-record **Follow-Up Review** for overdue, due-soon, unassigned, invalid-date, pending, in-progress, and completed tasks;
-- explicit source-meeting opening from each review item;
-- explicit filtered CSV download;
-- portable review logic and browser regression coverage;
-- no backend, credential, framework, build step, schema migration, automatic task update, or background synchronization.
+- an explicit **Workspace Capacity** panel;
+- aggregate localStorage category and byte reporting without raw keys or values;
+- optional browser origin-usage and quota comparison;
+- a bounded, in-memory large-workspace Follow-Up Review rehearsal;
+- metadata-only capacity and performance report downloads;
+- no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, or background synchronization.
 
 ## Entry points
 
@@ -63,6 +62,14 @@ Follow-Up Review derives task status across saved active records. Operators can 
 
 The review does not automatically update task status, send reminders, contact assignees, or synchronize data. Its CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
 
+## Workspace Capacity
+
+Workspace Capacity runs only after an explicit operator action. It estimates the UTF-8 size of browser-local entries, groups them into aggregate categories, and may compare the measured total with `navigator.storage.estimate()` when the browser provides it.
+
+The capacity panel also runs a bounded Follow-Up Review rehearsal with synthetic records held only in memory. Synthetic records are never saved, revised, archived, queued, transferred, or synchronized. Downloaded reports contain aggregate counts, byte totals, thresholds, and timing only. They exclude raw storage keys and values, meeting text, record identifiers, signatures, credentials, private keys, queue payloads, and hidden governance metadata.
+
+The panel never cleans, compacts, archives, deletes, or changes data automatically. A verified backup remains required before any separate operator-led cleanup decision.
+
 ## Meeting-Day Mode
 
 Meeting-Day Mode keeps the live route in front:
@@ -80,7 +87,7 @@ Summary
 Save
 ```
 
-Supporting governance, recovery, provider, synchronization, transfer, acceptance, diagnostics, and saved-record tools are collapsed rather than removed. **Show Tools** reopens them. The last section and mode preference are restored locally after reload. `Alt+M` toggles Meeting-Day Mode when focus is outside a form control.
+Supporting governance, recovery, provider, synchronization, transfer, acceptance, diagnostics, capacity, and saved-record tools are collapsed rather than removed. **Show Tools** reopens them. The last section and mode preference are restored locally after reload. `Alt+M` toggles Meeting-Day Mode when focus is outside a form control.
 
 ## Cross-device transfer and acceptance
 
@@ -95,7 +102,7 @@ The existing transfer workflow remains explicit:
 7. retain the pre-import package until actual-use acceptance;
 8. use the verified rollback rehearsal only through explicit approval.
 
-Transfer, acceptance, diagnostics, rollback, readiness, registry, and field-rehearsal reports are metadata-only. Transfer bundles and workspace backups contain business data and must be protected accordingly.
+Transfer, acceptance, diagnostics, rollback, readiness, registry, capacity, and field-rehearsal reports are metadata-only. Transfer bundles and workspace backups contain business data and must be protected accordingly.
 
 ## Core principles
 
@@ -109,7 +116,7 @@ Transfer, acceptance, diagnostics, rollback, readiness, registry, and field-rehe
 - Active preservation holds block permanent disposition.
 - Typed signatures require consent and remain excluded from external copies.
 - Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, reports, or service-worker caches.
-- Review, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
+- Review, capacity, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
 - Service workers cache static assets only and never process business data.
 - Infrastructure supports the meeting workflow rather than replacing it.
 
@@ -117,7 +124,7 @@ Transfer, acceptance, diagnostics, rollback, readiness, registry, and field-rehe
 
 ```text
 Configuration
-  config.js through config-v1611.js
+  config.js through config-v1612.js
 
 Schema and migration
   migrations.js through migrations-v16.js
@@ -145,6 +152,7 @@ Application shell and meeting workflow
   panel-registry-core.js
   panel-registry-definitions.js
   meeting-review-core.js
+  workspace-capacity-core.js
   app.js
   ordered features-v*.js layers
 
@@ -155,7 +163,7 @@ Archive, verification, and static shell
   service-worker.js
 ```
 
-Script order is part of the runtime contract. Later layers intentionally extend stable functions created by earlier layers. v1.6.11 creates its dynamic review panels before the v1.6.10 registry binds the completed shell, and Meeting-Day navigation consumes registry metadata last.
+Script order is part of the runtime contract. Later layers intentionally extend stable functions created by earlier layers. v1.6.12 loads its portable capacity core before browser features, creates the dynamic capacity panel after the Follow-Up Review, and lets the v1.6.10 registry bind the completed shell before Meeting-Day navigation consumes registry metadata.
 
 ## Hosted-provider boundary
 
@@ -180,6 +188,7 @@ GitHub Actions covers:
 - JavaScript syntax and required-file wiring;
 - panel registry and Meeting-Day behavior;
 - live pulse and follow-up review logic;
+- capacity aggregation, privacy boundaries, and bounded in-memory performance rehearsal;
 - cryptographic signing, recovery, and custody;
 - hosted-provider conformance and network-fault pilots;
 - synchronization rehearsal and queue portability;
@@ -203,6 +212,9 @@ docs/V1.6.10-ARCHITECTURE.md
 docs/V1.6.11-ARCHITECTURE.md
 docs/V1.6.11-TESTS.md
 docs/V1.6.11-CHANGELOG.md
+docs/V1.6.12-ARCHITECTURE.md
+docs/V1.6.12-TESTS.md
+docs/V1.6.12-CHANGELOG.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
@@ -212,7 +224,7 @@ docs/KEY-CUSTODY-OPERATIONS.md
 ### 1.x hardening
 
 - execute documented Android, iOS, tablet, and two-device field rehearsals;
-- continue large-workspace performance and bounded-storage testing;
+- continue real-device and large-workspace performance evidence collection;
 - improve meeting-day review and follow-up ergonomics without silent automation;
 - evaluate production-provider candidates against the evidence gate;
 - keep synchronization explicit and user controlled;
