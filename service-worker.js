@@ -1,7 +1,8 @@
 /* Methodz Meeting Manager optional static app-shell service worker. */
-const CACHE_NAME = "methodz-meeting-manager-v1.6.11";
-const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.10";
+const CACHE_NAME = "methodz-meeting-manager-v1.6.12";
+const PREVIOUS_CACHE_NAME = "methodz-meeting-manager-v1.6.11";
 const HISTORICAL_CACHE_NAMES = Object.freeze([
+  "methodz-meeting-manager-v1.6.10",
   "methodz-meeting-manager-v1.6.9",
   "methodz-meeting-manager-v1.6.8",
   "methodz-meeting-manager-v1.6.7",
@@ -41,6 +42,7 @@ const APP_SHELL = [
   "./features-v169.css",
   "./features-v1610.css",
   "./features-v1611.css",
+  "./features-v1612.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -58,6 +60,7 @@ const APP_SHELL = [
   "./config-v169.js",
   "./config-v1610.js",
   "./config-v1611.js",
+  "./config-v1612.js",
   "./migrations.js",
   "./migrations-v10.js",
   "./migrations-v11.js",
@@ -84,6 +87,7 @@ const APP_SHELL = [
   "./panel-registry-core.js",
   "./panel-registry-definitions.js",
   "./meeting-review-core.js",
+  "./workspace-capacity-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -136,6 +140,7 @@ const APP_SHELL = [
   "./features-v169-transfer-acceptance.js",
   "./features-v169-rollback-stability.js",
   "./features-v1611-follow-up-review.js",
+  "./features-v1612-workspace-capacity.js",
   "./features-v1610-panel-registry.js",
   "./features-v169-meeting-day.js",
   "./manifest.webmanifest",
@@ -202,7 +207,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, or review-mutation handler.
-// The service worker never reads meeting, task, review, registry, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, or review-mutation handler.
+// The service worker never reads meeting, task, review, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;
