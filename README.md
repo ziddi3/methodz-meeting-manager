@@ -6,7 +6,7 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, transfe
 
 ## Current release
 
-**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.0.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
 
 The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to any ordinary static host.
 
@@ -19,6 +19,8 @@ Version 1.6.12 adds:
 - a bounded, in-memory large-workspace Follow-Up Review rehearsal;
 - metadata-only capacity and performance report downloads;
 - no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, or background synchronization.
+
+The current 1.x hardening layer also adds a read-only **Daily Focus** inside Follow-Up Review. It prioritizes incomplete saved tasks by deadline risk, missing setup, configured priority, and due date, then summarizes **Assigned To** workload. It does not update records, assign people, send reminders, contact assignees, or synchronize data.
 
 ## Entry points
 
@@ -59,9 +61,11 @@ It can focus the next incomplete section through the existing Meeting-Day naviga
 
 ## Follow-Up Review
 
-Follow-Up Review derives task status across saved active records. Operators can filter and search the local review, open the source meeting for explicit editing, or download the visible review as CSV.
+Follow-Up Review derives task status across saved active records. Operators can filter and search the local review, inspect the bounded Daily Focus queue, review Assigned To workload, open a source meeting for explicit editing, or download the visible review as CSV.
 
-The review does not automatically update task status, send reminders, contact assignees, or synchronize data. Its CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
+Daily Focus excludes completed work and derives urgency bands and plain-language reasons such as overdue age, due-soon timing, missing Assigned To, invalid or missing due date, active status, and high priority. Ordering is deterministic and bounded by configuration.
+
+The review does not automatically update task status, assign people, send reminders, contact assignees, or synchronize data. Its CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
 
 ## Workspace Capacity
 
@@ -192,7 +196,7 @@ GitHub Actions covers:
 
 - JavaScript syntax and required-file wiring;
 - panel registry and Meeting-Day behavior;
-- live pulse and follow-up review logic;
+- live pulse, follow-up review, Daily Focus ordering, bounded Assigned To workload, and no-mutation logic;
 - deterministic bounded capacity collection, unavailable-read handling, archive precedence, privacy boundaries, and bounded in-memory performance rehearsal;
 - cryptographic signing, recovery, and custody;
 - hosted-provider conformance and network-fault pilots;
@@ -220,6 +224,8 @@ docs/V1.6.11-CHANGELOG.md
 docs/V1.6.12-ARCHITECTURE.md
 docs/V1.6.12-TESTS.md
 docs/V1.6.12-CHANGELOG.md
+docs/FOLLOW-UP-FOCUS.md
+docs/FOLLOW-UP-FOCUS-TESTS.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```

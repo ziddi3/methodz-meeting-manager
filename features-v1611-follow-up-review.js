@@ -1,4 +1,4 @@
-/* Methodz Meeting Manager v1.6.11 live meeting pulse and follow-up review browser layer. */
+/* Methodz Meeting Manager v1.6.11 live meeting pulse and follow-up review browser layer, hardened with read-only focus briefing. */
 (function initializeFollowUpReviewV1611(global) {
   "use strict";
 
@@ -7,6 +7,7 @@
   const Review = global.MethodzMeetingReviewCoreV1611;
   const preferencesKey = config.storageKeys?.followUpReviewPreferences || "methodzFollowUpReviewPreferencesV1611";
   let currentReport = null;
+  let currentFocusReport = null;
   let refreshQueued = false;
 
   const text = (value) => String(value ?? "").trim();
@@ -65,11 +66,34 @@
     const panel = document.createElement("section");
     panel.id = "followUpReviewPanelV1611";
     panel.className = "card follow-up-review-v1611";
+    panel.dataset.skipMeetingDraftAutosave = "true";
     panel.innerHTML = `
       <p class="eyebrow">Saved Record Review</p>
       <h2>Follow-Up Review</h2>
       <p class="helper-text">Review task status across saved active records. Opening a task loads its source meeting for explicit editing.</p>
       <div id="followUpMetricsV1611" class="follow-up-metrics-v1611"></div>
+      <section id="followUpFocusV1613" class="follow-up-focus-v1613" aria-labelledby="followUpFocusHeadingV1613">
+        <div class="follow-up-focus-heading-v1613">
+          <div>
+            <p class="eyebrow">Read-Only Triage</p>
+            <h3 id="followUpFocusHeadingV1613">Daily Focus</h3>
+          </div>
+          <button id="refreshFollowUpFocusV1613" type="button">Refresh Focus</button>
+        </div>
+        <p class="helper-text">A deterministic queue of incomplete work, ordered by deadline risk, missing setup, priority, and due date. It never changes task status or contacts anyone.</p>
+        <div id="followUpFocusMetricsV1613" class="follow-up-focus-metrics-v1613"></div>
+        <div class="follow-up-focus-grid-v1613">
+          <div>
+            <h4>Next Actions</h4>
+            <div id="followUpFocusListV1613" class="follow-up-focus-list-v1613"></div>
+          </div>
+          <div>
+            <h4>Assigned To Load</h4>
+            <div id="followUpAssigneeLoadV1613" class="follow-up-assignee-load-v1613"></div>
+          </div>
+        </div>
+        <p id="followUpFocusStatusV1613" class="helper-text" aria-live="polite"></p>
+      </section>
       <div class="follow-up-toolbar-v1611">
         <label for="followUpFilterV1611">Review Filter
           <select id="followUpFilterV1611">
@@ -150,6 +174,54 @@
     return (currentReport?.items || []).filter((item) => Review.matchesFilter(item, filter) && (!query || itemSearchText(item).includes(query)));
   }
 
+  function renderFocus(report) {
+    const section = document.getElementById("followUpFocusV1613");
+    if (!section) return;
+    if (settings.focusEnabled === false || typeof Review?.buildFollowUpFocus !== "function") {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    currentFocusReport = Review.buildFollowUpFocus(report, {
+      maximumItems: settings.focusMaximumItems,
+      maximumAssignees: settings.focusMaximumAssignees
+    });
+    const counts = currentFocusReport.counts;
+    const metrics = document.getElementById("followUpFocusMetricsV1613");
+    if (metrics) metrics.innerHTML = [
+      metric("Actionable", counts.actionable),
+      metric("Urgent", counts.urgent),
+      metric("Needs setup", counts.needsSetup),
+      metric("Due soon", counts.dueSoon),
+      metric("In progress", counts.active)
+    ].join("");
+    const list = document.getElementById("followUpFocusListV1613");
+    if (list) list.innerHTML = currentFocusReport.focusItems.length
+      ? currentFocusReport.focusItems.map((item, index) => `
+        <article class="follow-up-focus-item-v1613" data-focus-band-v1613="${escapeHtml(item.focus.band)}">
+          <div>
+            <span class="follow-up-focus-rank-v1613">${index + 1}</span>
+            <strong>${escapeHtml(item.task || "Untitled follow-up task")}</strong>
+            <p>${escapeHtml(item.meetingTitle)} · Assigned To: ${escapeHtml(item.assignedTo || "Unassigned")}</p>
+            <div class="follow-up-tags-v1611">${item.focus.reasons.map((reason) => `<span class="follow-up-tag-v1611">${escapeHtml(reason)}</span>`).join("")}</div>
+          </div>
+          <button type="button" data-follow-up-record-id-v1611="${escapeHtml(item.recordId)}">Open Meeting</button>
+        </article>`).join("")
+      : "<p>No incomplete saved tasks are available for focus.</p>";
+    const assignees = document.getElementById("followUpAssigneeLoadV1613");
+    if (assignees) assignees.innerHTML = currentFocusReport.assigneeLoads.length
+      ? currentFocusReport.assigneeLoads.map((item) => `
+        <div class="follow-up-assignee-item-v1613${item.missingAssignment ? " is-unassigned" : ""}">
+          <strong>${escapeHtml(item.assignedTo)}</strong>
+          <span>${escapeHtml(item.tasks)} open · ${escapeHtml(item.overdue)} overdue · ${escapeHtml(item.dueSoon)} due soon · ${escapeHtml(item.inProgress)} in progress</span>
+        </div>`).join("")
+      : "<p>No Assigned To workload is available.</p>";
+    const status = document.getElementById("followUpFocusStatusV1613");
+    if (status) status.textContent = currentFocusReport.totalItems
+      ? `${currentFocusReport.focusItems.length} of ${currentFocusReport.totalItems} incomplete task${currentFocusReport.totalItems === 1 ? "" : "s"} prioritized${currentFocusReport.truncated ? "; the queue is capped by configuration" : ""}. This view is read-only.`
+      : "No incomplete saved tasks require triage. This view is read-only.";
+  }
+
   function renderFollowUp() {
     if (!Review) return;
     currentReport = Review.buildFollowUpReview(safeRecords(), { dueSoonDays: settings.dueSoonDays, maxItems: settings.maximumItems });
@@ -159,6 +231,7 @@
       metric("Needs attention", counts.attention), metric("Overdue", counts.overdue), metric("Due soon", counts.dueSoon),
       metric("Unassigned", counts.unassigned), metric("In progress", counts.inProgress), metric("Completed", counts.completed)
     ].join("");
+    renderFocus(currentReport);
     const items = visibleItems();
     const status = document.getElementById("followUpStatusV1611");
     if (status) status.textContent = `${items.length} of ${currentReport.totalItems} task${currentReport.totalItems === 1 ? "" : "s"} shown${currentReport.truncated ? "; review is capped by configuration" : ""}.`;
@@ -239,7 +312,8 @@
     main?.addEventListener("change", refreshMeetingReviewV1611);
     document.getElementById("followUpFilterV1611")?.addEventListener("change", () => { savePreferences(); renderFollowUp(); });
     document.getElementById("followUpSearchV1611")?.addEventListener("input", renderFollowUp);
-    document.getElementById("followUpListV1611")?.addEventListener("click", (event) => {
+    document.getElementById("refreshFollowUpFocusV1613")?.addEventListener("click", renderFollowUp);
+    document.getElementById("followUpReviewPanelV1611")?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-follow-up-record-id-v1611]");
       if (button) openFollowUpMeetingV1611(button.dataset.followUpRecordIdV1611);
     });
@@ -257,6 +331,7 @@
   global.goToNextIncompleteMeetingSectionV1611 = goToNextIncompleteMeetingSectionV1611;
   global.openFollowUpMeetingV1611 = openFollowUpMeetingV1611;
   global.downloadFollowUpReviewCsvV1611 = downloadFollowUpReviewCsvV1611;
+  global.getFollowUpFocusReportV1613 = () => currentFocusReport;
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
   else start();

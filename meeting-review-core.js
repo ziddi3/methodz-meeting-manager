@@ -1,4 +1,4 @@
-/* Methodz Meeting Manager v1.6.11 portable live-pulse and follow-up review core. */
+/* Methodz Meeting Manager v1.6.11 portable live-pulse and follow-up review core, hardened with read-only focus briefing. */
 (function exposeMethodzMeetingReviewCore(root, factory) {
   "use strict";
   const api = factory();
@@ -7,7 +7,8 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createMethodzMeetingReviewCoreV1611() {
   "use strict";
 
-  const VERSION = "1.0.0";
+  const VERSION = "1.1.0";
+  const FOCUS_REPORT_VERSION = "1.0.0";
   const DAY_MS = 86400000;
   const SECTIONS = Object.freeze([
     { id: "meetingInformationPanelV1610", key: "meetingInformation", label: "Meeting Information" },
@@ -148,6 +149,107 @@
     };
   }
 
+  function priorityRank(value) {
+    const normalized = text(value).toLowerCase();
+    if (["urgent", "critical"].includes(normalized)) return 0;
+    if (normalized === "high") return 1;
+    if (["normal", "medium"].includes(normalized)) return 2;
+    if (normalized === "low") return 3;
+    return 2;
+  }
+
+  function focusDetails(item, today) {
+    const due = dateOnly(item?.due);
+    const deltaDays = due ? Math.round((due.milliseconds - today.milliseconds) / DAY_MS) : null;
+    const flags = item?.flags && typeof item.flags === "object" ? item.flags : {};
+    const band = flags.overdue ? "urgent"
+      : (flags.invalidDueDate || flags.unassigned || flags.unscheduled) ? "needs-setup"
+        : flags.dueSoon ? "due-soon"
+          : flags.inProgress ? "active" : "planned";
+    const reasons = [];
+    if (flags.overdue && deltaDays !== null) reasons.push(`${Math.abs(deltaDays)} day${Math.abs(deltaDays) === 1 ? "" : "s"} overdue`);
+    if (flags.invalidDueDate) reasons.push("Due date is invalid");
+    if (flags.unassigned) reasons.push("Assigned To is missing");
+    if (flags.unscheduled) reasons.push("Due date is missing");
+    if (flags.dueSoon && deltaDays === 0) reasons.push("Due today");
+    else if (flags.dueSoon && deltaDays !== null) reasons.push(`Due in ${deltaDays} day${deltaDays === 1 ? "" : "s"}`);
+    if (flags.inProgress) reasons.push("In progress");
+    if (["urgent", "critical", "high"].includes(text(item?.priority).toLowerCase())) reasons.push(`${text(item.priority)} priority`);
+    if (!reasons.length) reasons.push(flags.pending ? "Pending follow-up" : "Planned follow-up");
+    return {
+      band,
+      reasons,
+      daysUntilDue: deltaDays,
+      overdueDays: deltaDays !== null && deltaDays < 0 ? Math.abs(deltaDays) : 0
+    };
+  }
+
+  function buildFollowUpFocus(review, options = {}) {
+    const source = review && typeof review === "object" ? review : {};
+    const today = todayDateOnly(options.today);
+    const maximumItems = boundedInteger(options.maximumItems, 7, 1, 50);
+    const maximumAssignees = boundedInteger(options.maximumAssignees, 8, 1, 50);
+    const sourceItems = Array.isArray(source.items) ? source.items : [];
+    const actionable = sourceItems.filter((item) => item?.flags?.incomplete === true).map((item) => ({
+      ...item,
+      flags: { ...(item.flags || {}) },
+      attention: Array.isArray(item.attention) ? [...item.attention] : [],
+      focus: focusDetails(item, today)
+    }));
+    const bandRank = { urgent: 0, "needs-setup": 1, "due-soon": 2, active: 3, planned: 4 };
+    actionable.sort((left, right) => {
+      const bandDifference = (bandRank[left.focus.band] ?? 99) - (bandRank[right.focus.band] ?? 99);
+      if (bandDifference) return bandDifference;
+      const priorityDifference = priorityRank(left.priority) - priorityRank(right.priority);
+      if (priorityDifference) return priorityDifference;
+      const dueDifference = (dateOnly(left.due)?.milliseconds ?? Number.MAX_SAFE_INTEGER) - (dateOnly(right.due)?.milliseconds ?? Number.MAX_SAFE_INTEGER);
+      if (dueDifference) return dueDifference;
+      return right.recordUpdatedAt.localeCompare(left.recordUpdatedAt) || left.meetingTitle.localeCompare(right.meetingTitle) || left.taskIndex - right.taskIndex;
+    });
+
+    const assigneeMap = new Map();
+    actionable.forEach((item) => {
+      const label = item.assignedTo || "Unassigned";
+      const current = assigneeMap.get(label) || { assignedTo: label, tasks: 0, overdue: 0, dueSoon: 0, inProgress: 0, highPriority: 0, missingAssignment: !item.assignedTo };
+      current.tasks += 1;
+      if (item.flags.overdue) current.overdue += 1;
+      if (item.flags.dueSoon) current.dueSoon += 1;
+      if (item.flags.inProgress) current.inProgress += 1;
+      if (priorityRank(item.priority) <= 1) current.highPriority += 1;
+      assigneeMap.set(label, current);
+    });
+    const assignees = [...assigneeMap.values()].sort((left, right) =>
+      Number(right.missingAssignment) - Number(left.missingAssignment)
+      || right.overdue - left.overdue
+      || right.highPriority - left.highPriority
+      || right.tasks - left.tasks
+      || left.assignedTo.localeCompare(right.assignedTo)
+    );
+    const count = (predicate) => actionable.filter(predicate).length;
+    const focusItems = actionable.slice(0, maximumItems);
+    return {
+      reportType: "methodz-follow-up-focus", reportVersion: FOCUS_REPORT_VERSION,
+      generatedAt: new Date().toISOString(), today: today.raw,
+      counts: {
+        actionable: actionable.length,
+        urgent: count((item) => item.focus.band === "urgent"),
+        needsSetup: count((item) => item.focus.band === "needs-setup"),
+        dueSoon: count((item) => item.focus.band === "due-soon"),
+        active: count((item) => item.focus.band === "active"),
+        planned: count((item) => item.focus.band === "planned"),
+        unassigned: count((item) => item.flags.unassigned),
+        assignees: assignees.filter((item) => !item.missingAssignment).length
+      },
+      totalItems: actionable.length,
+      maximumItems,
+      truncated: actionable.length > maximumItems,
+      focusItems,
+      nextAction: focusItems[0] || null,
+      assigneeLoads: assignees.slice(0, maximumAssignees),
+      assigneeLoadsTruncated: assignees.length > maximumAssignees
+    };
+  }
+
   function createMeetingPulse(meeting) {
     const source = meeting && typeof meeting === "object" ? meeting : {};
     const agenda = Array.isArray(source.agenda) ? source.agenda : [];
@@ -188,5 +290,5 @@
     return item.flags[value] === true || item.primary === value;
   }
 
-  return Object.freeze({ version: VERSION, dateOnly, classifyTask, buildFollowUpReview, createMeetingPulse, matchesFilter });
+  return Object.freeze({ version: VERSION, focusReportVersion: FOCUS_REPORT_VERSION, dateOnly, classifyTask, buildFollowUpReview, buildFollowUpFocus, createMeetingPulse, matchesFilter });
 });
