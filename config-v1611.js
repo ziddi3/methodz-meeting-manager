@@ -10,14 +10,18 @@
     followUpReviewPreferences: "methodzFollowUpReviewPreferencesV1611"
   };
   config.followUpReview = {
-    version: "1.0.0",
+    version: "1.1.0",
     enabled: true,
     dueSoonDays: 7,
     maximumItems: 500,
     defaultFilter: "attention",
     livePulseEnabled: true,
+    focusEnabled: true,
+    focusMaximumItems: 7,
+    focusMaximumAssignees: 8,
     exportsRequireExplicitAction: true,
     automaticRecordMutation: false,
+    automaticReminderDelivery: false,
     productionEndpointConfigured: false
   };
 
