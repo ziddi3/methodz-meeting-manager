@@ -73,7 +73,10 @@ test.describe("v1.6.11 live meeting pulse and follow-up review", () => {
     expect(after.records).toBe(before.records);
     expect(after.draft).toBe(before.draft);
 
-    await page.locator('#followUpFocusListV1613 [data-follow-up-record-id-v1611="meeting-1"]').click();
+    await page.locator("#followUpFocusListV1613 .follow-up-focus-item-v1613")
+      .filter({ hasText: "Repair overdue item" })
+      .getByRole("button", { name: "Open Meeting" })
+      .click();
     await expect(page.locator("#editingRecordId")).toHaveValue("meeting-1");
     await expect(page.locator(".task-name").first()).toHaveValue("Repair overdue item");
     await expect(page.locator("#followUpTasksPanelV1610")).toBeInViewport();
