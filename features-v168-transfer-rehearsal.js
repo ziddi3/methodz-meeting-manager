@@ -174,6 +174,7 @@
     const panel = document.createElement("section");
     panel.id = "crossDeviceTransferPanelV168";
     panel.className = "card cross-device-transfer-v168";
+    panel.dataset.skipMeetingDraftAutosave = "true";
     panel.tabIndex = -1;
     panel.innerHTML = `
       <div class="section-subheader transfer-header-v168">

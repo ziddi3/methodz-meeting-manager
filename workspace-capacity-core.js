@@ -18,6 +18,12 @@
     { id: "preferences-diagnostics", label: "Preferences and diagnostics", pattern: /preference|diagnostic|readiness|evidence|report|meetingday|panelregistry/i },
     { id: "other", label: "Other application data", pattern: null }
   ]);
+  const CATEGORY_MATCH_ORDER = Object.freeze([
+    ...CATEGORY_DEFINITIONS.filter(({ id }) => id === "archive"),
+    ...CATEGORY_DEFINITIONS.filter(({ id }) => id !== "archive")
+  ]);
+  const UTF8_ENCODER = typeof TextEncoder === "function" ? new TextEncoder() : null;
+  const STORAGE_READ_ERROR_CODE = "local-storage-read-failed";
 
   const text = (value) => String(value ?? "");
 
@@ -34,14 +40,14 @@
 
   function utf8ByteLength(value) {
     const content = text(value);
-    if (typeof TextEncoder === "function") return new TextEncoder().encode(content).length;
+    if (UTF8_ENCODER) return UTF8_ENCODER.encode(content).length;
     if (typeof Buffer === "function") return Buffer.byteLength(content, "utf8");
     return unescape(encodeURIComponent(content)).length;
   }
 
   function categoryForKey(key) {
     const normalized = text(key);
-    return CATEGORY_DEFINITIONS.find((definition) => definition.pattern?.test(normalized)) || CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1];
+    return CATEGORY_MATCH_ORDER.find((definition) => definition.pattern?.test(normalized)) || CATEGORY_DEFINITIONS[CATEGORY_DEFINITIONS.length - 1];
   }
 
   function buildRecommendations(status, utilizationPercent, truncated, browserUsageHigher) {
@@ -56,6 +62,22 @@
     return recommendations;
   }
 
+  function reportBoundaries() {
+    return {
+      metadataOnly: true,
+      rawKeysIncluded: false,
+      rawValuesIncluded: false,
+      automaticCleanup: false,
+      recordMutation: false,
+      synchronization: false
+    };
+  }
+
+  function totalEntryCount(value, minimum) {
+    const numeric = Number(value);
+    return Number.isSafeInteger(numeric) && numeric >= minimum ? numeric : minimum;
+  }
+
   function buildCapacityReport(snapshot, options = {}) {
     const source = snapshot && typeof snapshot === "object" && !Array.isArray(snapshot) ? snapshot : {};
     const maximumEntries = boundedInteger(options.maximumEntries, 5000, 1, 50000);
@@ -64,6 +86,7 @@
     const softBudgetBytes = finiteNonNegative(options.softBudgetBytes) ?? 4 * 1024 * 1024;
     const keys = Object.keys(source).sort();
     const selectedKeys = keys.slice(0, maximumEntries);
+    const totalEntries = totalEntryCount(options.totalEntries, keys.length);
     const categories = new Map(CATEGORY_DEFINITIONS.map(({ id, label }) => [id, { id, label, entries: 0, bytes: 0 }]));
     let measuredBytes = 0;
 
@@ -88,14 +111,15 @@
           ? "review"
           : "healthy";
     const browserUsageHigher = browserUsageBytes !== null && browserUsageBytes > measuredBytes;
-    const truncated = keys.length > selectedKeys.length;
+    const truncated = totalEntries > selectedKeys.length;
 
     return {
       reportType: "methodz-workspace-capacity",
       reportVersion: VERSION,
       generatedAt: new Date().toISOString(),
       status,
-      counts: { scannedEntries: selectedKeys.length, totalEntries: keys.length, truncated },
+      availability: { localStorage: "available", errorCode: null },
+      counts: { scannedEntries: selectedKeys.length, totalEntries, truncated },
       bytes: {
         measuredLocalStorage: measuredBytes,
         browserReportedOriginUsage: browserUsageBytes,
@@ -107,15 +131,104 @@
       thresholds: { warningPercent, criticalPercent },
       categories: Array.from(categories.values()).filter((category) => category.entries > 0),
       recommendations: buildRecommendations(status, utilizationPercent, truncated, browserUsageHigher),
-      boundaries: {
-        metadataOnly: true,
-        rawKeysIncluded: false,
-        rawValuesIncluded: false,
-        automaticCleanup: false,
-        recordMutation: false,
-        synchronization: false
-      }
+      boundaries: reportBoundaries()
     };
+  }
+
+  function buildUnavailableCapacityReport(options = {}) {
+    const warningPercent = boundedInteger(options.warningPercent, 70, 1, 99);
+    const criticalPercent = boundedInteger(options.criticalPercent, 90, warningPercent + 1, 100);
+    const softBudgetBytes = finiteNonNegative(options.softBudgetBytes) ?? 4 * 1024 * 1024;
+    const quotaBytes = finiteNonNegative(options.quotaBytes);
+    const browserUsageBytes = finiteNonNegative(options.browserUsageBytes);
+    const utilizationPercent = quotaBytes && quotaBytes > 0 && browserUsageBytes !== null
+      ? Math.min(100, Math.round((browserUsageBytes / quotaBytes) * 10000) / 100)
+      : null;
+
+    return {
+      reportType: "methodz-workspace-capacity",
+      reportVersion: VERSION,
+      generatedAt: new Date().toISOString(),
+      status: "unavailable",
+      availability: { localStorage: "unavailable", errorCode: STORAGE_READ_ERROR_CODE },
+      counts: { scannedEntries: null, totalEntries: null, truncated: null },
+      bytes: {
+        measuredLocalStorage: null,
+        browserReportedOriginUsage: browserUsageBytes,
+        quota: quotaBytes,
+        effectiveUsage: browserUsageBytes,
+        configuredSoftBudget: softBudgetBytes
+      },
+      utilizationPercent,
+      thresholds: { warningPercent, criticalPercent },
+      categories: [],
+      recommendations: [
+        { code: "storage-unavailable", message: "Browser-local storage could not be read, so workspace capacity is unavailable. Confirm storage access and run the check again." },
+        { code: "no-automatic-cleanup", message: "This report never deletes, compacts, archives, synchronizes, or changes meeting records." }
+      ],
+      boundaries: reportBoundaries()
+    };
+  }
+
+  function collectStorageSnapshot(storage, maximumEntries) {
+    const entryLimit = boundedInteger(maximumEntries, 5000, 1, 50000);
+    try {
+      if (!storage || typeof storage.key !== "function" || typeof storage.getItem !== "function") {
+        throw new TypeError("A Storage-compatible source is required.");
+      }
+      const totalEntries = Number(storage.length);
+      if (!Number.isSafeInteger(totalEntries) || totalEntries < 0) {
+        throw new TypeError("Storage length is unavailable.");
+      }
+
+      const keys = [];
+      const uniqueKeys = new Set();
+      for (let index = 0; index < totalEntries; index += 1) {
+        const key = storage.key(index);
+        if (key === null) throw new Error("Storage changed during key enumeration.");
+        const normalizedKey = text(key);
+        if (uniqueKeys.has(normalizedKey)) throw new Error("Storage returned a duplicate key.");
+        uniqueKeys.add(normalizedKey);
+        keys.push(normalizedKey);
+      }
+      keys.sort();
+
+      const selectedKeys = keys.slice(0, entryLimit);
+      const snapshot = Object.create(null);
+      selectedKeys.forEach((key) => {
+        const value = storage.getItem(key);
+        if (value === null) throw new Error("Storage changed during value collection.");
+        snapshot[key] = text(value);
+      });
+      if (Number(storage.length) !== totalEntries) throw new Error("Storage changed during snapshot collection.");
+
+      return {
+        available: true,
+        snapshot,
+        totalEntries,
+        scannedEntries: selectedKeys.length,
+        truncated: totalEntries > selectedKeys.length,
+        errorCode: null
+      };
+    } catch (error) {
+      return {
+        available: false,
+        snapshot: null,
+        totalEntries: null,
+        scannedEntries: null,
+        truncated: null,
+        errorCode: STORAGE_READ_ERROR_CODE
+      };
+    }
+  }
+
+  function buildStorageCapacityReport(storage, options = {}) {
+    const collection = collectStorageSnapshot(storage, options.maximumEntries);
+    if (!collection.available) return buildUnavailableCapacityReport(options);
+    return buildCapacityReport(collection.snapshot, {
+      ...options,
+      totalEntries: collection.totalEntries
+    });
   }
 
   function createSyntheticRecords(recordCount, tasksPerRecord) {
@@ -222,6 +335,7 @@
     utf8ByteLength,
     categoryForKey,
     buildCapacityReport,
+    buildStorageCapacityReport,
     runFollowUpPerformanceRehearsal,
     buildMetadataReport
   });

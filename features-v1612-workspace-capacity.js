@@ -18,6 +18,7 @@
     return Math.min(maximum, Math.max(minimum, Math.trunc(numeric)));
   };
   const formatBytes = (value) => {
+    if (value === null || value === undefined || value === "") return "Unavailable";
     const bytes = Number(value);
     if (!Number.isFinite(bytes) || bytes < 0) return "Unavailable";
     if (bytes < 1024) return `${bytes} B`;
@@ -32,6 +33,7 @@
     const panel = document.createElement("section");
     panel.id = "workspaceCapacityPanelV1612";
     panel.className = "card workspace-capacity-v1612";
+    panel.dataset.skipMeetingDraftAutosave = "true";
     panel.innerHTML = `
       <p class="eyebrow">Explicit Local Rehearsal</p>
       <h2>Workspace Capacity</h2>
@@ -56,20 +58,6 @@
     anchor.insertAdjacentElement("afterend", panel);
   }
 
-  function storageSnapshot() {
-    const snapshot = {};
-    try {
-      for (let index = 0; index < global.localStorage.length; index += 1) {
-        const key = global.localStorage.key(index);
-        if (key === null) continue;
-        snapshot[key] = global.localStorage.getItem(key) || "";
-      }
-    } catch (error) {
-      console.warn("Unable to read browser-local capacity snapshot", error);
-    }
-    return snapshot;
-  }
-
   async function browserStorageEstimate() {
     try {
       if (!global.navigator?.storage?.estimate) return {};
@@ -88,16 +76,21 @@
     if (!currentCapacityReport) return;
     const report = currentCapacityReport;
     const utilization = report.utilizationPercent === null ? "Quota unavailable" : `${report.utilizationPercent}%`;
+    const scannedEntries = Number.isInteger(report.counts.scannedEntries) ? report.counts.scannedEntries : "Unavailable";
     if (metrics) metrics.innerHTML = [
       [report.status, "Capacity status"],
       [formatBytes(report.bytes.measuredLocalStorage), "Measured localStorage"],
       [formatBytes(report.bytes.browserReportedOriginUsage), "Browser origin usage"],
       [utilization, "Quota utilization"],
-      [report.counts.scannedEntries, "Entries scanned"]
+      [scannedEntries, "Entries scanned"]
     ].map(([value, label]) => `<div><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`).join("");
-    if (categories) categories.innerHTML = report.categories.length
-      ? report.categories.map((category) => `<div><span>${escapeHtml(category.label)}</span><strong>${escapeHtml(category.entries)} · ${escapeHtml(formatBytes(category.bytes))}</strong></div>`).join("")
-      : "<p>No browser-local entries were measured.</p>";
+    if (categories) {
+      categories.innerHTML = report.status === "unavailable"
+        ? "<p>Browser-local storage could not be read. No capacity measurement is available.</p>"
+        : report.categories.length
+          ? report.categories.map((category) => `<div><span>${escapeHtml(category.label)}</span><strong>${escapeHtml(category.entries)} · ${escapeHtml(formatBytes(category.bytes))}</strong></div>`).join("")
+          : "<p>No browser-local entries were measured.</p>";
+    }
     if (recommendations) recommendations.innerHTML = `<ul>${report.recommendations.map((item) => `<li>${escapeHtml(item.message)}</li>`).join("")}</ul>`;
   }
 
@@ -118,7 +111,13 @@
     const status = document.getElementById("workspaceCapacityStatusV1612");
     if (status) status.textContent = "Measuring aggregate browser-local capacity without changing stored data...";
     const estimate = await browserStorageEstimate();
-    currentCapacityReport = Capacity.buildCapacityReport(storageSnapshot(), {
+    let storage = null;
+    try {
+      storage = global.localStorage;
+    } catch (error) {
+      console.warn("Browser-local storage is unavailable for the capacity check.");
+    }
+    currentCapacityReport = Capacity.buildStorageCapacityReport(storage, {
       ...estimate,
       maximumEntries: settings.maximumStorageEntries,
       softBudgetBytes: settings.softBudgetBytes,
@@ -126,8 +125,13 @@
       criticalPercent: settings.criticalPercent
     });
     renderCapacity();
-    if (status) status.textContent = `Capacity check complete: ${currentCapacityReport.status}. ${currentCapacityReport.counts.scannedEntries} browser-local entr${currentCapacityReport.counts.scannedEntries === 1 ? "y" : "ies"} measured. No cleanup or record mutation occurred.`;
-    if (currentPerformanceReport) renderPerformance();
+    if (currentCapacityReport.status === "unavailable") {
+      console.warn("Browser-local storage could not be read for the capacity check.");
+      if (status) status.textContent = "Capacity check unavailable: browser-local storage could not be read, so no capacity result was reported. No cleanup or record mutation occurred.";
+    } else if (status) {
+      status.textContent = `Capacity check complete: ${currentCapacityReport.status}. ${currentCapacityReport.counts.scannedEntries} browser-local entr${currentCapacityReport.counts.scannedEntries === 1 ? "y" : "ies"} measured. No cleanup or record mutation occurred.`;
+    }
+    if (currentPerformanceReport && currentCapacityReport.status !== "unavailable") renderPerformance();
     updateDownloadState();
     return currentCapacityReport;
   }

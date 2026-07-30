@@ -621,7 +621,8 @@ function resetForm() {
   updateMeetingNumberLabel();
 }
 
-function scheduleDraftSave() {
+function scheduleDraftSave(event) {
+  if (event?.target?.closest?.("[data-skip-meeting-draft-autosave]")) return;
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(saveDraft, 350);
 }
