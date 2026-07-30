@@ -13,7 +13,8 @@ The application remains plain HTML, CSS, and JavaScript with no required runtime
 Version 1.6.12 adds:
 
 - an explicit **Workspace Capacity** panel;
-- aggregate localStorage category and byte reporting without raw keys or values;
+- bounded, deterministic localStorage collection and aggregate category and byte reporting without raw keys or values;
+- an explicit unavailable state when browser-local key enumeration or value reads fail;
 - optional browser origin-usage and quota comparison;
 - a bounded, in-memory large-workspace Follow-Up Review rehearsal;
 - metadata-only capacity and performance report downloads;
@@ -66,9 +67,13 @@ The review does not automatically update task status, send reminders, contact as
 
 Workspace Capacity runs only after an explicit operator action. It estimates the UTF-8 size of browser-local entries, groups them into aggregate categories, and may compare the measured total with `navigator.storage.estimate()` when the browser provides it.
 
+For a capacity check, the collector enumerates and sorts all browser-local key names so deterministic selection, `totalEntries`, and truncation remain accurate. It reads values and retains raw snapshot entries only for the configured maximum number of selected keys. Archive-identifying keys are classified before active-record patterns, so real archive storage is reported as **Archive Vault** and cannot also count as active meeting records.
+
+If localStorage length access, key enumeration, value collection, or the final consistency check fails, the report and interface show capacity as **unavailable**. They do not reinterpret the failure as a healthy zero-entry scan or expose a partial measurement. The metadata-only report uses the fixed `local-storage-read-failed` code, null local scan measurements, and empty categories; it never includes the raw error object or message.
+
 The capacity panel also runs a bounded Follow-Up Review rehearsal with synthetic records held only in memory. Synthetic records are never saved, revised, archived, queued, transferred, or synchronized. Downloaded reports contain aggregate counts, byte totals, thresholds, and timing only. They exclude raw storage keys and values, meeting text, record identifiers, signatures, credentials, private keys, queue payloads, and hidden governance metadata.
 
-The panel never cleans, compacts, archives, deletes, or changes data automatically. A verified backup remains required before any separate operator-led cleanup decision.
+The panel never cleans, compacts, archives, deletes, or changes data automatically. Its controls are excluded from meeting-draft autosave, so changing rehearsal inputs does not create a draft write. A verified backup remains required before any separate operator-led cleanup decision.
 
 ## Meeting-Day Mode
 
@@ -188,7 +193,7 @@ GitHub Actions covers:
 - JavaScript syntax and required-file wiring;
 - panel registry and Meeting-Day behavior;
 - live pulse and follow-up review logic;
-- capacity aggregation, privacy boundaries, and bounded in-memory performance rehearsal;
+- deterministic bounded capacity collection, unavailable-read handling, archive precedence, privacy boundaries, and bounded in-memory performance rehearsal;
 - cryptographic signing, recovery, and custody;
 - hosted-provider conformance and network-fault pilots;
 - synchronization rehearsal and queue portability;
