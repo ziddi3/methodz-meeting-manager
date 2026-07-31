@@ -43,6 +43,7 @@ const APP_SHELL = [
   "./features-v1610.css",
   "./features-v1611.css",
   "./features-v1612.css",
+  "./features-v1613.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -87,6 +88,7 @@ const APP_SHELL = [
   "./panel-registry-core.js",
   "./panel-registry-definitions.js",
   "./meeting-review-core.js",
+  "./follow-up-planning-core.js",
   "./workspace-capacity-core.js",
   "./app.js",
   "./archive.js",
@@ -141,6 +143,7 @@ const APP_SHELL = [
   "./features-v169-rollback-stability.js",
   "./features-v1611-follow-up-review.js",
   "./features-v1612-workspace-capacity.js",
+  "./features-v1613-follow-up-planning.js",
   "./features-v1610-panel-registry.js",
   "./features-v169-meeting-day.js",
   "./manifest.webmanifest",
@@ -207,7 +210,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, or review-mutation handler.
-// The service worker never reads meeting, task, review, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, or review-mutation handler.
+// The service worker never reads meeting, task, review, planning, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;

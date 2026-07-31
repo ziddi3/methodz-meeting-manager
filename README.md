@@ -6,7 +6,7 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, transfe
 
 ## Current release
 
-**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Follow-up planning core 1.0.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
 
 The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to any ordinary static host.
 
@@ -21,6 +21,8 @@ Version 1.6.12 adds:
 - no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, or background synchronization.
 
 The current 1.x hardening layer also adds a read-only **Daily Focus** inside Follow-Up Review. It prioritizes incomplete saved tasks by deadline risk, missing setup, configured priority, and due date, then summarizes **Assigned To** workload. It does not update records, assign people, send reminders, contact assignees, or synchronize data.
+
+The read-only **Follow-Up Planning Brief** extends that workflow with explicit 7, 14, and 30 day horizons. It groups incomplete tasks into overdue, due-today, within-window, needs-scheduling, and later lanes, then provides a bounded Assigned To outlook. Operators may open the source meeting or explicitly download a planning CSV, but the brief never changes records, assigns people, sends reminders, or synchronizes data.
 
 ## Entry points
 
@@ -61,11 +63,23 @@ It can focus the next incomplete section through the existing Meeting-Day naviga
 
 ## Follow-Up Review
 
-Follow-Up Review derives task status across saved active records. Operators can filter and search the local review, inspect the bounded Daily Focus queue, review Assigned To workload, open a source meeting for explicit editing, or download the visible review as CSV.
+Follow-Up Review derives task status across saved active records. Operators can filter and search the local review, inspect the bounded Daily Focus queue, review Assigned To workload, build a Follow-Up Planning Brief, open a source meeting for explicit editing, or download an explicit CSV working copy.
 
 Daily Focus excludes completed work and derives urgency bands and plain-language reasons such as overdue age, due-soon timing, missing Assigned To, invalid or missing due date, active status, and high priority. Ordering is deterministic and bounded by configuration.
 
-The review does not automatically update task status, assign people, send reminders, contact assignees, or synchronize data. Its CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
+The Follow-Up Planning Brief excludes completed work and places each incomplete task into one deterministic lane:
+
+```text
+Overdue
+Due Today
+Within Planning Window
+Needs Scheduling
+Later
+```
+
+The selected 7, 14, or 30 day horizon is stored only as a local display preference. The planning CSV contains meeting and task details and must be protected as business data. It excludes typed signatures, consent details, notes, decisions, credentials, private keys, provider secrets, queue payloads, and hidden governance metadata.
+
+The review does not automatically update task status, assign people, send reminders, contact assignees, or synchronize data. Its review CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
 
 ## Workspace Capacity
 
@@ -96,7 +110,7 @@ Summary
 Save
 ```
 
-Supporting governance, recovery, provider, synchronization, transfer, acceptance, diagnostics, capacity, and saved-record tools are collapsed rather than removed. **Show Tools** reopens them. The last section and mode preference are restored locally after reload. `Alt+M` toggles Meeting-Day Mode when focus is outside a form control.
+Supporting governance, recovery, provider, synchronization, transfer, acceptance, diagnostics, capacity, planning, and saved-record tools are collapsed rather than removed. **Show Tools** reopens them. The last section and mode preference are restored locally after reload. `Alt+M` toggles Meeting-Day Mode when focus is outside a form control.
 
 ## Cross-device transfer and acceptance
 
@@ -125,7 +139,7 @@ Transfer, acceptance, diagnostics, rollback, readiness, registry, capacity, and 
 - Active preservation holds block permanent disposition.
 - Typed signatures require consent and remain excluded from external copies.
 - Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, reports, or service-worker caches.
-- Review, capacity, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
+- Review, focus, planning, capacity, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
 - Service workers cache static assets only and never process business data.
 - Infrastructure supports the meeting workflow rather than replacing it.
 
@@ -161,6 +175,7 @@ Application shell and meeting workflow
   panel-registry-core.js
   panel-registry-definitions.js
   meeting-review-core.js
+  follow-up-planning-core.js
   workspace-capacity-core.js
   app.js
   ordered features-v*.js layers
@@ -173,6 +188,8 @@ Archive, verification, and static shell
 ```
 
 Script order is part of the runtime contract. Later layers intentionally extend stable functions created by earlier layers. v1.6.12 loads its portable capacity core before browser features, creates the dynamic capacity panel after the Follow-Up Review, and lets the v1.6.10 registry bind the completed shell before Meeting-Day navigation consumes registry metadata.
+
+The planning layer preserves that contract by loading a standalone, DOM-free planning core and browser presentation through `config-v1611.js`. The service worker pre-caches those static assets. The browser presentation waits for the established Follow-Up Review panel, derives a report through the existing review core, and never writes source records.
 
 ## Hosted-provider boundary
 
@@ -196,7 +213,8 @@ GitHub Actions covers:
 
 - JavaScript syntax and required-file wiring;
 - panel registry and Meeting-Day behavior;
-- live pulse, follow-up review, Daily Focus ordering, bounded Assigned To workload, and no-mutation logic;
+- live pulse, follow-up review, Daily Focus ordering, planning-lane ordering, bounded Assigned To workload, and no-mutation logic;
+- explicit planning CSV download, planning-window preference recovery, and phone-width containment;
 - deterministic bounded capacity collection, unavailable-read handling, archive precedence, privacy boundaries, and bounded in-memory performance rehearsal;
 - cryptographic signing, recovery, and custody;
 - hosted-provider conformance and network-fault pilots;
@@ -226,6 +244,8 @@ docs/V1.6.12-TESTS.md
 docs/V1.6.12-CHANGELOG.md
 docs/FOLLOW-UP-FOCUS.md
 docs/FOLLOW-UP-FOCUS-TESTS.md
+docs/FOLLOW-UP-PLANNING-BRIEF.md
+docs/FOLLOW-UP-PLANNING-BRIEF-TESTS.md
 docs/PRODUCTION-PROVIDER-EVIDENCE.md
 docs/KEY-CUSTODY-OPERATIONS.md
 ```
@@ -236,7 +256,7 @@ docs/KEY-CUSTODY-OPERATIONS.md
 
 - execute documented Android, iOS, tablet, and two-device field rehearsals;
 - continue real-device and large-workspace performance evidence collection;
-- improve meeting-day review and follow-up ergonomics without silent automation;
+- improve meeting-day review, Daily Focus, and planning ergonomics without silent automation;
 - evaluate production-provider candidates against the evidence gate;
 - keep synchronization explicit and user controlled;
 - preserve browser-local storage as the default until a hosted provider is explicitly approved.

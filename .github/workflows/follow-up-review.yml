@@ -17,40 +17,59 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate review and focus static wiring
+      - name: Validate review, focus, and planning static wiring
         shell: bash
         run: |
           set -euo pipefail
           required=(
-            config-v1611.js meeting-review-core.js features-v1611-follow-up-review.js features-v1611.css
-            tests/v1611-meeting-review.mjs tests/v1613-follow-up-focus.mjs tests/v1611-follow-up-review.spec.js
+            config-v1611.js meeting-review-core.js follow-up-planning-core.js
+            features-v1611-follow-up-review.js features-v1611.css
+            features-v1613-follow-up-planning.js features-v1613.css
+            tests/v1611-meeting-review.mjs tests/v1613-follow-up-focus.mjs tests/v1613-follow-up-planning.mjs
+            tests/v1611-follow-up-review.spec.js tests/v1613-follow-up-planning.spec.js
             docs/V1.6.11-ARCHITECTURE.md docs/V1.6.11-TESTS.md docs/V1.6.11-CHANGELOG.md
             docs/FOLLOW-UP-FOCUS.md docs/FOLLOW-UP-FOCUS-TESTS.md
+            docs/FOLLOW-UP-PLANNING-BRIEF.md docs/FOLLOW-UP-PLANNING-BRIEF-TESTS.md
           )
           for file in "${required[@]}"; do test -f "$file" || { echo "Missing $file"; exit 1; }; done
           node --check config-v1611.js
           node --check meeting-review-core.js
+          node --check follow-up-planning-core.js
           node --check features-v1611-follow-up-review.js
+          node --check features-v1613-follow-up-planning.js
           node --check tests/v1611-follow-up-review.spec.js
+          node --check tests/v1613-follow-up-planning.spec.js
           grep -q 'appShellVersion = "1.6.11"' config-v1611.js
           grep -q 'schemaVersion = "1.6.0"' config-v1611.js
           grep -q 'version: "1.1.0"' config-v1611.js
           grep -q 'buildFollowUpFocus' meeting-review-core.js
+          grep -q 'buildFollowUpPlanningBrief' follow-up-planning-core.js
           grep -q 'followUpFocusV1613' features-v1611-follow-up-review.js
+          grep -q 'followUpPlanningV1613' features-v1613-follow-up-planning.js
+          grep -q 'follow-up-planning-core.js' config-v1611.js
+          grep -q 'features-v1613-follow-up-planning.js' config-v1611.js
+          grep -q 'features-v1613.css' config-v1611.js
+          grep -q 'automaticRecordMutation: false' config-v1611.js
+          grep -q 'automaticAssignment: false' config-v1611.js
           grep -q 'automaticReminderDelivery: false' config-v1611.js
+          grep -q 'automaticSynchronization: false' config-v1611.js
           grep -q 'config-v1611.js' meeting.html
           grep -q 'meeting-review-core.js' meeting.html
           grep -q 'features-v1611-follow-up-review.js' meeting.html
           grep -q 'features-v1611.css' meeting.html
+          grep -q 'follow-up-planning-core.js' service-worker.js
+          grep -q 'features-v1613-follow-up-planning.js' service-worker.js
+          grep -q 'features-v1613.css' service-worker.js
           grep -q 'methodz-meeting-manager-v1.6.11' service-worker.js
           ! grep -q 'addEventListener("sync"' service-worker.js
           ! grep -q "addEventListener('sync'" service-worker.js
           ! grep -q 'periodicSync' service-worker.js
           ! grep -Eq 'hub\.methodz\.ca' meeting.html archive.html verify.html manifest.webmanifest service-worker.js
-      - name: Run portable review tests
+      - name: Run portable review, focus, and planning tests
         run: |
           node tests/v1611-meeting-review.mjs
           node tests/v1613-follow-up-focus.mjs
+          node tests/v1613-follow-up-planning.mjs
 
   chromium-review-workflow:
     runs-on: ubuntu-latest
@@ -74,7 +93,7 @@ jobs:
           done
           cat /tmp/methodz-http.log
           exit 1
-      - name: Run review and focus browser coverage
+      - name: Run review, focus, and planning browser coverage
         env:
           METHODZ_BROWSER: chromium
-        run: npx playwright test tests/v1611-follow-up-review.spec.js --reporter=line
+        run: npx playwright test tests/v1611-follow-up-review.spec.js tests/v1613-follow-up-planning.spec.js --reporter=line
