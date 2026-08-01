@@ -104,7 +104,7 @@
       if (!sourceRecord || typeof sourceRecord !== "object") return;
       if (text(sourceRecord.id) === text(targetRecord.id)) return;
       const sourceDate = dateOnly(sourceRecord.date);
-      if (sourceDate && sourceDate.milliseconds > targetDate.milliseconds) return;
+      if (!sourceDate || sourceDate.milliseconds >= targetDate.milliseconds) return;
 
       (Array.isArray(sourceRecord.tasks) ? sourceRecord.tasks : []).forEach((task, taskIndex) => {
         if (!task || typeof task !== "object" || isCompletedTask(task)) return;
