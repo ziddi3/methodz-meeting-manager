@@ -7,7 +7,6 @@
   let currentReport = null;
 
   const byId = (id) => document.getElementById(id);
-  const text = (value) => String(value ?? "").trim();
 
   function element(tag, className, content) {
     const node = document.createElement(tag);
@@ -33,13 +32,26 @@
     }
   }
 
+  function readLocalRecordsFailClosed() {
+    const key = global.METHODZ_MEETING_CONFIG?.storageKeys?.records || "methodzMeetingRecords";
+    const raw = global.localStorage.getItem(key);
+    if (raw === null || raw === "") return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new TypeError("Saved meeting storage is not an array.");
+    return parsed;
+  }
+
   function readRecords() {
     if (global.MethodzMeetingData && typeof global.MethodzMeetingData.listRecords === "function") {
-      return global.MethodzMeetingData.listRecords();
+      const adapterId = typeof global.MethodzMeetingData.getAdapterInfo === "function"
+        ? global.MethodzMeetingData.getAdapterInfo().id
+        : "local-storage";
+      if (adapterId === "local-storage") return readLocalRecordsFailClosed();
+      const records = global.MethodzMeetingData.listRecords();
+      if (!Array.isArray(records)) throw new TypeError("Meeting data adapter did not return an array.");
+      return records;
     }
-    const key = global.METHODZ_MEETING_CONFIG?.storageKeys?.records || "methodzMeetingRecords";
-    const parsed = JSON.parse(global.localStorage.getItem(key)) || [];
-    return Array.isArray(parsed) ? parsed : [];
+    return readLocalRecordsFailClosed();
   }
 
   function setStatus(message, tone = "neutral") {
@@ -171,6 +183,8 @@
       console.error("Unable to build Meeting Preparation Brief", error);
       currentReport = null;
       byId("downloadPreparationCsv").disabled = true;
+      byId("preparationMetrics").replaceChildren();
+      byId("preparationMeetings").replaceChildren();
       setStatus("Saved meeting records could not be read. No records were changed.", "error");
     }
   }
