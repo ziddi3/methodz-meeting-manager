@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Read-only preparation brief for upcoming Methodz Meeting Manager records." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Meeting Preparation Brief · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="meeting-preparation.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Meeting Preparation Brief</h1>
+    <p>Read-only preparation, scheduling pressure, and unresolved carryover review</p>
+  </header>
+
+  <main class="preparation-shell" id="mainContent" tabindex="-1">
+    <section class="card preparation-intro" aria-labelledby="preparationIntroTitle">
+      <p class="eyebrow">Methodz Meeting Manager</p>
+      <h2 id="preparationIntroTitle">Prepare the meeting before the meeting prepares a surprise</h2>
+      <p class="helper-text">
+        This workspace reads saved active meeting records and shows missing setup, upcoming dates,
+        same-day scheduling pressure, and unresolved tasks due by each meeting. It never edits,
+        assigns, completes, archives, transfers, or synchronizes a record.
+      </p>
+
+      <div class="preparation-toolbar" aria-label="Preparation brief controls">
+        <label for="preparationHorizon">
+          Planning horizon
+          <select id="preparationHorizon">
+            <option value="7">Next 7 days</option>
+            <option value="14">Next 14 days</option>
+            <option value="30">Next 30 days</option>
+            <option value="60">Next 60 days</option>
+          </select>
+        </label>
+        <button type="button" id="refreshPreparationBrief">Refresh Brief</button>
+        <button type="button" id="downloadPreparationCsv" disabled>Download CSV</button>
+        <a class="button-like" href="meeting.html">Return to Meeting Manager</a>
+      </div>
+
+      <p class="preparation-status" id="preparationStatus" role="status" aria-live="polite">Preparing brief…</p>
+    </section>
+
+    <section class="preparation-metrics" id="preparationMetrics" aria-label="Preparation summary"></section>
+    <section class="preparation-meetings" id="preparationMeetings" aria-label="Meetings requiring preparation"></section>
+
+    <section class="card preparation-privacy" aria-labelledby="preparationPrivacyTitle">
+      <h2 id="preparationPrivacyTitle">Data boundary</h2>
+      <p class="helper-text">
+        The on-screen brief and CSV contain meeting setup and task-count information and must be
+        protected as business data. They exclude discussion notes, decisions, summaries, consent
+        details, typed signatures, credentials, private keys, provider secrets, synchronization
+        queues, and hidden governance metadata. A same-day warning identifies shared calendar dates;
+        it is not proof that meeting times overlap.
+      </p>
+      <noscript><p>JavaScript is required to read the browser-local meeting workspace.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="data-adapter.js"></script>
+  <script src="meeting-preparation-core.js"></script>
+  <script src="meeting-preparation.js"></script>
+</body>
+</html>

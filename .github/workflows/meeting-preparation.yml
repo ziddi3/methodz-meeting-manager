@@ -1,0 +1,74 @@
+name: Meeting Preparation Brief
+
+on:
+  pull_request:
+    paths:
+      - "meeting-preparation-core.js"
+      - "meeting-preparation.js"
+      - "meeting-preparation.css"
+      - "preparation.html"
+      - "tests/meeting-preparation-core.mjs"
+      - "docs/MEETING-PREPARATION-BRIEF.md"
+      - "docs/MEETING-PREPARATION-BRIEF-TESTS.md"
+      - ".github/workflows/meeting-preparation.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "meeting-preparation-core.js"
+      - "meeting-preparation.js"
+      - "meeting-preparation.css"
+      - "preparation.html"
+      - "tests/meeting-preparation-core.mjs"
+      - "docs/MEETING-PREPARATION-BRIEF.md"
+      - "docs/MEETING-PREPARATION-BRIEF-TESTS.md"
+      - ".github/workflows/meeting-preparation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-preparation-brief:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static preparation workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            meeting-preparation-core.js
+            meeting-preparation.js
+            meeting-preparation.css
+            preparation.html
+            tests/meeting-preparation-core.mjs
+            docs/MEETING-PREPARATION-BRIEF.md
+            docs/MEETING-PREPARATION-BRIEF-TESTS.md
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check meeting-preparation-core.js
+          node --check meeting-preparation.js
+          node --check tests/meeting-preparation-core.mjs
+
+          grep -q 'data-adapter.js' preparation.html
+          grep -q 'meeting-preparation-core.js' preparation.html
+          grep -q 'meeting-preparation.js' preparation.html
+          grep -q 'meeting-preparation.css' preparation.html
+          grep -q 'Return to Meeting Manager' preparation.html
+          grep -q 'buildMeetingPreparationBrief' meeting-preparation-core.js
+          grep -q 'MethodzMeetingData.listRecords' meeting-preparation.js
+          grep -q 'Download CSV' preparation.html
+
+          ! grep -Eq 'hub\.methodz\.ca' preparation.html meeting-preparation.js meeting-preparation-core.js meeting-preparation.css
+          ! grep -Eq 'setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(' meeting-preparation.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" preparation.html meeting-preparation.js meeting-preparation-core.js
+
+      - name: Run portable preparation core tests
+        run: node tests/meeting-preparation-core.mjs
