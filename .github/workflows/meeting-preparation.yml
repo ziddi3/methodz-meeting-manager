@@ -68,7 +68,7 @@ jobs:
 
           ! grep -Eq 'hub\.methodz\.ca' preparation.html meeting-preparation.js meeting-preparation-core.js meeting-preparation.css
           ! grep -Eq 'setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(' meeting-preparation.js
-          ! grep -Eq 'addEventListener\(["'"']sync["'"']|periodicSync' preparation.html meeting-preparation.js meeting-preparation-core.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" preparation.html meeting-preparation.js meeting-preparation-core.js
 
       - name: Run portable preparation core tests
         run: node tests/meeting-preparation-core.mjs
