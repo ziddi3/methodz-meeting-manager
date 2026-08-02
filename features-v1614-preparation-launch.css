@@ -1,0 +1,69 @@
+/* Explicit preparation handoff presentation. */
+.preparation-card-actions-v1614 {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.preparation-card-actions-v1614 .button-like {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.methodz-preparation-launch-v1614 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-left: 0.35rem solid #17633a;
+}
+
+.methodz-preparation-launch-v1614.is-error {
+  border-left-color: #9f241f;
+  background: #fff8f7;
+}
+
+.methodz-preparation-launch-v1614 h2,
+.methodz-preparation-launch-v1614 p {
+  margin-top: 0;
+}
+
+.methodz-preparation-launch-v1614 .button-like {
+  display: inline-flex;
+  min-height: 44px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.methodz-preparation-target-v1614 {
+  outline: 3px solid #a94722;
+  outline-offset: 4px;
+  scroll-margin-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .preparation-card-actions-v1614,
+  .methodz-preparation-launch-v1614 {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .preparation-card-actions-v1614 .button-like,
+  .methodz-preparation-launch-v1614 .button-like {
+    width: 100%;
+  }
+}
+
+@media print {
+  .preparation-card-actions-v1614,
+  .methodz-preparation-launch-v1614 {
+    display: none !important;
+  }
+
+  .methodz-preparation-target-v1614 {
+    outline: 0;
+  }
+}
