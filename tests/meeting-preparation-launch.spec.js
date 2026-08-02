@@ -24,7 +24,8 @@ const seedRecord = {
 };
 
 async function seed(page) {
-  await page.addInitScript((record) => {
+  await page.goto(`${BASE_URL}/meeting.html`);
+  await page.evaluate((record) => {
     const date = new Date();
     date.setUTCDate(date.getUTCDate() + 3);
     const prepared = structuredClone(record);
@@ -33,6 +34,7 @@ async function seed(page) {
     localStorage.clear();
     localStorage.setItem("methodzMeetingRecords", JSON.stringify([prepared]));
   }, seedRecord);
+  await page.reload();
 }
 
 test.describe("Meeting Preparation launch bridge", () => {
@@ -64,8 +66,8 @@ test.describe("Meeting Preparation launch bridge", () => {
 
   test("fails visibly for a missing record without changing storage", async ({ page }) => {
     await seed(page);
-    await page.goto(`${BASE_URL}/meeting.html`);
     const recordsBefore = await page.evaluate(() => localStorage.getItem("methodzMeetingRecords"));
+    await page.goto(`${BASE_URL}/preparation.html`);
     await page.goto(`${BASE_URL}/meeting.html#prepare-record=missing-record&focus=agenda`);
     await expect(page).toHaveURL(`${BASE_URL}/meeting.html`);
     await expect(page.locator("#preparationLaunchStatusV1614")).toContainText("Saved meeting was not found");
@@ -77,6 +79,7 @@ test.describe("Meeting Preparation launch bridge", () => {
   test("ignores unrelated fragments and keeps the bridge mobile-safe", async ({ page }) => {
     await seed(page);
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE_URL}/preparation.html`);
     await page.goto(`${BASE_URL}/meeting.html#unrelated-section`);
     await expect(page).toHaveURL(`${BASE_URL}/meeting.html#unrelated-section`);
     await expect(page.locator("#preparationLaunchStatusV1614")).toHaveCount(0);
