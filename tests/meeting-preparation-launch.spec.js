@@ -8,7 +8,7 @@ const seedRecord = {
   meetingNumber: "PREP-001",
   title: "Preparation Launch Rehearsal",
   status: "Scheduled",
-  date: "2099-08-05",
+  date: "",
   location: "",
   facilitator: "Morgan",
   organizations: ["Method HVAC Inc."],
@@ -16,7 +16,7 @@ const seedRecord = {
   agenda: [{ group: "Operations", item: "Review readiness", completed: false }],
   notes: "Protected note remains in the source record",
   decisions: "Protected decision remains in the source record",
-  tasks: [{ task: "Prepare evidence", assignedTo: "Morgan", priority: "High", due: "2099-08-04", status: "Pending" }],
+  tasks: [{ task: "Prepare evidence", assignedTo: "Morgan", priority: "High", due: "", status: "Pending" }],
   summary: "Protected summary remains in the source record",
   createdAt: "2026-08-02T00:00:00.000Z",
   updatedAt: "2026-08-02T00:00:00.000Z",
@@ -25,8 +25,13 @@ const seedRecord = {
 
 async function seed(page) {
   await page.addInitScript((record) => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + 3);
+    const prepared = structuredClone(record);
+    prepared.date = date.toISOString().slice(0, 10);
+    prepared.tasks[0].due = prepared.date;
     localStorage.clear();
-    localStorage.setItem("methodzMeetingRecords", JSON.stringify([record]));
+    localStorage.setItem("methodzMeetingRecords", JSON.stringify([prepared]));
   }, seedRecord);
 }
 
@@ -59,12 +64,14 @@ test.describe("Meeting Preparation launch bridge", () => {
 
   test("fails visibly for a missing record without changing storage", async ({ page }) => {
     await seed(page);
+    await page.goto(`${BASE_URL}/meeting.html`);
+    const recordsBefore = await page.evaluate(() => localStorage.getItem("methodzMeetingRecords"));
     await page.goto(`${BASE_URL}/meeting.html#prepare-record=missing-record&focus=agenda`);
     await expect(page).toHaveURL(`${BASE_URL}/meeting.html`);
     await expect(page.locator("#preparationLaunchStatusV1614")).toContainText("Saved meeting was not found");
     await expect(page.locator("#editingRecordId")).toHaveValue("");
-    const records = await page.evaluate(() => localStorage.getItem("methodzMeetingRecords"));
-    expect(records).toBe(JSON.stringify([seedRecord]));
+    const recordsAfter = await page.evaluate(() => localStorage.getItem("methodzMeetingRecords"));
+    expect(recordsAfter).toBe(recordsBefore);
   });
 
   test("ignores unrelated fragments and keeps the bridge mobile-safe", async ({ page }) => {
