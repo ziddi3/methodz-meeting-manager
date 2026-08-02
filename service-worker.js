@@ -19,7 +19,9 @@ const APP_SHELL = [
   "./meeting.html",
   "./archive.html",
   "./verify.html",
+  "./preparation.html",
   "./style.css",
+  "./meeting-preparation.css",
   "./features-v04.css",
   "./features-v05.css",
   "./features-v06.css",
@@ -44,6 +46,7 @@ const APP_SHELL = [
   "./features-v1611.css",
   "./features-v1612.css",
   "./features-v1613.css",
+  "./features-v1614-preparation-launch.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -90,12 +93,15 @@ const APP_SHELL = [
   "./meeting-review-core.js",
   "./follow-up-planning-core.js",
   "./workspace-capacity-core.js",
+  "./meeting-preparation-core.js",
+  "./meeting-preparation-launch-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
   "./archive-v11.js",
   "./archive-v13.js",
   "./verify.js",
+  "./meeting-preparation.js",
   "./features-v03.js",
   "./features-v03-startup.js",
   "./features-v04-templates.js",
@@ -146,6 +152,7 @@ const APP_SHELL = [
   "./features-v1613-follow-up-planning.js",
   "./features-v1610-panel-registry.js",
   "./features-v169-meeting-day.js",
+  "./features-v1614-preparation-launch.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
@@ -210,7 +217,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, or review-mutation handler.
-// The service worker never reads meeting, task, review, planning, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, or review-mutation handler.
+// The service worker never reads meeting, task, review, planning, preparation, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;
