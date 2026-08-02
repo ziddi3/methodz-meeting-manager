@@ -19,6 +19,7 @@ on:
       - "docs/MEETING-PREPARATION-BRIEF-TESTS.md"
       - "docs/MEETING-PREPARATION-LAUNCH.md"
       - "docs/MEETING-PREPARATION-LAUNCH-TESTS.md"
+      - "docs/MEETING-PREPARATION-LAUNCH-CHANGELOG.md"
       - ".github/workflows/meeting-preparation.yml"
   push:
     branches:
@@ -40,6 +41,7 @@ on:
       - "docs/MEETING-PREPARATION-BRIEF-TESTS.md"
       - "docs/MEETING-PREPARATION-LAUNCH.md"
       - "docs/MEETING-PREPARATION-LAUNCH-TESTS.md"
+      - "docs/MEETING-PREPARATION-LAUNCH-CHANGELOG.md"
       - ".github/workflows/meeting-preparation.yml"
   workflow_dispatch:
 
@@ -75,6 +77,7 @@ jobs:
             docs/MEETING-PREPARATION-BRIEF-TESTS.md
             docs/MEETING-PREPARATION-LAUNCH.md
             docs/MEETING-PREPARATION-LAUNCH-TESTS.md
+            docs/MEETING-PREPARATION-LAUNCH-CHANGELOG.md
           )
           for file in "${required[@]}"; do
             test -f "$file" || { echo "Missing $file"; exit 1; }
