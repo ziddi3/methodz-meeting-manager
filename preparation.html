@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="meeting-preparation.css" />
   <link rel="stylesheet" href="features-v1614-preparation-launch.css" />
+  <link rel="stylesheet" href="features-v1615-meeting-run-sheet.css" />
 </head>
 <body>
   <header class="app-header">
@@ -45,19 +46,30 @@
       </div>
 
       <p class="preparation-status" id="preparationStatus" role="status" aria-live="polite">Preparing brief…</p>
+      <p id="meetingRunSheetStatusV1615" role="status" aria-live="polite"></p>
     </section>
 
     <section class="preparation-metrics" id="preparationMetrics" aria-label="Preparation summary"></section>
     <section class="preparation-meetings" id="preparationMeetings" aria-label="Meetings requiring preparation"></section>
 
+    <dialog id="meetingRunSheetDialogV1615" class="meeting-run-sheet-dialog-v1615" aria-labelledby="meetingRunSheetTitleV1615">
+      <article id="meetingRunSheetContentV1615" class="meeting-run-sheet-content-v1615">
+        <h2 id="meetingRunSheetTitleV1615">Meeting run sheet</h2>
+      </article>
+      <div class="meeting-run-sheet-dialog-actions-v1615">
+        <button type="button" id="printMeetingRunSheetV1615">Print Run Sheet</button>
+        <button type="button" id="closeMeetingRunSheetV1615">Close Run Sheet</button>
+      </div>
+    </dialog>
+
     <section class="card preparation-privacy" aria-labelledby="preparationPrivacyTitle">
       <h2 id="preparationPrivacyTitle">Data boundary</h2>
       <p class="helper-text">
-        The on-screen brief and CSV contain meeting setup and task-count information and must be
-        protected as business data. They exclude discussion notes, decisions, summaries, consent
-        details, typed signatures, credentials, private keys, provider secrets, synchronization
-        queues, and hidden governance metadata. A same-day warning identifies shared calendar dates;
-        it is not proof that meeting times overlap.
+        The on-screen brief, run-sheet preview, print output, and CSV contain meeting setup and
+        task information and must be protected as business data. They exclude discussion notes,
+        decisions, summaries, consent details, typed signatures, attachments, credentials, private
+        keys, provider secrets, synchronization queues, and hidden governance metadata. A same-day
+        warning identifies shared calendar dates; it is not proof that meeting times overlap.
       </p>
       <noscript><p>JavaScript is required to read the browser-local meeting workspace.</p></noscript>
     </section>
@@ -67,7 +79,9 @@
   <script src="data-adapter.js"></script>
   <script src="meeting-preparation-core.js"></script>
   <script src="meeting-preparation-launch-core.js"></script>
+  <script src="meeting-run-sheet-core.js"></script>
   <script src="meeting-preparation.js"></script>
   <script src="features-v1614-preparation-launch.js"></script>
+  <script src="features-v1615-meeting-run-sheet.js"></script>
 </body>
 </html>

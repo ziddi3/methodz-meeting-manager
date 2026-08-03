@@ -47,6 +47,7 @@ const APP_SHELL = [
   "./features-v1612.css",
   "./features-v1613.css",
   "./features-v1614-preparation-launch.css",
+  "./features-v1615-meeting-run-sheet.css",
   "./config.js",
   "./config-v11.js",
   "./config-v12.js",
@@ -95,6 +96,7 @@ const APP_SHELL = [
   "./workspace-capacity-core.js",
   "./meeting-preparation-core.js",
   "./meeting-preparation-launch-core.js",
+  "./meeting-run-sheet-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -153,6 +155,7 @@ const APP_SHELL = [
   "./features-v1610-panel-registry.js",
   "./features-v169-meeting-day.js",
   "./features-v1614-preparation-launch.js",
+  "./features-v1615-meeting-run-sheet.js",
   "./manifest.webmanifest",
   "./assets/icons/methodz-meeting.svg"
 ];
@@ -217,7 +220,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, or review-mutation handler.
-// The service worker never reads meeting, task, review, planning, preparation, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, or review-mutation handler.
+// The service worker never reads meeting, task, review, planning, preparation, run-sheet, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;

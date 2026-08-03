@@ -1,0 +1,176 @@
+/* Operator-controlled, read-only meeting run-sheet preview. */
+.meeting-run-sheet-actions-v1615 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.meeting-run-sheet-actions-v1615 button,
+.meeting-run-sheet-dialog-actions-v1615 button {
+  min-height: 44px;
+}
+
+#meetingRunSheetStatusV1615 {
+  margin: 0.75rem 0 0;
+  min-height: 1.5rem;
+  font-weight: 700;
+}
+
+#meetingRunSheetStatusV1615[data-tone="success"] {
+  color: #17633a;
+}
+
+#meetingRunSheetStatusV1615[data-tone="error"] {
+  color: #9f241f;
+}
+
+.meeting-run-sheet-dialog-v1615 {
+  width: min(960px, calc(100% - 1rem));
+  max-height: min(90vh, 980px);
+  padding: 0;
+  border: 0;
+  border-radius: 0.85rem;
+  box-shadow: 0 1rem 3rem rgba(17, 17, 17, 0.28);
+}
+
+.meeting-run-sheet-dialog-v1615::backdrop {
+  background: rgba(17, 17, 17, 0.7);
+}
+
+.meeting-run-sheet-content-v1615 {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  background: #ffffff;
+}
+
+.meeting-run-sheet-header-v1615 h2,
+.meeting-run-sheet-section-v1615 h3,
+.meeting-run-sheet-readiness-v1615 h3 {
+  margin-top: 0;
+}
+
+.meeting-run-sheet-readiness-v1615 {
+  padding: 1rem;
+  border-left: 0.35rem solid #a94722;
+  border-radius: 0.45rem;
+  background: #fff8f3;
+}
+
+.meeting-run-sheet-ready-v1615 {
+  margin-bottom: 0;
+  color: #17633a;
+  font-weight: 700;
+}
+
+.meeting-run-sheet-grid-v1615 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.meeting-run-sheet-section-v1615 {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba(17, 17, 17, 0.15);
+  border-radius: 0.65rem;
+}
+
+.meeting-run-sheet-list-v1615 {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meeting-run-sheet-list-v1615 li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-left: 0.3rem solid #767676;
+  border-radius: 0.45rem;
+  background: #f5f5f5;
+  overflow-wrap: anywhere;
+}
+
+.meeting-run-sheet-list-v1615 li.is-ready {
+  border-left-color: #17633a;
+}
+
+.meeting-run-sheet-list-v1615 li.needs-work {
+  border-left-color: #a94722;
+  background: #fff8f3;
+}
+
+.meeting-run-sheet-list-v1615 span {
+  color: #4a4a4a;
+  font-size: 0.9rem;
+}
+
+.meeting-run-sheet-boundary-v1615 {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.45rem;
+  background: #f1f1f1;
+  font-size: 0.9rem;
+}
+
+.meeting-run-sheet-dialog-actions-v1615 {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem clamp(1rem, 3vw, 2rem);
+  border-top: 1px solid rgba(17, 17, 17, 0.15);
+  background: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .meeting-run-sheet-grid-v1615 {
+    grid-template-columns: 1fr;
+  }
+
+  .meeting-run-sheet-actions-v1615 button,
+  .meeting-run-sheet-dialog-actions-v1615 button {
+    width: 100%;
+  }
+
+  .meeting-run-sheet-dialog-actions-v1615 {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  body.printing-meeting-run-sheet-v1615 .app-header,
+  body.printing-meeting-run-sheet-v1615 .preparation-shell > :not(#meetingRunSheetDialogV1615) {
+    display: none !important;
+  }
+
+  body.printing-meeting-run-sheet-v1615 .preparation-shell {
+    width: 100%;
+    margin: 0;
+  }
+
+  body.printing-meeting-run-sheet-v1615 #meetingRunSheetDialogV1615 {
+    position: static;
+    display: block !important;
+    width: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  body.printing-meeting-run-sheet-v1615 .meeting-run-sheet-dialog-actions-v1615 {
+    display: none !important;
+  }
+
+  body.printing-meeting-run-sheet-v1615 .meeting-run-sheet-section-v1615,
+  body.printing-meeting-run-sheet-v1615 .meeting-run-sheet-readiness-v1615 {
+    break-inside: avoid;
+  }
+}

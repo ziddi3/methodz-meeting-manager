@@ -1,0 +1,114 @@
+name: Meeting Run Sheet
+
+on:
+  pull_request:
+    paths:
+      - "meeting-run-sheet-core.js"
+      - "features-v1615-meeting-run-sheet.js"
+      - "features-v1615-meeting-run-sheet.css"
+      - "preparation.html"
+      - "service-worker.js"
+      - "tests/meeting-run-sheet-core.mjs"
+      - "tests/meeting-run-sheet.spec.js"
+      - "docs/MEETING-RUN-SHEET.md"
+      - "docs/MEETING-RUN-SHEET-TESTS.md"
+      - "docs/MEETING-RUN-SHEET-CHANGELOG.md"
+      - ".github/workflows/meeting-run-sheet.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "meeting-run-sheet-core.js"
+      - "features-v1615-meeting-run-sheet.js"
+      - "features-v1615-meeting-run-sheet.css"
+      - "preparation.html"
+      - "service-worker.js"
+      - "tests/meeting-run-sheet-core.mjs"
+      - "tests/meeting-run-sheet.spec.js"
+      - "docs/MEETING-RUN-SHEET.md"
+      - "docs/MEETING-RUN-SHEET-TESTS.md"
+      - "docs/MEETING-RUN-SHEET-CHANGELOG.md"
+      - ".github/workflows/meeting-run-sheet.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-run-sheet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static run-sheet boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            meeting-run-sheet-core.js
+            features-v1615-meeting-run-sheet.js
+            features-v1615-meeting-run-sheet.css
+            preparation.html
+            service-worker.js
+            tests/meeting-run-sheet-core.mjs
+            tests/meeting-run-sheet.spec.js
+            docs/MEETING-RUN-SHEET.md
+            docs/MEETING-RUN-SHEET-TESTS.md
+            docs/MEETING-RUN-SHEET-CHANGELOG.md
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check meeting-run-sheet-core.js
+          node --check features-v1615-meeting-run-sheet.js
+          node --check tests/meeting-run-sheet-core.mjs
+          node --check tests/meeting-run-sheet.spec.js
+
+          grep -q 'meeting-run-sheet-core.js' preparation.html
+          grep -q 'features-v1615-meeting-run-sheet.js' preparation.html
+          grep -q 'features-v1615-meeting-run-sheet.css' preparation.html
+          grep -q 'Preview Run Sheet' features-v1615-meeting-run-sheet.js
+          grep -q 'Print Run Sheet' preparation.html
+          grep -q 'Close Run Sheet' preparation.html
+          grep -q 'buildMeetingRunSheet' meeting-run-sheet-core.js
+          grep -q 'meeting-run-sheet-core.js' service-worker.js
+          grep -q 'features-v1615-meeting-run-sheet.js' service-worker.js
+          grep -q 'features-v1615-meeting-run-sheet.css' service-worker.js
+
+          ! grep -Eq 'hub\.methodz\.ca' preparation.html meeting-run-sheet-core.js features-v1615-meeting-run-sheet.js features-v1615-meeting-run-sheet.css
+          ! grep -Eq 'setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|saveMeeting\(|archiveRecord\(' features-v1615-meeting-run-sheet.js
+          ! grep -Eq 'localStorage\.setItem|sessionStorage\.setItem' features-v1615-meeting-run-sheet.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" meeting-run-sheet-core.js features-v1615-meeting-run-sheet.js service-worker.js
+
+      - name: Run portable run-sheet tests
+        run: node tests/meeting-run-sheet-core.mjs
+
+  chromium-run-sheet:
+    runs-on: ubuntu-latest
+    needs: portable-run-sheet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/preparation.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run meeting run-sheet browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/meeting-run-sheet.spec.js --reporter=line
