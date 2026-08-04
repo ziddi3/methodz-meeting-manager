@@ -27,10 +27,13 @@ node tests/meeting-closeout-core.mjs
 - review runs only after operator action;
 - the current form and browser-local records are not saved or changed;
 - the first incomplete checkpoint receives focus only after operator action;
+- changing the meeting form invalidates the stale review and disables focus and download until a fresh review;
 - the metadata report excludes meeting title, attendee name, and task text;
 - the panel is present in Meeting-Day navigation between Summary and Save;
 - controls retain a 44-pixel minimum touch height;
 - the page remains contained at a 390-pixel viewport.
+
+The no-mutation browser test allows the existing draft timer to settle before capturing its baseline. This isolates closeout actions from ordinary form-edit autosave behavior.
 
 ## Static boundary checks
 
