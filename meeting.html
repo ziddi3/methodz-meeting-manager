@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="features-v1611.css" />
   <link rel="stylesheet" href="features-v1612.css" />
   <link rel="stylesheet" href="features-v1614-preparation-launch.css" />
+  <link rel="stylesheet" href="features-v1616-meeting-closeout.css" />
 </head>
 <body>
   <header class="app-header">
@@ -131,6 +132,22 @@
       <textarea id="summary" placeholder="Brief summary of the meeting outcome..."></textarea>
     </section>
 
+    <section class="card" id="meetingCloseoutPanelV1616" aria-labelledby="meetingCloseoutHeadingV1616">
+      <p class="eyebrow">Operator-controlled review</p>
+      <h2 id="meetingCloseoutHeadingV1616">Meeting Closeout Review</h2>
+      <p class="helper-text">Inspect the current form before saving, exporting, changing status, or archiving. Review, focus, and report actions never save or change the meeting automatically.</p>
+      <div class="meeting-closeout-actions-v1616">
+        <button type="button" id="reviewMeetingCloseoutV1616">Review Meeting Closeout</button>
+        <button type="button" id="focusMeetingCloseoutV1616" disabled>Focus Next Review Item</button>
+        <button type="button" id="downloadMeetingCloseoutV1616" disabled>Download Metadata Report</button>
+      </div>
+      <div id="meetingCloseoutResultsV1616" aria-live="polite">
+        <p class="helper-text">Run the review when the meeting is ready for an operator-led closeout check.</p>
+      </div>
+      <p class="helper-text">The downloaded report contains checkpoint states and aggregate counts only. It excludes meeting content, attendee names, signatures, task text, record identifiers, credentials, keys, provider secrets, queue payloads, and hidden governance metadata.</p>
+      <p id="meetingCloseoutStatusV1616" class="helper-text" aria-live="polite">No closeout review has been run.</p>
+    </section>
+
     <section class="card controls" id="endOfMeetingPanelV1610">
       <h2>End of Meeting</h2>
       <div class="button-row">
@@ -208,6 +225,7 @@
   <script src="meeting-review-core.js"></script>
   <script src="workspace-capacity-core.js"></script>
   <script src="meeting-preparation-launch-core.js"></script>
+  <script src="meeting-closeout-core.js"></script>
   <script src="app.js"></script>
   <script src="features-v03.js"></script>
   <script src="features-v03-startup.js"></script>
@@ -259,5 +277,6 @@
   <script src="features-v1610-panel-registry.js"></script>
   <script src="features-v169-meeting-day.js"></script>
   <script src="features-v1614-preparation-launch.js"></script>
+  <script src="features-v1616-meeting-closeout.js"></script>
 </body>
 </html>

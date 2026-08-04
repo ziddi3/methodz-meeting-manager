@@ -1,0 +1,123 @@
+#meetingCloseoutPanelV1616 {
+  scroll-margin-top: 1rem;
+}
+
+.meeting-closeout-actions-v1616,
+.meeting-closeout-summary-v1616,
+.meeting-closeout-counts-v1616 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+.meeting-closeout-actions-v1616 {
+  margin: 1rem 0;
+}
+
+.meeting-closeout-actions-v1616 button {
+  min-height: 44px;
+}
+
+.meeting-closeout-summary-v1616 {
+  margin-top: 1rem;
+}
+
+.meeting-closeout-score-v1616,
+.meeting-closeout-state-v1616,
+.meeting-closeout-counts-v1616 p {
+  border: 1px solid var(--border, #d4d4d4);
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  background: var(--surface, #fff);
+}
+
+.meeting-closeout-score-v1616,
+.meeting-closeout-state-v1616 {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 14rem;
+}
+
+.meeting-closeout-score-v1616 strong {
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+}
+
+.meeting-closeout-state-v1616.is-ready {
+  border-color: #2f7d32;
+}
+
+.meeting-closeout-state-v1616.is-needs-review {
+  border-color: #9a6700;
+}
+
+.meeting-closeout-checkpoints-v1616 {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.meeting-closeout-checkpoints-v1616 li {
+  border: 1px solid var(--border, #d4d4d4);
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+}
+
+.meeting-closeout-checkpoints-v1616 li.is-complete {
+  border-left: 0.35rem solid #2f7d32;
+}
+
+.meeting-closeout-checkpoints-v1616 li.needs-review {
+  border-left: 0.35rem solid #9a6700;
+}
+
+.meeting-closeout-checkpoint-heading-v1616 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.meeting-closeout-counts-v1616 p {
+  flex: 1 1 13rem;
+  margin: 0;
+}
+
+.meeting-closeout-warning-v1616 {
+  flex-basis: 100% !important;
+}
+
+#meetingCloseoutStatusV1616[data-tone="success"] {
+  font-weight: 700;
+}
+
+#meetingCloseoutStatusV1616[data-tone="warning"],
+#meetingCloseoutStatusV1616[data-tone="error"] {
+  font-weight: 700;
+}
+
+.methodz-closeout-target-v1616 {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+}
+
+@media (max-width: 560px) {
+  .meeting-closeout-actions-v1616,
+  .meeting-closeout-summary-v1616,
+  .meeting-closeout-counts-v1616 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .meeting-closeout-actions-v1616 button,
+  .meeting-closeout-counts-v1616 p {
+    width: 100%;
+  }
+}
+
+@media print {
+  #meetingCloseoutPanelV1616 {
+    display: none !important;
+  }
+}
