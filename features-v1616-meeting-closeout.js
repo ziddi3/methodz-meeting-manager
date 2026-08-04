@@ -33,6 +33,13 @@
     status.dataset.tone = tone;
   }
 
+  function setActionState(review) {
+    const focus = document.getElementById("focusMeetingCloseoutV1616");
+    const download = document.getElementById("downloadMeetingCloseoutV1616");
+    if (focus) focus.disabled = !review || review.ready;
+    if (download) download.disabled = !review;
+  }
+
   function clearFocusHighlight() {
     document.querySelectorAll(`.${FOCUS_CLASS}`).forEach((node) => node.classList.remove(FOCUS_CLASS));
   }
@@ -41,7 +48,7 @@
     if (typeof global.collectMeetingData !== "function") {
       throw new Error("Meeting form collector is unavailable.");
     }
-    return global.collectMeetingData({ keepEmptyRows: true });
+    return global.collectMeetingData({ keepEmptyRows: true, forceNewId: true });
   }
 
   function renderReview(review) {
@@ -98,8 +105,7 @@
         maximumTasks: 250
       });
       renderReview(currentReview);
-      document.getElementById("focusMeetingCloseoutV1616").disabled = currentReview.ready;
-      document.getElementById("downloadMeetingCloseoutV1616").disabled = false;
+      setActionState(currentReview);
       setStatus(currentReview.ready
         ? "Closeout review is ready. No meeting record was saved or changed."
         : `Closeout review found ${currentReview.total - currentReview.completed} checkpoint${currentReview.total - currentReview.completed === 1 ? "" : "s"} requiring attention. Nothing was saved automatically.`,
@@ -108,6 +114,7 @@
     } catch (error) {
       console.error("Unable to build meeting closeout review", error);
       currentReview = null;
+      setActionState(null);
       setStatus("The current meeting form could not be reviewed. Nothing was saved or changed.", "error");
       return false;
     }
@@ -165,12 +172,24 @@
     return true;
   }
 
+  function invalidateReview(event) {
+    if (!currentReview || event.target?.closest?.(`#${PANEL_ID}`)) return;
+    currentReview = null;
+    clearFocusHighlight();
+    setActionState(null);
+    setStatus("The meeting form changed. Run Meeting Closeout Review again before focusing or downloading a report.", "neutral");
+  }
+
   function initialize() {
     const panel = document.getElementById(PANEL_ID);
     if (!panel) return;
+    setActionState(null);
     document.getElementById("reviewMeetingCloseoutV1616")?.addEventListener("click", reviewCurrentMeeting);
     document.getElementById("focusMeetingCloseoutV1616")?.addEventListener("click", focusNextCheckpoint);
     document.getElementById("downloadMeetingCloseoutV1616")?.addEventListener("click", downloadMetadataReport);
+    const shell = document.getElementById("mainContent");
+    shell?.addEventListener("input", invalidateReview);
+    shell?.addEventListener("change", invalidateReview);
   }
 
   global.MethodzMeetingCloseoutV1616 = Object.freeze({
