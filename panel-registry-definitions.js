@@ -33,6 +33,7 @@
     panel("decisions-made", "Decisions Made", "capture", "#decisionsMadePanelV1610", 150, { required: true, meetingDayPriority: 60, meetingDayLabel: "Decisions", compatibilityHeading: "Decisions Made" }),
     panel("follow-up-tasks", "Follow-Up Tasks", "capture", "#followUpTasksPanelV1610", 160, { required: true, meetingDayPriority: 70, meetingDayLabel: "Tasks", compatibilityHeading: "Follow-Up Tasks" }),
     panel("meeting-summary", "Meeting Summary", "capture", "#meetingSummaryPanelV1610", 170, { required: true, meetingDayPriority: 80, meetingDayLabel: "Summary", compatibilityHeading: "Meeting Summary" }),
+    panel("meeting-closeout", "Meeting Closeout Review", "shell", "#meetingCloseoutPanelV1616", 175, { meetingDayPriority: 85, meetingDayLabel: "Closeout", printBehavior: "exclude" }),
     panel("end-of-meeting", "End of Meeting", "capture", "#endOfMeetingPanelV1610", 180, { required: true, meetingDayPriority: 90, meetingDayLabel: "Save", compatibilityHeading: "End of Meeting" }),
     panel("saved-records", "Saved Meeting Records", "records", "#savedRecordsPanelV1610", 190),
     panel("follow-up-review", "Follow-Up Review", "records", "#followUpReviewPanelV1611", 200, { printBehavior: "exclude" }),
