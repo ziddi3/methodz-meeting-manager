@@ -1,0 +1,116 @@
+name: Meeting Closeout Review
+
+on:
+  pull_request:
+    paths:
+      - "meeting-closeout-core.js"
+      - "features-v1616-meeting-closeout.js"
+      - "features-v1616-meeting-closeout.css"
+      - "meeting.html"
+      - "panel-registry-definitions.js"
+      - "service-worker.js"
+      - "tests/meeting-closeout-core.mjs"
+      - "tests/meeting-closeout.spec.js"
+      - "docs/MEETING-CLOSEOUT-REVIEW.md"
+      - "docs/MEETING-CLOSEOUT-REVIEW-TESTS.md"
+      - "docs/MEETING-CLOSEOUT-REVIEW-CHANGELOG.md"
+      - ".github/workflows/meeting-closeout-review.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "meeting-closeout-core.js"
+      - "features-v1616-meeting-closeout.js"
+      - "features-v1616-meeting-closeout.css"
+      - "meeting.html"
+      - "panel-registry-definitions.js"
+      - "service-worker.js"
+      - "tests/meeting-closeout-core.mjs"
+      - "tests/meeting-closeout.spec.js"
+      - "docs/MEETING-CLOSEOUT-REVIEW.md"
+      - "docs/MEETING-CLOSEOUT-REVIEW-TESTS.md"
+      - "docs/MEETING-CLOSEOUT-REVIEW-CHANGELOG.md"
+      - ".github/workflows/meeting-closeout-review.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-closeout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static closeout boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            meeting-closeout-core.js
+            features-v1616-meeting-closeout.js
+            features-v1616-meeting-closeout.css
+            meeting.html
+            panel-registry-definitions.js
+            service-worker.js
+            tests/meeting-closeout-core.mjs
+            tests/meeting-closeout.spec.js
+            docs/MEETING-CLOSEOUT-REVIEW.md
+            docs/MEETING-CLOSEOUT-REVIEW-TESTS.md
+            docs/MEETING-CLOSEOUT-REVIEW-CHANGELOG.md
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check meeting-closeout-core.js
+          node --check features-v1616-meeting-closeout.js
+          node --check tests/meeting-closeout-core.mjs
+          node --check tests/meeting-closeout.spec.js
+
+          grep -q 'features-v1616-meeting-closeout.css' meeting.html
+          grep -q 'meeting-closeout-core.js' meeting.html
+          grep -q 'meetingCloseoutPanelV1616' meeting.html
+          grep -q 'features-v1616-meeting-closeout.js' meeting.html
+          grep -q 'meeting-closeout' panel-registry-definitions.js
+          grep -q 'meetingCloseoutPanelV1616' panel-registry-definitions.js
+          grep -q 'meeting-closeout-core.js' service-worker.js
+          grep -q 'features-v1616-meeting-closeout.js' service-worker.js
+          grep -q 'features-v1616-meeting-closeout.css' service-worker.js
+
+          ! grep -Eq 'hub\.methodz\.ca' meeting-closeout-core.js features-v1616-meeting-closeout.js features-v1616-meeting-closeout.css
+          ! grep -Eq 'localStorage\.setItem|sessionStorage\.setItem' features-v1616-meeting-closeout.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|transfer|synchroni[sz]e|provider\.write' features-v1616-meeting-closeout.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" meeting-closeout-core.js features-v1616-meeting-closeout.js service-worker.js
+
+      - name: Run portable closeout tests
+        run: node tests/meeting-closeout-core.mjs
+
+  chromium-closeout:
+    runs-on: ubuntu-latest
+    needs: portable-closeout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/meeting.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run meeting closeout browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/meeting-closeout.spec.js --reporter=line
