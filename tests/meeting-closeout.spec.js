@@ -51,11 +51,12 @@ test.describe("Meeting closeout review", () => {
 
   test("invalidates a stale review after the meeting form changes", async ({ page }) => {
     await prepareMeeting(page);
-    await page.getByRole("button", { name: "Review Meeting Closeout" }).click();
-    await expect(page.getByRole("button", { name: "Download Metadata Report" })).toBeEnabled();
+    const closeoutPanel = page.locator("#meetingCloseoutPanelV1616");
+    await closeoutPanel.getByRole("button", { name: "Review Meeting Closeout" }).click();
+    await expect(closeoutPanel.getByRole("button", { name: "Download Metadata Report" })).toBeEnabled();
     await page.locator("#summary").fill("Updated after review");
-    await expect(page.getByRole("button", { name: "Download Metadata Report" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Focus Next Review Item" })).toBeDisabled();
+    await expect(closeoutPanel.getByRole("button", { name: "Download Metadata Report" })).toBeDisabled();
+    await expect(closeoutPanel.getByRole("button", { name: "Focus Next Review Item" })).toBeDisabled();
     await expect(page.locator("#meetingCloseoutStatusV1616")).toContainText("form changed");
   });
 
