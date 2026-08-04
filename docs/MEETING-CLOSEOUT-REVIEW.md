@@ -24,7 +24,7 @@ A meeting with no decisions or no follow-up tasks is not silently interpreted as
 
 ```text
 Current meeting form
-  -> collectMeetingData({ keepEmptyRows: true })
+  -> collectMeetingData({ keepEmptyRows: true, forceNewId: true })
   -> meeting-closeout-core.js
   -> features-v1616-meeting-closeout.js
   -> Meeting Closeout Review panel
@@ -38,7 +38,10 @@ The browser feature:
 - renders the checkpoint result;
 - focuses the first incomplete section only after **Focus Next Review Item**;
 - downloads a metadata-only JSON report only after an explicit operator action;
+- invalidates the displayed review when the meeting form changes, disabling focus and download until a fresh review is run;
 - never calls save, archive, delete, transfer, provider, or synchronization functions.
+
+Using `forceNewId` prevents the read-only snapshot from inheriting the currently edited saved-record identity. The portable core would exclude that identity in either case, but the browser layer avoids carrying it farther than necessary.
 
 ## Bounded review
 
