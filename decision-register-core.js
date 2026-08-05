@@ -89,8 +89,15 @@
     if (!status.label) issues.push("missing-status");
     else if (!status.knownLane) issues.push("unsupported-status");
 
+    const nonStatusIssues = issues.filter((issue) => issue !== "unsupported-status");
+    const lane = nonStatusIssues.length
+      ? "needs-review"
+      : status.label && !status.knownLane
+        ? "other"
+        : status.knownLane;
+
     return Object.freeze({
-      lane: issues.length ? "needs-review" : status.knownLane,
+      lane,
       issues: Object.freeze(issues),
       status,
       parsedDate
@@ -101,7 +108,7 @@
     const number = boundedText(record?.meetingNumber, TEXT_LIMITS.meetingNumber);
     const title = boundedText(record?.title || "Untitled Meeting", TEXT_LIMITS.meetingTitle);
     return {
-      recordId: text(record?.id).slice(0, 256),
+      recordId: String(record?.id ?? ""),
       meetingNumber: number.value,
       meetingTitle: title.value || "Untitled Meeting",
       meetingDate: dateOnly(record?.date)?.raw || text(record?.date).slice(0, 40),
