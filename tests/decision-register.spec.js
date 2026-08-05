@@ -29,7 +29,7 @@ const seedRecord = {
       approvedBy: "",
       date: "not-a-date",
       status: "Proposed",
-      notes: "Requires operator review"
+      notes: "=WEBSERVICE(\"https://example.invalid\")"
     }
   ],
   tasks: [{ task: "Private task", assignedTo: "Private Assignee", priority: "High", due: "2026-08-10", status: "Pending" }],
@@ -89,6 +89,8 @@ test.describe("Decision Register", () => {
     const csv = await page.evaluate(() => window.MethodzDecisionRegisterV1617.buildCsv());
     expect(csv).toContain("Review the provider evidence");
     expect(csv).toContain("Decision date invalid");
+    expect(csv).toContain("'=WEBSERVICE(");
+    expect(csv).not.toContain('"=WEBSERVICE(');
     expect(csv).not.toContain("Approve the field rehearsal");
     expect(csv).not.toContain("decision-register-meeting");
     expect(csv).not.toContain("Private Attendee");
