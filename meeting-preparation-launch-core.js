@@ -40,8 +40,8 @@
   const owns = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 
   function validateRecordId(value) {
-    const recordId = text(value);
-    if (!recordId) return { valid: false, reason: "missing-record-id", recordId: "" };
+    const recordId = String(value ?? "");
+    if (!recordId.trim()) return { valid: false, reason: "missing-record-id", recordId: "" };
     if (recordId.length > MAX_RECORD_ID_LENGTH) return { valid: false, reason: "record-id-too-long", recordId: "" };
     if (CONTROL_CHARACTERS.test(recordId)) return { valid: false, reason: "invalid-record-id", recordId: "" };
     return { valid: true, reason: "", recordId };
