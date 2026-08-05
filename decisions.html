@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Read-only structured Decision Register for Methodz Meeting Manager records." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Decision Register · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="decision-register.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Decision Register</h1>
+    <p>Read-only structured decisions, review gaps, and source-meeting handoff</p>
+  </header>
+
+  <main class="decision-register-shell" id="mainContent" tabindex="-1">
+    <section class="card decision-register-intro" aria-labelledby="decisionRegisterIntroTitle">
+      <p class="eyebrow">Methodz Meeting Manager</p>
+      <h2 id="decisionRegisterIntroTitle">See what was decided, what is still proposed, and what needs a human review</h2>
+      <p class="helper-text">
+        This workspace reads saved records and lists structured decision entries without approving,
+        reversing, interpreting, saving, archiving, transferring, notifying, or synchronizing anything.
+        Free-form decision notes are surfaced as source-review items and are never automatically parsed.
+      </p>
+
+      <div class="decision-register-toolbar" aria-label="Decision Register controls">
+        <label for="decisionStatusFilter">
+          Decision lane
+          <select id="decisionStatusFilter">
+            <option value="all">All decision lanes</option>
+            <option value="needs-review">Needs Review</option>
+            <option value="proposed">Proposed</option>
+            <option value="deferred">Deferred</option>
+            <option value="approved">Approved</option>
+            <option value="reversed">Reversed</option>
+            <option value="other">Other</option>
+            <option value="unstructured">Free-form source review</option>
+          </select>
+        </label>
+        <label for="decisionSearchFilter">
+          Filter visible decisions
+          <input id="decisionSearchFilter" type="search" placeholder="Decision, meeting, status, approved by..." autocomplete="off" />
+        </label>
+        <button type="button" id="refreshDecisionRegister">Refresh Register</button>
+        <button type="button" id="downloadDecisionRegisterCsv" disabled>Download Visible CSV</button>
+        <a class="button-like" href="meeting.html">Return to Meeting Manager</a>
+      </div>
+
+      <p id="decisionRegisterStatus" class="decision-register-status" role="status" aria-live="polite">Preparing Decision Register…</p>
+    </section>
+
+    <section id="decisionRegisterMetrics" class="decision-register-metrics" aria-label="Decision Register summary"></section>
+    <section id="decisionRegisterResults" class="decision-register-results" aria-label="Decision Register entries"></section>
+
+    <section class="card decision-register-privacy" aria-labelledby="decisionRegisterPrivacyTitle">
+      <h2 id="decisionRegisterPrivacyTitle">Protected business-data boundary</h2>
+      <p class="helper-text">
+        The on-screen register and CSV may contain structured decision text, approval or confirmation
+        labels, decision dates, and decision conditions. Protect them as business data. They exclude
+        attendee data, signatures, consent details, discussion notes, tasks, summaries, credentials,
+        private keys, provider secrets, synchronization queues, raw record identifiers, and hidden
+        governance metadata. Free-form decision prose is not copied into this register or its CSV.
+      </p>
+      <noscript><p>JavaScript is required to read the browser-local meeting workspace.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="data-adapter.js"></script>
+  <script src="decision-register-core.js"></script>
+  <script src="meeting-preparation-launch-core.js"></script>
+  <script src="decision-register.js"></script>
+</body>
+</html>
