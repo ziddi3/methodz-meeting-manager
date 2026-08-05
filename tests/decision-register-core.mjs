@@ -97,11 +97,14 @@ assert.equal(missing.lane, "needs-review");
 assert.deepEqual([...missing.issues].sort(), ["missing-approved-by", "missing-date", "missing-decision", "missing-status"]);
 
 const unknown = core.classifyDecision({ decision: "Keep reviewing", approvedBy: "Team", date: "2026-08-01", status: "Conditional" });
-assert.equal(unknown.lane, "needs-review");
+assert.equal(unknown.lane, "other");
 assert.deepEqual([...unknown.issues], ["unsupported-status"]);
 
 const preparationHash = launchCore.createPreparationLaunchHash("meeting-a", "location");
 assert.equal(preparationHash, "#prepare-record=meeting-a&focus=location", "existing preparation hashes must remain stable");
+const spacedId = "  meeting-a  ";
+const spacedHash = launchCore.createPreparationLaunchHash(spacedId, "decisions", "decision-register");
+assert.equal(launchCore.parsePreparationLaunchHash(spacedHash).recordId, spacedId);
 const decisionHash = launchCore.createPreparationLaunchHash("meeting-a", "decisions", "decision-register");
 assert.equal(decisionHash, "#prepare-record=meeting-a&focus=decisions&from=decision-register");
 const decisionLaunch = launchCore.parsePreparationLaunchHash(decisionHash);
