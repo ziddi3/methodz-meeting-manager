@@ -4,9 +4,9 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const core = require("../meeting-preparation-launch-core.js");
 
-assert.equal(core.version, "1.1.0");
+assert.equal(core.version, "1.2.0");
 assert.equal(core.launchKey, "prepare-record");
-assert.deepEqual(Object.keys(core.focusTargets), ["title", "date", "location", "facilitator", "organizations", "attendees", "agenda", "decisions"]);
+assert.deepEqual(Object.keys(core.focusTargets), ["title", "date", "location", "facilitator", "organizations", "attendees", "agenda", "decisions", "tasks", "summary"]);
 
 const hash = core.createPreparationLaunchHash("meeting / one?", "location");
 assert.equal(hash, "#prepare-record=meeting%20%2F%20one%3F&focus=location");
@@ -37,6 +37,24 @@ const defaultFocus = core.parsePreparationLaunchHash("#prepare-record=meeting-1"
 assert.equal(defaultFocus.valid, true);
 assert.equal(defaultFocus.focus, "title");
 assert.equal(defaultFocus.sourceKey, "preparation");
+
+const outcomeHash = core.createPreparationLaunchHash("meeting-2", "summary", "outcomes");
+assert.equal(outcomeHash, "#prepare-record=meeting-2&focus=summary&from=outcomes");
+const outcome = core.parsePreparationLaunchHash(outcomeHash);
+assert.equal(outcome.valid, true);
+assert.equal(outcome.sourceKey, "outcomes");
+assert.equal(outcome.target.panelId, "meetingSummaryPanelV1610");
+assert.equal(outcome.target.selector, "#summary");
+assert.deepEqual(outcome.source, {
+  key: "outcomes",
+  label: "Meeting Outcomes",
+  returnHref: "outcomes.html",
+  returnLabel: "Back to Meeting Outcomes"
+});
+
+const tasks = core.parsePreparationLaunchHash(core.createPreparationLaunchHash("meeting-3", "tasks", "outcomes"));
+assert.equal(tasks.target.panelId, "followUpTasksPanelV1610");
+assert.equal(tasks.target.selector, ".task-name");
 
 assert.deepEqual(core.parsePreparationLaunchHash("#follow-up"), {
   valid: false,
