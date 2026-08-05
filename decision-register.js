@@ -45,15 +45,7 @@
   }
 
   function readRecords() {
-    if (global.MethodzMeetingData && typeof global.MethodzMeetingData.listRecords === "function") {
-      const adapterId = typeof global.MethodzMeetingData.getAdapterInfo === "function"
-        ? global.MethodzMeetingData.getAdapterInfo().id
-        : "local-storage";
-      if (adapterId === "local-storage") return readLocalRecordsFailClosed();
-      const records = global.MethodzMeetingData.listRecords();
-      if (!Array.isArray(records)) throw new TypeError("Meeting data adapter did not return an array.");
-      return records;
-    }
+    // The Decision Register is deliberately browser-local. It never calls a hosted adapter.
     return readLocalRecordsFailClosed();
   }
 
@@ -119,7 +111,11 @@
       return element("span", "helper-text", "Source record cannot be opened from this entry.");
     }
     const link = element("a", "button-like", "Open Source Meeting");
-    link.href = `meeting.html${launchCore.createPreparationLaunchHash(item.recordId, "decisions", "decision-register")}`;
+    try {
+      link.href = `meeting.html${launchCore.createPreparationLaunchHash(item.recordId, "decisions", "decision-register")}`;
+    } catch (_error) {
+      return element("span", "helper-text", "Source record reference is invalid and cannot be opened from this entry.");
+    }
     link.setAttribute("aria-label", `Open ${item.meetingTitle} decisions`);
     return link;
   }
@@ -249,7 +245,9 @@
   }
 
   function csvCell(value) {
-    return `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const raw = String(value ?? "");
+    const spreadsheetSafe = /^[\t\r\n ]*[=+\-@]/.test(raw) ? `'${raw}` : raw;
+    return `"${spreadsheetSafe.replace(/"/g, '""')}"`;
   }
 
   function buildCsv(items = getVisibleItems()) {
