@@ -81,9 +81,9 @@ test.describe("Meeting Outcomes Review", () => {
 
     await expect(page.locator(".outcomes-card")).toHaveCount(3);
     await expect(page.locator("#meetingOutcomesStatus")).toContainText("3 completed or archived meeting(s)");
-    await expect(page.getByText("Ready", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Needs Summary", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Needs Multiple Reviews", { exact: true }).first()).toBeVisible();
+    await expect(page.locator(".outcomes-badge.is-ready")).toHaveText("Ready");
+    await expect(page.locator(".outcomes-badge.is-needs-summary")).toHaveText("Needs Summary");
+    await expect(page.locator(".outcomes-badge.is-needs-multiple-reviews")).toHaveText("Needs Multiple Reviews");
 
     await page.locator("#outcomesStateFilter").selectOption("needs-summary");
     await expect(page.locator(".outcomes-card")).toHaveCount(1);
