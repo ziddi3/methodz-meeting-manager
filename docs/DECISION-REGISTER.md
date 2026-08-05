@@ -21,8 +21,9 @@ An entry is placed in **Needs Review** when it has any of these conditions:
 - Approved / Confirmed By is missing;
 - decision date is missing;
 - decision date is invalid;
-- status is missing;
-- status is outside the configured lanes.
+- status is missing.
+
+A complete entry with a non-empty status outside the configured lanes appears in **Other** and retains an explicit `unsupported-status` review issue. If other required metadata is also missing, it remains in **Needs Review**.
 
 The core does not infer approval or status from prose.
 
@@ -36,7 +37,7 @@ Those records appear as **Free-form Source Review** items. The register reports 
 
 ```text
 Browser-local saved records
-  -> data-adapter.js / fail-closed local read
+  -> fail-closed localStorage read
   -> decision-register-core.js
   -> decision-register.js
   -> decisions.html
@@ -44,11 +45,14 @@ Browser-local saved records
 
 `decision-register-core.js` is portable and side-effect free. It has no DOM, storage, network, provider, timer, download, service-worker, or mutation dependency.
 
+The browser presentation deliberately reads only the browser-local record key. It does not call a hosted provider even if another adapter is configured elsewhere in the application.
+
 The existing `meeting-preparation-launch-core.js` advances to version `1.1.0` as a source-aware saved-record launch contract. It preserves all existing Preparation Brief hashes and adds:
 
 - the `decisions` focus target;
 - the `decision-register` source route;
-- a source-specific return label and destination.
+- a source-specific return label and destination;
+- exact saved-record identifier preservation through encoding and decoding.
 
 The browser launch feature removes recognized fragments before loading the selected record, validates that the record exists, uses the established editor function, and focuses the Decisions panel only after the operator clicks **Open Source Meeting**.
 
@@ -90,13 +94,13 @@ They exclude:
 - hidden governance metadata;
 - free-form decision prose.
 
-The register and CSV must be protected as business data.
+CSV cells beginning with spreadsheet formula characters are prefixed with a safe apostrophe before serialization. The register and CSV must still be protected as business data.
 
 ## Operator workflow
 
 1. Save structured decisions in the Meeting Manager.
 2. Open `decisions.html` directly or through the Preparation Brief.
-3. Review **Needs Review**, Proposed, and Deferred lanes first.
+3. Review **Needs Review**, Proposed, Deferred, and Other lanes first.
 4. Use the text filter for a decision, meeting, status, or approval label.
 5. Open the source meeting when an entry needs correction or context.
 6. Make changes only in the Meeting Manager and save explicitly.
