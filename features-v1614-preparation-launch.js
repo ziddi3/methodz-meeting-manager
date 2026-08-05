@@ -1,8 +1,8 @@
-/* Explicit, no-write handoff between the Meeting Preparation Brief and a saved meeting. */
+/* Explicit, no-write handoff between read-only workspaces and a saved meeting. */
 (function initializePreparationLaunchBridge(global) {
   "use strict";
 
-  const VERSION = "1.0.0";
+  const VERSION = "1.1.0";
   const STATUS_ID = "preparationLaunchStatusV1614";
   const TARGET_CLASS = "methodz-preparation-target-v1614";
   const ACTION_CLASS = "preparation-launch-action-v1614";
@@ -38,7 +38,7 @@
     document.querySelectorAll(`.${TARGET_CLASS}`).forEach((node) => node.classList.remove(TARGET_CLASS));
   }
 
-  function renderStatus(title, message, tone) {
+  function renderStatus(title, message, tone, source) {
     const existing = document.getElementById(STATUS_ID);
     const section = existing || document.createElement("section");
     section.id = STATUS_ID;
@@ -49,7 +49,7 @@
     const copy = document.createElement("div");
     const eyebrow = document.createElement("p");
     eyebrow.className = "eyebrow";
-    eyebrow.textContent = "Preparation handoff";
+    eyebrow.textContent = `${source?.label || "Saved record"} handoff`;
     const heading = document.createElement("h2");
     heading.textContent = title;
     const detail = document.createElement("p");
@@ -59,8 +59,8 @@
 
     const back = document.createElement("a");
     back.className = "button-like";
-    back.href = "preparation.html";
-    back.textContent = "Back to Preparation Brief";
+    back.href = source?.returnHref || "preparation.html";
+    back.textContent = source?.returnLabel || "Back to Preparation Brief";
     section.replaceChildren(copy, back);
 
     if (!existing) {
@@ -101,7 +101,7 @@
 
     cleanLaunchFragment();
     if (!launch.valid) {
-      renderStatus("Preparation link could not be opened", "The launch reference was incomplete or unsupported. No meeting record was changed.", "error");
+      renderStatus("Saved-record link could not be opened", "The launch reference was incomplete or unsupported. No meeting record was changed.", "error", launch.source);
       return false;
     }
 
@@ -113,22 +113,27 @@
     }
     const record = (Array.isArray(records) ? records : []).find((item) => String(item?.id ?? "") === launch.recordId);
     if (!record) {
-      renderStatus("Saved meeting was not found", "The selected record is not present in this browser-local workspace. No meeting record was changed.", "error");
+      renderStatus("Saved meeting was not found", "The selected record is not present in this browser-local workspace. No meeting record was changed.", "error", launch.source);
       return false;
     }
     if (typeof global.loadRecordForEditing !== "function") {
-      renderStatus("Meeting editor is unavailable", "The saved record remains unchanged. Return to the Preparation Brief or reload the Meeting Manager.", "error");
+      renderStatus("Meeting editor is unavailable", "The saved record remains unchanged. Return to the source workspace or reload the Meeting Manager.", "error", launch.source);
       return false;
     }
 
     global.loadRecordForEditing(launch.recordId);
     const loadedId = document.getElementById("editingRecordId")?.value || "";
     if (loadedId !== launch.recordId) {
-      renderStatus("Saved meeting could not be loaded", "The selected record remains unchanged. Return to the Preparation Brief and try again.", "error");
+      renderStatus("Saved meeting could not be loaded", "The selected record remains unchanged. Return to the source workspace and try again.", "error", launch.source);
       return false;
     }
 
-    renderStatus("Meeting opened for preparation", `${launch.target.label} is the first incomplete preparation item from the brief. Nothing was saved automatically.`, "success");
+    const isPreparation = launch.sourceKey === "preparation";
+    const title = isPreparation ? "Meeting opened for preparation" : "Source meeting opened";
+    const message = isPreparation
+      ? `${launch.target.label} is the first incomplete preparation item from the brief. Nothing was saved automatically.`
+      : `${launch.target.label} is ready for operator review. Nothing was saved or changed automatically.`;
+    renderStatus(title, message, "success", launch.source);
     global.requestAnimationFrame(() => focusTarget(launch.target));
     return true;
   }
