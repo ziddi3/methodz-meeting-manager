@@ -11,6 +11,10 @@ assert.deepEqual(Object.keys(core.focusTargets), ["title", "date", "location", "
 const hash = core.createPreparationLaunchHash("meeting / one?", "location");
 assert.equal(hash, "#prepare-record=meeting%20%2F%20one%3F&focus=location");
 
+const spacedId = "  meeting / one?  ";
+const spacedHash = core.createPreparationLaunchHash(spacedId, "location");
+assert.equal(core.parsePreparationLaunchHash(spacedHash).recordId, spacedId);
+
 const parsed = core.parsePreparationLaunchHash(hash);
 assert.equal(parsed.valid, true);
 assert.equal(parsed.isPreparationLaunch, true);
