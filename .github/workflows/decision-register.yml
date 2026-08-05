@@ -1,0 +1,125 @@
+name: Decision Register
+
+on:
+  pull_request:
+    paths:
+      - "decision-register-core.js"
+      - "decision-register.js"
+      - "decision-register.css"
+      - "decisions.html"
+      - "meeting-preparation-launch-core.js"
+      - "features-v1614-preparation-launch.js"
+      - "preparation.html"
+      - "service-worker.js"
+      - "tests/decision-register-core.mjs"
+      - "tests/decision-register.spec.js"
+      - "docs/DECISION-REGISTER.md"
+      - "docs/DECISION-REGISTER-TESTS.md"
+      - "docs/DECISION-REGISTER-CHANGELOG.md"
+      - ".github/workflows/decision-register.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "decision-register-core.js"
+      - "decision-register.js"
+      - "decision-register.css"
+      - "decisions.html"
+      - "meeting-preparation-launch-core.js"
+      - "features-v1614-preparation-launch.js"
+      - "preparation.html"
+      - "service-worker.js"
+      - "tests/decision-register-core.mjs"
+      - "tests/decision-register.spec.js"
+      - "docs/DECISION-REGISTER.md"
+      - "docs/DECISION-REGISTER-TESTS.md"
+      - "docs/DECISION-REGISTER-CHANGELOG.md"
+      - ".github/workflows/decision-register.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-decision-register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static Decision Register boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            decision-register-core.js
+            decision-register.js
+            decision-register.css
+            decisions.html
+            meeting-preparation-launch-core.js
+            features-v1614-preparation-launch.js
+            preparation.html
+            service-worker.js
+            tests/decision-register-core.mjs
+            tests/decision-register.spec.js
+            docs/DECISION-REGISTER.md
+            docs/DECISION-REGISTER-TESTS.md
+            docs/DECISION-REGISTER-CHANGELOG.md
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check decision-register-core.js
+          node --check decision-register.js
+          node --check meeting-preparation-launch-core.js
+          node --check features-v1614-preparation-launch.js
+          node --check tests/decision-register-core.mjs
+          node --check tests/decision-register.spec.js
+
+          grep -q 'decision-register.css' decisions.html
+          grep -q 'decision-register-core.js' decisions.html
+          grep -q 'meeting-preparation-launch-core.js' decisions.html
+          grep -q 'decision-register.js' decisions.html
+          grep -q 'href="decisions.html"' preparation.html
+          grep -q 'decisions.html' service-worker.js
+          grep -q 'decision-register.css' service-worker.js
+          grep -q 'decision-register-core.js' service-worker.js
+          grep -q 'decision-register.js' service-worker.js
+          grep -q 'decisionsMadePanelV1610' meeting-preparation-launch-core.js
+          grep -q 'decision-register' meeting-preparation-launch-core.js
+
+          ! grep -Eq 'hub\.methodz\.ca' decision-register-core.js decision-register.js decision-register.css decisions.html
+          ! grep -Eq 'replaceRecords\(|upsertRecord\(|deleteRecord\(|saveMeeting\(|archiveRecord\(|provider\.write|synchroni[sz]e|transfer' decision-register-core.js decision-register.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" decision-register-core.js decision-register.js service-worker.js
+
+      - name: Run portable Decision Register tests
+        run: node tests/decision-register-core.mjs
+
+  chromium-decision-register:
+    runs-on: ubuntu-latest
+    needs: portable-decision-register
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/decisions.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Decision Register browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/decision-register.spec.js --reporter=line
