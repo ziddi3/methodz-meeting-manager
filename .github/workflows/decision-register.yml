@@ -13,6 +13,7 @@ on:
       - "service-worker.js"
       - "tests/decision-register-core.mjs"
       - "tests/decision-register.spec.js"
+      - "tests/meeting-preparation-launch-core.mjs"
       - "docs/DECISION-REGISTER.md"
       - "docs/DECISION-REGISTER-TESTS.md"
       - "docs/DECISION-REGISTER-CHANGELOG.md"
@@ -31,6 +32,7 @@ on:
       - "service-worker.js"
       - "tests/decision-register-core.mjs"
       - "tests/decision-register.spec.js"
+      - "tests/meeting-preparation-launch-core.mjs"
       - "docs/DECISION-REGISTER.md"
       - "docs/DECISION-REGISTER-TESTS.md"
       - "docs/DECISION-REGISTER-CHANGELOG.md"
@@ -63,6 +65,7 @@ jobs:
             service-worker.js
             tests/decision-register-core.mjs
             tests/decision-register.spec.js
+            tests/meeting-preparation-launch-core.mjs
             docs/DECISION-REGISTER.md
             docs/DECISION-REGISTER-TESTS.md
             docs/DECISION-REGISTER-CHANGELOG.md
@@ -77,6 +80,7 @@ jobs:
           node --check features-v1614-preparation-launch.js
           node --check tests/decision-register-core.mjs
           node --check tests/decision-register.spec.js
+          node --check tests/meeting-preparation-launch-core.mjs
 
           grep -q 'decision-register.css' decisions.html
           grep -q 'decision-register-core.js' decisions.html
@@ -89,13 +93,17 @@ jobs:
           grep -q 'decision-register.js' service-worker.js
           grep -q 'decisionsMadePanelV1610' meeting-preparation-launch-core.js
           grep -q 'decision-register' meeting-preparation-launch-core.js
+          grep -q 'spreadsheetSafe' decision-register.js
 
           ! grep -Eq 'hub\.methodz\.ca' decision-register-core.js decision-register.js decision-register.css decisions.html
+          ! grep -q 'MethodzMeetingData.listRecords' decision-register.js
           ! grep -Eq 'replaceRecords\(|upsertRecord\(|deleteRecord\(|saveMeeting\(|archiveRecord\(|provider\.write|synchroni[sz]e|transfer' decision-register-core.js decision-register.js
           ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" decision-register-core.js decision-register.js service-worker.js
 
       - name: Run portable Decision Register tests
-        run: node tests/decision-register-core.mjs
+        run: |
+          node tests/decision-register-core.mjs
+          node tests/meeting-preparation-launch-core.mjs
 
   chromium-decision-register:
     runs-on: ubuntu-latest
