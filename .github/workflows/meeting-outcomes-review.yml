@@ -1,0 +1,150 @@
+name: Meeting Outcomes Review
+
+on:
+  pull_request:
+    paths:
+      - "outcomes.html"
+      - "meeting-outcomes-core.js"
+      - "meeting-outcomes.js"
+      - "meeting-outcomes.css"
+      - "meeting-preparation-launch-core.js"
+      - "preparation.html"
+      - "decisions.html"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "tests/meeting-outcomes-core.mjs"
+      - "tests/meeting-outcomes.spec.js"
+      - "tests/meeting-preparation-launch-core.mjs"
+      - "docs/MEETING-OUTCOMES-REVIEW.md"
+      - "docs/MEETING-OUTCOMES-REVIEW-TESTS.md"
+      - "docs/MEETING-OUTCOMES-REVIEW-CHANGELOG.md"
+      - "docs/V1.6.18-RELEASE-ROADMAP.md"
+      - ".github/workflows/meeting-outcomes-review.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "outcomes.html"
+      - "meeting-outcomes-core.js"
+      - "meeting-outcomes.js"
+      - "meeting-outcomes.css"
+      - "meeting-preparation-launch-core.js"
+      - "preparation.html"
+      - "decisions.html"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "tests/meeting-outcomes-core.mjs"
+      - "tests/meeting-outcomes.spec.js"
+      - "tests/meeting-preparation-launch-core.mjs"
+      - "docs/MEETING-OUTCOMES-REVIEW.md"
+      - "docs/MEETING-OUTCOMES-REVIEW-TESTS.md"
+      - "docs/MEETING-OUTCOMES-REVIEW-CHANGELOG.md"
+      - "docs/V1.6.18-RELEASE-ROADMAP.md"
+      - ".github/workflows/meeting-outcomes-review.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-meeting-outcomes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static Meeting Outcomes boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            outcomes.html
+            meeting-outcomes-core.js
+            meeting-outcomes.js
+            meeting-outcomes.css
+            meeting-preparation-launch-core.js
+            preparation.html
+            decisions.html
+            service-worker.js
+            docs/APPLICATION-MAP.md
+            tests/meeting-outcomes-core.mjs
+            tests/meeting-outcomes.spec.js
+            tests/meeting-preparation-launch-core.mjs
+            docs/MEETING-OUTCOMES-REVIEW.md
+            docs/MEETING-OUTCOMES-REVIEW-TESTS.md
+            docs/MEETING-OUTCOMES-REVIEW-CHANGELOG.md
+            docs/V1.6.18-RELEASE-ROADMAP.md
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check meeting-outcomes-core.js
+          node --check meeting-outcomes.js
+          node --check meeting-preparation-launch-core.js
+          node --check tests/meeting-outcomes-core.mjs
+          node --check tests/meeting-outcomes.spec.js
+          node --check tests/meeting-preparation-launch-core.mjs
+
+          grep -q 'meeting-outcomes.css' outcomes.html
+          grep -q 'meeting-outcomes-core.js' outcomes.html
+          grep -q 'meeting-preparation-launch-core.js' outcomes.html
+          grep -q 'meeting-outcomes.js' outcomes.html
+          grep -q 'outcomes.html' preparation.html
+          grep -q 'outcomes.html' decisions.html
+          grep -q 'outcomes.html' service-worker.js
+          grep -q 'meeting-outcomes.css' service-worker.js
+          grep -q 'meeting-outcomes-core.js' service-worker.js
+          grep -q 'meeting-outcomes.js' service-worker.js
+          grep -q 'meetingSummaryPanelV1610' meeting-preparation-launch-core.js
+          grep -q 'followUpTasksPanelV1610' meeting-preparation-launch-core.js
+          grep -q 'returnHref: "outcomes.html"' meeting-preparation-launch-core.js
+          grep -q 'outcomes.html' docs/APPLICATION-MAP.md
+          grep -q 'spreadsheetSafe' meeting-outcomes.js
+
+          ! grep -Eq 'hub\.methodz\.ca' outcomes.html meeting-outcomes-core.js meeting-outcomes.js meeting-outcomes.css
+          ! grep -Eq 'localStorage\.setItem|sessionStorage\.setItem' meeting-outcomes.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' meeting-outcomes.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" meeting-outcomes-core.js meeting-outcomes.js service-worker.js
+
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const browser = fs.readFileSync('meeting-outcomes.js', 'utf8');
+          const csvFunction = browser.slice(browser.indexOf('function csvRows'), browser.indexOf('function downloadCsv'));
+          if (/recordId|attendee|signature|consent|notes|summaryText|decisionText|approvedBy|taskText|assignedTo|credential|privateKey|queue/i.test(csvFunction)) {
+            throw new Error('Meeting Outcomes CSV boundary includes a prohibited field name.');
+          }
+          NODE
+
+      - name: Run portable Meeting Outcomes tests
+        run: |
+          node tests/meeting-outcomes-core.mjs
+          node tests/meeting-preparation-launch-core.mjs
+
+  chromium-meeting-outcomes:
+    runs-on: ubuntu-latest
+    needs: portable-meeting-outcomes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/outcomes.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Meeting Outcomes browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/meeting-outcomes.spec.js --reporter=line

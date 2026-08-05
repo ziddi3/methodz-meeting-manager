@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Read-only Meeting Outcomes Review for completed Methodz Meeting Manager records." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Meeting Outcomes Review · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="meeting-outcomes.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Meeting Outcomes Review</h1>
+    <p>Read-only completion, decision-capture, and follow-up review across finished meetings</p>
+  </header>
+
+  <main class="outcomes-shell" id="mainContent" tabindex="-1">
+    <section class="card outcomes-intro" aria-labelledby="outcomesIntroTitle">
+      <p class="eyebrow">Methodz Meeting Manager</p>
+      <h2 id="outcomesIntroTitle">Review what is recorded after the meeting ends</h2>
+      <p class="helper-text">
+        This workspace reports whether completed and archived meetings contain a summary, structured
+        decision capture, and reviewed follow-up work. It does not interpret decision prose, link a task
+        to a particular decision, generate summaries, change task status, or save anything.
+      </p>
+
+      <div class="outcomes-toolbar" aria-label="Meeting Outcomes controls">
+        <label for="outcomesStateFilter">
+          Outcome state
+          <select id="outcomesStateFilter" disabled>
+            <option value="all">All outcome states</option>
+            <option value="ready">Ready</option>
+            <option value="needs-summary">Needs Summary</option>
+            <option value="needs-decision-review">Needs Decision Review</option>
+            <option value="needs-follow-up-review">Needs Follow-Up Review</option>
+            <option value="needs-multiple-reviews">Needs Multiple Reviews</option>
+          </select>
+        </label>
+        <label for="outcomesSearchFilter">
+          Filter visible meetings
+          <input id="outcomesSearchFilter" type="search" placeholder="Meeting title, number, date, status…" autocomplete="off" disabled />
+        </label>
+        <button type="button" id="refreshMeetingOutcomes">Refresh Outcomes</button>
+        <button type="button" id="downloadMeetingOutcomesCsv" disabled>Download Visible CSV</button>
+        <a class="button-like" href="decisions.html">Open Decision Register</a>
+        <a class="button-like" href="preparation.html">Open Preparation Brief</a>
+        <a class="button-like" href="meeting.html">Return to Meeting Manager</a>
+      </div>
+
+      <p id="meetingOutcomesStatus" class="outcomes-status" role="status" aria-live="polite">
+        Use Refresh Outcomes to read this browser-local workspace.
+      </p>
+      <p id="meetingOutcomesFilterSummary" class="helper-text">No outcomes review has been built.</p>
+    </section>
+
+    <section id="meetingOutcomesMetrics" class="outcomes-metrics" aria-label="Meeting Outcomes summary"></section>
+    <section id="meetingOutcomesResults" class="outcomes-results" aria-label="Meeting Outcomes results"></section>
+
+    <section class="card outcomes-privacy" aria-labelledby="outcomesPrivacyTitle">
+      <h2 id="outcomesPrivacyTitle">Protected business-data boundary</h2>
+      <p class="helper-text">
+        The screen and CSV contain meeting identity plus aggregate decision and task state. Protect them
+        as business data. They exclude raw record identifiers, attendee information, signatures, consent,
+        discussion notes, summary text, free-form decision text, structured decision text and conditions,
+        task text, Assigned To values, credentials, private keys, provider secrets, synchronization
+        payloads, and hidden governance metadata.
+      </p>
+      <p class="helper-text">
+        Decision and task counts belong to the same source meeting. The review never claims that a task
+        implements, proves, or is linked to a specific decision.
+      </p>
+      <noscript><p>JavaScript is required to read the browser-local meeting workspace.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="meeting-outcomes-core.js"></script>
+  <script src="meeting-preparation-launch-core.js"></script>
+  <script src="meeting-outcomes.js"></script>
+</body>
+</html>
