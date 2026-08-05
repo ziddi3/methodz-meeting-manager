@@ -7,7 +7,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createMethodzMeetingPreparationLaunchCore() {
   "use strict";
 
-  const VERSION = "1.1.0";
+  const VERSION = "1.2.0";
   const MAX_RECORD_ID_LENGTH = 256;
   const LAUNCH_KEY = "prepare-record";
   const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
@@ -19,7 +19,9 @@
     organizations: Object.freeze({ panelId: "organizationsPresentPanelV1610", selector: ".company-present", label: "Organizations present" }),
     attendees: Object.freeze({ panelId: "attendanceSignOnPanelV1610", selector: ".attendee-name", label: "Attendee setup" }),
     agenda: Object.freeze({ panelId: "agendaChecklistPanelV1610", selector: "#agendaList input[type='checkbox']", label: "Agenda setup" }),
-    decisions: Object.freeze({ panelId: "decisionsMadePanelV1610", selector: "#decisions", label: "Decisions Made" })
+    decisions: Object.freeze({ panelId: "decisionsMadePanelV1610", selector: "#decisions", label: "Decisions Made" }),
+    tasks: Object.freeze({ panelId: "followUpTasksPanelV1610", selector: ".task-name", label: "Follow-Up Tasks" }),
+    summary: Object.freeze({ panelId: "meetingSummaryPanelV1610", selector: "#summary", label: "Meeting Summary" })
   });
   const SOURCES = Object.freeze({
     preparation: Object.freeze({
@@ -33,6 +35,12 @@
       label: "Decision Register",
       returnHref: "decisions.html",
       returnLabel: "Back to Decision Register"
+    }),
+    outcomes: Object.freeze({
+      key: "outcomes",
+      label: "Meeting Outcomes",
+      returnHref: "outcomes.html",
+      returnLabel: "Back to Meeting Outcomes"
     })
   });
 
