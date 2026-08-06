@@ -16,6 +16,7 @@ const HISTORICAL_CACHE_NAMES = Object.freeze([
 ]);
 const APP_SHELL = [
   "./",
+  "./index.html",
   "./meeting.html",
   "./archive.html",
   "./verify.html",
@@ -23,6 +24,7 @@ const APP_SHELL = [
   "./decisions.html",
   "./outcomes.html",
   "./style.css",
+  "./workspace-home.css",
   "./meeting-preparation.css",
   "./decision-register.css",
   "./meeting-outcomes.css",
@@ -99,6 +101,7 @@ const APP_SHELL = [
   "./meeting-review-core.js",
   "./follow-up-planning-core.js",
   "./workspace-capacity-core.js",
+  "./workspace-home-core.js",
   "./meeting-preparation-core.js",
   "./meeting-preparation-launch-core.js",
   "./meeting-run-sheet-core.js",
@@ -111,6 +114,7 @@ const APP_SHELL = [
   "./archive-v11.js",
   "./archive-v13.js",
   "./verify.js",
+  "./workspace-home.js",
   "./meeting-preparation.js",
   "./decision-register.js",
   "./meeting-outcomes.js",
@@ -214,7 +218,9 @@ self.addEventListener("fetch", (event) => {
     const network = await networkPromise;
     if (network) return network;
 
-    if (request.mode === "navigate") return caches.match("./meeting.html");
+    if (request.mode === "navigate") {
+      return (await caches.match("./index.html")) || caches.match("./meeting.html");
+    }
 
     return new Response("Offline resource unavailable.", {
       status: 503,
@@ -231,7 +237,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, or review-mutation handler.
-// The service worker never reads meeting, task, decision, outcomes, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, or review-mutation handler.
+// The service worker never reads meeting, task, decision, outcomes, workspace-home, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;

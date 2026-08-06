@@ -6,30 +6,38 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, transfe
 
 ## Current release
 
-**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Follow-up planning core 1.0.0 · Workspace capacity core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Follow-up planning core 1.0.0 · Workspace capacity core 1.0.0 · Workspace Home core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
 
-The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `meeting.html` directly for core meeting workflows or deploy the repository to any ordinary static host.
+The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `index.html` for the lifecycle launchpad, open `meeting.html` directly for core meeting workflows, or deploy the repository to any ordinary static host.
 
-Version 1.6.12 adds:
+The current 1.x hardening layer includes:
 
-- an explicit **Workspace Capacity** panel;
-- bounded, deterministic localStorage collection and aggregate category and byte reporting without raw keys or values;
-- an explicit unavailable state when browser-local key enumeration or value reads fail;
-- optional browser origin-usage and quota comparison;
-- a bounded, in-memory large-workspace Follow-Up Review rehearsal;
-- metadata-only capacity and performance report downloads;
+- an explicit **Workspace Home** with lifecycle links and an operator-triggered aggregate counts-only snapshot;
+- an explicit **Workspace Capacity** panel with bounded browser-local storage reporting and synthetic performance rehearsal;
+- read-only **Daily Focus** and **Follow-Up Planning Brief** workspaces;
+- a read-only **Meeting Preparation Brief** with operator-controlled run-sheet preview and safe source handoff;
+- an operator-controlled **Meeting Closeout Review**;
+- a read-only **Decision Register** and **Meeting Outcomes Review**;
 - no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, or background synchronization.
 
-The current 1.x hardening layer also adds a read-only **Daily Focus** inside Follow-Up Review. It prioritizes incomplete saved tasks by deadline risk, missing setup, configured priority, and due date, then summarizes **Assigned To** workload. It does not update records, assign people, send reminders, contact assignees, or synchronize data.
+## Workspace Home
 
-The read-only **Follow-Up Planning Brief** extends that workflow with explicit 7, 14, and 30 day horizons. It groups incomplete tasks into overdue, due-today, within-window, needs-scheduling, and later lanes, then provides a bounded Assigned To outlook. Operators may open the source meeting or explicitly download a planning CSV, but the brief never changes records, assigns people, sends reminders, or synchronizes data.
+`index.html` is the static root entry point. It links the established Preparation, Meeting-Day, Decision Register, Meeting Outcomes, Archive, and Verify workflows without requiring a framework or provider.
+
+The optional aggregate launch snapshot reads browser-local meeting records only after **Refresh Workspace Snapshot**. Its portable core retains counts, bounds, and report metadata only. It does not retain meeting titles, attendee names, notes, decisions, summaries, task text, Assigned To values, record identifiers, signatures, credentials, private keys, provider secrets, queue payloads, or hidden governance metadata.
+
+The PWA identity remains `./meeting.html`, while the installed `start_url` is `./index.html`. This changes the launch surface without creating a second installed-app identity.
 
 ## Entry points
 
 ```text
-meeting.html   Main meeting and operator workspace
-archive.html   Dedicated detail and print view
-verify.html    Standalone signed-package verifier
+index.html         Workspace Home and explicit aggregate launch snapshot
+meeting.html       Main meeting and operator workspace
+preparation.html   Upcoming-meeting preparation brief and run-sheet preview
+decisions.html     Structured Decision Register
+outcomes.html      Completed / archived Meeting Outcomes Review
+archive.html       Dedicated record detail and print view
+verify.html        Standalone signed-package verifier
 ```
 
 ## Direct meeting workflow
@@ -81,6 +89,18 @@ The selected 7, 14, or 30 day horizon is stored only as a local display preferen
 
 The review does not automatically update task status, assign people, send reminders, contact assignees, or synchronize data. Its review CSV excludes typed signatures, consent details, private keys, credentials, provider secrets, queue payloads, and hidden governance metadata.
 
+## Meeting Preparation and run sheet
+
+`preparation.html` provides a read-only preparation brief for active meetings inside explicit 7, 14, 30, or 60 day horizons. It reports required setup, same-day date pressure, and bounded carryover work without changing the source meeting.
+
+Operators may explicitly open a saved meeting to prepare it or preview a bounded single-meeting run sheet. Preparation handoff uses a validated URL fragment, removes the fragment on arrival, and focuses the first missing preparation requirement without saving automatically.
+
+## Decision Register and Meeting Outcomes
+
+`decisions.html` reads structured decision entries into explicit review lanes and keeps free-form decision prose in source-review status rather than attempting to interpret it.
+
+`outcomes.html` reviews Completed and Archived meetings for summary presence, structured decision readiness, and follow-up state. Both workspaces read browser-local records only after an explicit refresh and preserve source records.
+
 ## Workspace Capacity
 
 Workspace Capacity runs only after an explicit operator action. It estimates the UTF-8 size of browser-local entries, groups them into aggregate categories, and may compare the measured total with `navigator.storage.estimate()` when the browser provides it.
@@ -107,6 +127,7 @@ Notes
 Decisions
 Tasks
 Summary
+Closeout Review
 Save
 ```
 
@@ -139,7 +160,7 @@ Transfer, acceptance, diagnostics, rollback, readiness, registry, capacity, and 
 - Active preservation holds block permanent disposition.
 - Typed signatures require consent and remain excluded from external copies.
 - Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, reports, or service-worker caches.
-- Review, focus, planning, capacity, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
+- Review, focus, planning, capacity, preparation, outcomes, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
 - Service workers cache static assets only and never process business data.
 - Infrastructure supports the meeting workflow rather than replacing it.
 
@@ -171,14 +192,25 @@ Synchronization, transfer, acceptance, and recovery
   key-custody-core.js
   workspace-package-core.js
 
-Application shell and meeting workflow
-  panel-registry-core.js
-  panel-registry-definitions.js
+Portable derived-workspace cores
+  workspace-home-core.js
   meeting-review-core.js
   follow-up-planning-core.js
   workspace-capacity-core.js
+  meeting-preparation-core.js
+  meeting-preparation-launch-core.js
+  meeting-run-sheet-core.js
+  meeting-closeout-core.js
+  decision-register-core.js
+  meeting-outcomes-core.js
+
+Application shell and browser presentation
+  index.html + workspace-home.js
   app.js
   ordered features-v*.js layers
+  preparation.html + meeting-preparation.js
+  decisions.html + decision-register.js
+  outcomes.html + meeting-outcomes.js
 
 Archive, verification, and static shell
   archive*.js
@@ -187,9 +219,7 @@ Archive, verification, and static shell
   service-worker.js
 ```
 
-Script order is part of the runtime contract. Later layers intentionally extend stable functions created by earlier layers. v1.6.12 loads its portable capacity core before browser features, creates the dynamic capacity panel after the Follow-Up Review, and lets the v1.6.10 registry bind the completed shell before Meeting-Day navigation consumes registry metadata.
-
-The planning layer preserves that contract by loading a standalone, DOM-free planning core and browser presentation through `config-v1611.js`. The service worker pre-caches those static assets. The browser presentation waits for the established Follow-Up Review panel, derives a report through the existing review core, and never writes source records.
+Script order in `meeting.html` remains part of the runtime contract. Later feature layers intentionally extend stable functions created by earlier layers. Dedicated derived workspaces load their own portable core before browser presentation and do not mutate source records implicitly.
 
 ## Hosted-provider boundary
 
@@ -205,15 +235,19 @@ A valid signature confirms integrity relative to the matching public key. It doe
 
 Supported modes include direct `file:` use, localhost, GitHub Pages, Cloudflare Pages, Netlify, Vercel static hosting, Render static hosting, and ordinary web servers. HTTPS or localhost is recommended for service-worker and Web Crypto availability.
 
+Static hosting should serve `index.html` as the root document. Direct `meeting.html` URLs remain supported. Offline navigation uses the cached Workspace Home as the primary shell fallback and `meeting.html` as a secondary fallback.
+
 Do not deploy this repository over `hub.methodz.ca`. Methodz Meeting Manager is a task-focused tool, not Method Hub, Nexus Hub, the Cathedral, a storefront, or a business container.
 
 ## Automated validation
 
 GitHub Actions covers:
 
+- Workspace Home explicit-read, aggregate privacy, manifest identity, mobile, and static-boundary behavior;
 - JavaScript syntax and required-file wiring;
 - panel registry and Meeting-Day behavior;
 - live pulse, follow-up review, Daily Focus ordering, planning-lane ordering, bounded Assigned To workload, and no-mutation logic;
+- preparation, run-sheet, Decision Register, and Meeting Outcomes derived-workspace behavior;
 - explicit planning CSV download, planning-window preference recovery, and phone-width containment;
 - deterministic bounded capacity collection, unavailable-read handling, archive precedence, privacy boundaries, and bounded in-memory performance rehearsal;
 - cryptographic signing, recovery, and custody;
@@ -228,6 +262,11 @@ Playwright and other test packages are installed only in CI and are not deployed
 ## Current documentation
 
 ```text
+docs/APPLICATION-MAP.md
+docs/WORKSPACE-HOME.md
+docs/WORKSPACE-HOME-TESTS.md
+docs/WORKSPACE-HOME-CHANGELOG.md
+docs/V1.6.19-RELEASE-ROADMAP.md
 docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
 docs/SECURITY-AND-PRIVACY.md
@@ -254,9 +293,9 @@ docs/KEY-CUSTODY-OPERATIONS.md
 
 ### 1.x hardening
 
-- execute documented Android, iOS, tablet, and two-device field rehearsals;
+- execute documented Android, iOS, tablet, and two-device field rehearsals from the Workspace Home launch surface;
 - continue real-device and large-workspace performance evidence collection;
-- improve meeting-day review, Daily Focus, and planning ergonomics without silent automation;
+- improve meeting-day review, Daily Focus, planning, preparation, and outcomes ergonomics without silent automation;
 - evaluate production-provider candidates against the evidence gate;
 - keep synchronization explicit and user controlled;
 - preserve browser-local storage as the default until a hosted provider is explicitly approved.
