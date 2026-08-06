@@ -3,7 +3,7 @@
   "short_name": "Methodz Meetings",
   "description": "Offline-first meeting records for Canadian Soft Water Corporation, Method HVAC Inc., and Methodz partner workflows.",
   "id": "./meeting.html",
-  "start_url": "./meeting.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f4f4",
@@ -25,14 +25,19 @@
       "url": "./meeting.html"
     },
     {
-      "name": "Meeting Archive",
-      "short_name": "Archive",
-      "url": "./meeting.html#archiveVaultV08"
+      "name": "Meeting Preparation",
+      "short_name": "Prepare",
+      "url": "./preparation.html"
     },
     {
-      "name": "Device Readiness",
-      "short_name": "Device Check",
-      "url": "./meeting.html#deviceReadinessV167"
+      "name": "Decision Register",
+      "short_name": "Decisions",
+      "url": "./decisions.html"
+    },
+    {
+      "name": "Meeting Outcomes",
+      "short_name": "Outcomes",
+      "url": "./outcomes.html"
     },
     {
       "name": "Verify Signed Package",
