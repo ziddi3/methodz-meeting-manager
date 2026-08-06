@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Static Workspace Home for Methodz Meeting Manager lifecycle workflows." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Workspace Home · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="workspace-home.css" />
+</head>
+<body>
+  <header class="app-header workspace-header">
+    <div>
+      <p class="workspace-kicker">Methodz Meeting Manager</p>
+      <h1>Workspace Home</h1>
+      <p>One static launchpad for the meeting lifecycle, with an operator-controlled aggregate snapshot.</p>
+    </div>
+    <a class="button-like workspace-primary-link" href="meeting.html">Open Meeting-Day</a>
+  </header>
+
+  <main class="workspace-shell" id="mainContent" tabindex="-1">
+    <section class="card workspace-intro" aria-labelledby="workspaceSnapshotTitle">
+      <p class="eyebrow">Browser-local workspace</p>
+      <h2 id="workspaceSnapshotTitle">Aggregate launch snapshot</h2>
+      <p class="helper-text">
+        Nothing is read from meeting storage when this page opens. Use Refresh Snapshot when you want a
+        counts-only view of current workload. The snapshot retains no meeting identity, meeting text,
+        attendee data, decisions, summaries, task text, Assigned To values, signatures, or record IDs.
+      </p>
+      <div class="workspace-actions">
+        <button type="button" id="refreshWorkspaceSnapshot">Refresh Snapshot</button>
+        <span id="workspaceSnapshotStatus" class="workspace-status" role="status" aria-live="polite">
+          Snapshot not loaded. No meeting records have been read.
+        </span>
+      </div>
+    </section>
+
+    <section class="workspace-metrics" aria-label="Workspace aggregate signals">
+      <article class="card metric-card"><span>Active meetings</span><strong id="metricActive">—</strong></article>
+      <article class="card metric-card"><span>Completed meetings</span><strong id="metricCompleted">—</strong></article>
+      <article class="card metric-card"><span>Archived meetings</span><strong id="metricArchived">—</strong></article>
+      <article class="card metric-card"><span>Upcoming meetings</span><strong id="metricUpcoming">—</strong></article>
+      <article class="card metric-card"><span>Unscheduled meetings</span><strong id="metricUnscheduled">—</strong></article>
+      <article class="card metric-card attention-card"><span>Overdue tasks</span><strong id="metricOverdue">—</strong></article>
+      <article class="card metric-card attention-card"><span>Unassigned tasks</span><strong id="metricUnassigned">—</strong></article>
+      <article class="card metric-card attention-card"><span>Tasks needing scheduling</span><strong id="metricNeedsScheduling">—</strong></article>
+    </section>
+
+    <section class="workspace-section" aria-labelledby="workspaceLifecycleTitle">
+      <div class="workspace-section-heading">
+        <div>
+          <p class="eyebrow">Lifecycle launchpad</p>
+          <h2 id="workspaceLifecycleTitle">Move to the right workspace</h2>
+        </div>
+        <p class="helper-text">Opening a workspace is explicit. The home page does not save, assign, archive, transfer, notify, or synchronize records.</p>
+      </div>
+
+      <div class="workspace-grid">
+        <a class="card workspace-route" href="preparation.html">
+          <span class="route-step">Before</span>
+          <h3>Preparation Brief</h3>
+          <p>Review upcoming readiness, missing setup, scheduling pressure, and bounded carryover work.</p>
+        </a>
+        <a class="card workspace-route" href="meeting.html">
+          <span class="route-step">During</span>
+          <h3>Meeting-Day</h3>
+          <p>Capture meeting information, attendance, agenda, notes, decisions, tasks, summary, and closeout.</p>
+        </a>
+        <a class="card workspace-route" href="decisions.html">
+          <span class="route-step">Review</span>
+          <h3>Decision Register</h3>
+          <p>Inspect structured decision state across saved meetings without interpreting decision prose.</p>
+        </a>
+        <a class="card workspace-route" href="outcomes.html">
+          <span class="route-step">After</span>
+          <h3>Meeting Outcomes</h3>
+          <p>Review summary, decision-capture, and follow-up completeness for completed and archived meetings.</p>
+        </a>
+        <a class="card workspace-route" href="archive.html">
+          <span class="route-step">Retain</span>
+          <h3>Archive</h3>
+          <p>Open the dedicated record detail and print surface for retained meeting records.</p>
+        </a>
+        <a class="card workspace-route" href="verify.html">
+          <span class="route-step">Verify</span>
+          <h3>Signed Package Verification</h3>
+          <p>Verify supported signed exports without requiring the main meeting editor.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="card workspace-boundary" aria-labelledby="workspaceBoundaryTitle">
+      <h2 id="workspaceBoundaryTitle">Static deployment boundary</h2>
+      <p class="helper-text">
+        This remains a plain HTML, CSS, and JavaScript application. Browser-local storage is the default
+        provider. There is no production endpoint, required runtime package, build command, automatic
+        reminder, background synchronization, or service-worker access to meeting business data.
+      </p>
+      <p class="helper-text">
+        If a bounded snapshot is truncated, the page says so rather than presenting the partial scan as complete.
+      </p>
+      <noscript><p>JavaScript is required only for the optional aggregate snapshot. Lifecycle links remain available.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="workspace-home-core.js"></script>
+  <script src="workspace-home.js"></script>
+</body>
+</html>
