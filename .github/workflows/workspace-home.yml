@@ -1,0 +1,143 @@
+name: Workspace Home
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "workspace-home-core.js"
+      - "workspace-home.js"
+      - "workspace-home.css"
+      - "manifest.webmanifest"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/WORKSPACE-HOME.md"
+      - "docs/WORKSPACE-HOME-TESTS.md"
+      - "docs/WORKSPACE-HOME-CHANGELOG.md"
+      - "docs/V1.6.19-RELEASE-ROADMAP.md"
+      - "tests/workspace-home-core.mjs"
+      - "tests/workspace-home.spec.js"
+      - ".github/workflows/workspace-home.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "workspace-home-core.js"
+      - "workspace-home.js"
+      - "workspace-home.css"
+      - "manifest.webmanifest"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/WORKSPACE-HOME.md"
+      - "docs/WORKSPACE-HOME-TESTS.md"
+      - "docs/WORKSPACE-HOME-CHANGELOG.md"
+      - "docs/V1.6.19-RELEASE-ROADMAP.md"
+      - "tests/workspace-home-core.mjs"
+      - "tests/workspace-home.spec.js"
+      - ".github/workflows/workspace-home.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-workspace-home:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static Workspace Home boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            index.html
+            workspace-home-core.js
+            workspace-home.js
+            workspace-home.css
+            manifest.webmanifest
+            service-worker.js
+            docs/APPLICATION-MAP.md
+            docs/WORKSPACE-HOME.md
+            docs/WORKSPACE-HOME-TESTS.md
+            docs/WORKSPACE-HOME-CHANGELOG.md
+            docs/V1.6.19-RELEASE-ROADMAP.md
+            tests/workspace-home-core.mjs
+            tests/workspace-home.spec.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check workspace-home-core.js
+          node --check workspace-home.js
+          node --check tests/workspace-home-core.mjs
+          node --check tests/workspace-home.spec.js
+
+          grep -q 'workspace-home.css' index.html
+          grep -q 'workspace-home-core.js' index.html
+          grep -q 'workspace-home.js' index.html
+          grep -q 'preparation.html' index.html
+          grep -q 'meeting.html' index.html
+          grep -q 'decisions.html' index.html
+          grep -q 'outcomes.html' index.html
+          grep -q 'archiveVaultV08' index.html
+          grep -q 'verify.html' index.html
+          grep -q 'index.html' service-worker.js
+          grep -q 'workspace-home.css' service-worker.js
+          grep -q 'workspace-home-core.js' service-worker.js
+          grep -q 'workspace-home.js' service-worker.js
+          grep -q 'index.html' docs/APPLICATION-MAP.md
+          grep -q 'Workspace Home core' docs/APPLICATION-MAP.md
+
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
+          if (manifest.id !== './meeting.html') throw new Error('PWA identity changed unexpectedly.');
+          if (manifest.start_url !== './index.html') throw new Error('Workspace Home is not the installed launch route.');
+
+          const browser = fs.readFileSync('workspace-home.js', 'utf8');
+          const initStart = browser.indexOf('function initialize()');
+          const initEnd = browser.indexOf('global.MethodzWorkspaceHomeV1619');
+          const initializer = browser.slice(initStart, initEnd);
+          if (/localStorage\.getItem|readLocalRecordsFailClosed|refreshSnapshot\s*\(/.test(initializer)) {
+            throw new Error('Workspace Home initialization must not read meeting records or auto-refresh.');
+          }
+          NODE
+
+          ! grep -Eq 'hub\.methodz\.ca' index.html workspace-home-core.js workspace-home.js workspace-home.css
+          ! grep -Eq 'localStorage\.setItem|sessionStorage\.setItem' workspace-home.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' workspace-home.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" workspace-home-core.js workspace-home.js service-worker.js
+
+      - name: Run portable Workspace Home tests
+        run: node tests/workspace-home-core.mjs
+
+  chromium-workspace-home:
+    runs-on: ubuntu-latest
+    needs: portable-workspace-home
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/index.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Workspace Home browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/workspace-home.spec.js --reporter=line
