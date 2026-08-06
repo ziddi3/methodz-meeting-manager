@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Static Workspace Home for Methodz Meeting Manager lifecycle workflows." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Workspace Home · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="workspace-home.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Methodz Meeting Manager</h1>
+    <p>Workspace Home · static lifecycle launchpad</p>
+  </header>
+
+  <main class="workspace-home-shell" id="mainContent" tabindex="-1">
+    <section class="card workspace-home-hero" aria-labelledby="workspaceHomeTitle">
+      <p class="eyebrow">Workspace Home</p>
+      <h2 id="workspaceHomeTitle">Start with the workflow you need, not the infrastructure behind it</h2>
+      <p class="helper-text">
+        This page is a static launch surface for preparation, meeting-day work, review, archive, and verification.
+        It does not read saved meeting records until you explicitly refresh the aggregate snapshot below.
+      </p>
+    </section>
+
+    <section class="card workspace-home-snapshot" aria-labelledby="workspaceSnapshotTitle">
+      <p class="eyebrow">Aggregate launch snapshot</p>
+      <h2 id="workspaceSnapshotTitle">Workspace signals without meeting identity or meeting text</h2>
+      <p class="helper-text">
+        Refreshing reads browser-local meeting records once and derives counts only. The snapshot does not retain
+        meeting titles, attendee names, notes, decisions, summaries, task text, Assigned To values, record identifiers,
+        signatures, credentials, keys, provider secrets, queue payloads, or hidden governance metadata.
+      </p>
+      <div class="workspace-home-toolbar">
+        <button type="button" id="refreshWorkspaceSnapshot">Refresh Workspace Snapshot</button>
+      </div>
+      <p id="workspaceSnapshotStatus" class="workspace-home-status" role="status" aria-live="polite">
+        Snapshot not loaded. Select Refresh Workspace Snapshot to read browser-local records.
+      </p>
+
+      <div class="workspace-home-metrics" aria-label="Workspace aggregate signals">
+        <div class="workspace-home-metric"><strong id="snapshotActive">—</strong><span>Active meetings</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotCompleted">—</strong><span>Completed meetings</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotArchived">—</strong><span>Archived meetings</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotUpcoming">—</strong><span>Upcoming active meetings</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotUnscheduled">—</strong><span>Unscheduled active meetings</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotOverdue">—</strong><span>Overdue incomplete tasks</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotUnassigned">—</strong><span>Unassigned incomplete tasks</span></div>
+        <div class="workspace-home-metric"><strong id="snapshotNeedsScheduling">—</strong><span>Tasks needing scheduling</span></div>
+      </div>
+      <p id="workspaceSnapshotBounds" class="workspace-home-bound-warning" hidden></p>
+    </section>
+
+    <section class="card workspace-home-launches" aria-labelledby="workspaceLaunchTitle">
+      <p class="eyebrow">Lifecycle launchpad</p>
+      <h2 id="workspaceLaunchTitle">Open a dedicated workspace</h2>
+      <div class="workspace-home-launch-grid">
+        <article class="workspace-home-launch-card">
+          <h3>Preparation</h3>
+          <p>Review upcoming meeting readiness, carryover work, and operator-controlled run sheets.</p>
+          <a class="workspace-home-link" href="preparation.html">Open Preparation Brief</a>
+        </article>
+        <article class="workspace-home-launch-card">
+          <h3>Meeting-Day</h3>
+          <p>Create or open a meeting, capture attendance and agenda work, then run closeout review before saving.</p>
+          <a class="workspace-home-link" href="meeting.html">Open Meeting Manager</a>
+        </article>
+        <article class="workspace-home-launch-card">
+          <h3>Decision Register</h3>
+          <p>Review structured decisions and explicit source-review gaps without changing source records.</p>
+          <a class="workspace-home-link" href="decisions.html">Open Decision Register</a>
+        </article>
+        <article class="workspace-home-launch-card">
+          <h3>Meeting Outcomes</h3>
+          <p>Review completed and archived meeting outcomes, summaries, decision capture, and follow-up state.</p>
+          <a class="workspace-home-link" href="outcomes.html">Open Meeting Outcomes</a>
+        </article>
+        <article class="workspace-home-launch-card">
+          <h3>Archive</h3>
+          <p>Open the governed Archive Vault inside the Meeting Manager for search, restore, and source-record review.</p>
+          <a class="workspace-home-link" href="meeting.html#archiveVaultV08">Open Archive Vault</a>
+        </article>
+        <article class="workspace-home-launch-card">
+          <h3>Verify</h3>
+          <p>Verify a signed export package without loading the main meeting workspace.</p>
+          <a class="workspace-home-link" href="verify.html">Open Package Verifier</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="card workspace-home-boundary" aria-labelledby="workspaceBoundaryTitle">
+      <h2 id="workspaceBoundaryTitle">Static deployment boundary</h2>
+      <ul>
+        <li>Plain HTML, CSS, and JavaScript. No build command or runtime package is required.</li>
+        <li>Browser-local storage remains the default meeting-record provider.</li>
+        <li>The home snapshot is read-only and runs only after an explicit operator refresh.</li>
+        <li>No automatic save, assignment, reminder, notification, archive, transfer, provider call, or synchronization is introduced here.</li>
+        <li>This task-focused application remains separate from Method Hub.</li>
+      </ul>
+      <noscript><p>JavaScript is required only for the optional aggregate snapshot. All lifecycle links remain ordinary static navigation.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="workspace-home-core.js"></script>
+  <script src="workspace-home.js"></script>
+</body>
+</html>
