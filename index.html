@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Static Workspace Home for Methodz Meeting Manager." />
+  <meta name="theme-color" content="#111111" />
+  <meta name="application-name" content="Methodz Meeting Manager" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Workspace Home · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="workspace-home.css" />
+</head>
+<body>
+  <header class="app-header workspace-home-header">
+    <div>
+      <p class="eyebrow">Methodz</p>
+      <h1>Meeting Manager</h1>
+      <p>Static workspace home for preparation, capture, follow-up, decisions, outcomes, archive, and verification</p>
+    </div>
+    <a class="button-like workspace-primary-launch" href="meeting.html">Open Meeting Manager</a>
+  </header>
+
+  <main class="workspace-home-shell" id="mainContent" tabindex="-1">
+    <section class="card workspace-home-intro" aria-labelledby="workspaceHomeTitle">
+      <p class="eyebrow">Workspace Home</p>
+      <h2 id="workspaceHomeTitle">One launch point for the meeting lifecycle</h2>
+      <p class="helper-text">
+        This page is a static navigation and aggregate-status surface. It does not read saved meeting
+        records until you explicitly refresh the workspace snapshot, and it never writes records.
+      </p>
+    </section>
+
+    <section class="workspace-lifecycle" aria-labelledby="workspaceLifecycleTitle">
+      <div class="workspace-section-heading">
+        <div>
+          <p class="eyebrow">Direct lifecycle</p>
+          <h2 id="workspaceLifecycleTitle">Move through the work without hunting for entry points</h2>
+        </div>
+      </div>
+      <div class="workspace-route-grid">
+        <a class="card workspace-route-card" href="preparation.html">
+          <span class="workspace-route-step">01</span>
+          <h3>Prepare</h3>
+          <p>Review upcoming meetings, missing setup, scheduling pressure, carryover work, and run sheets.</p>
+        </a>
+        <a class="card workspace-route-card" href="meeting.html">
+          <span class="workspace-route-step">02</span>
+          <h3>Capture</h3>
+          <p>Run Meeting-Day capture, closeout review, follow-up review, planning, recovery, and governed record operations.</p>
+        </a>
+        <a class="card workspace-route-card" href="decisions.html">
+          <span class="workspace-route-step">03</span>
+          <h3>Decisions</h3>
+          <p>Review structured decision lanes and explicitly open the source meeting when a decision needs attention.</p>
+        </a>
+        <a class="card workspace-route-card" href="outcomes.html">
+          <span class="workspace-route-step">04</span>
+          <h3>Outcomes</h3>
+          <p>Review completed and archived meetings for summary, decision, and follow-up readiness.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="card workspace-snapshot" aria-labelledby="workspaceSnapshotTitle">
+      <div class="workspace-snapshot-heading">
+        <div>
+          <p class="eyebrow">Aggregate only</p>
+          <h2 id="workspaceSnapshotTitle">Workspace Snapshot</h2>
+          <p class="helper-text">
+            The snapshot returns counts only. Meeting titles, names, notes, decisions, summaries, task text,
+            Assigned To values, identifiers, signatures, credentials, keys, provider secrets, queue payloads,
+            and hidden governance metadata are not retained in the derived report.
+          </p>
+        </div>
+        <button type="button" id="refreshWorkspaceSnapshot">Refresh Workspace Snapshot</button>
+      </div>
+      <p id="workspaceSnapshotStatus" class="workspace-snapshot-status" role="status" aria-live="polite">
+        No saved meeting records have been read from this page.
+      </p>
+      <div id="workspaceSnapshotMetrics" class="workspace-metrics" aria-label="Workspace aggregate metrics"></div>
+      <p id="workspaceSnapshotCoverage" class="helper-text"></p>
+    </section>
+
+    <section class="workspace-support" aria-labelledby="workspaceSupportTitle">
+      <div class="workspace-section-heading">
+        <div>
+          <p class="eyebrow">Supporting tools</p>
+          <h2 id="workspaceSupportTitle">Governed record and verification routes</h2>
+        </div>
+      </div>
+      <div class="workspace-support-grid">
+        <a class="card workspace-support-card" href="meeting.html#archiveVaultV08">
+          <h3>Archive Vault</h3>
+          <p>Search, inspect, restore, and govern archived records through the established operator workspace.</p>
+        </a>
+        <a class="card workspace-support-card" href="verify.html">
+          <h3>Verify Package</h3>
+          <p>Verify a signed exported package against its matching public key without changing meeting records.</p>
+        </a>
+        <a class="card workspace-support-card" href="meeting.html#deviceReadinessV167">
+          <h3>Device Readiness</h3>
+          <p>Run the existing device-readiness checks before field use or cross-device operations.</p>
+        </a>
+      </div>
+    </section>
+
+    <section class="card workspace-boundary" aria-labelledby="workspaceBoundaryTitle">
+      <h2 id="workspaceBoundaryTitle">Deployment boundary</h2>
+      <p class="helper-text">
+        Methodz Meeting Manager remains plain HTML, CSS, and JavaScript. Browser-local storage is the default
+        provider. No production hosted provider, account system, backend, mandatory network connection, runtime
+        package, or build command is required for core operation.
+      </p>
+      <p class="helper-text">
+        This task-focused application is separate from Method Hub and must not be deployed over
+        <code>hub.methodz.ca</code>.
+      </p>
+      <noscript><p>JavaScript is required only for the optional aggregate workspace snapshot. Navigation remains available.</p></noscript>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="workspace-home-core.js"></script>
+  <script src="workspace-home.js"></script>
+</body>
+</html>
