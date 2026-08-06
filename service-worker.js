@@ -16,6 +16,7 @@ const HISTORICAL_CACHE_NAMES = Object.freeze([
 ]);
 const APP_SHELL = [
   "./",
+  "./index.html",
   "./meeting.html",
   "./archive.html",
   "./verify.html",
@@ -23,6 +24,7 @@ const APP_SHELL = [
   "./decisions.html",
   "./outcomes.html",
   "./style.css",
+  "./workspace-home.css",
   "./meeting-preparation.css",
   "./decision-register.css",
   "./meeting-outcomes.css",
@@ -105,6 +107,7 @@ const APP_SHELL = [
   "./meeting-closeout-core.js",
   "./decision-register-core.js",
   "./meeting-outcomes-core.js",
+  "./workspace-home-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -114,6 +117,7 @@ const APP_SHELL = [
   "./meeting-preparation.js",
   "./decision-register.js",
   "./meeting-outcomes.js",
+  "./workspace-home.js",
   "./features-v03.js",
   "./features-v03-startup.js",
   "./features-v04-templates.js",
@@ -231,7 +235,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, or review-mutation handler.
-// The service worker never reads meeting, task, decision, outcomes, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, or review-mutation handler.
+// The service worker never reads meeting, task, decision, outcomes, workspace-home, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;
