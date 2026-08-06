@@ -92,8 +92,17 @@
     }
   }
 
+  function registerStaticServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    if (!/^https?:$/.test(global.location.protocol)) return;
+    navigator.serviceWorker.register("service-worker.js").catch((error) => {
+      console.warn("Workspace Home service worker registration failed", error);
+    });
+  }
+
   function initialize() {
     byId("refreshWorkspaceSnapshot").addEventListener("click", refreshSnapshot);
+    registerStaticServiceWorker();
   }
 
   document.addEventListener("DOMContentLoaded", initialize, { once: true });
