@@ -14,6 +14,7 @@ Meeting run-sheet core:         1.0.0
 Meeting closeout core:          1.0.0
 Decision Register core:         1.0.0
 Meeting Outcomes core:          1.0.0
+Workspace Home core:            1.0.0
 ```
 
 The application shell may gain static workspaces without changing the meeting-record schema.
@@ -21,6 +22,7 @@ The application shell may gain static workspaces without changing the meeting-re
 ## Static entry points
 
 ```text
+index.html        Workspace Home and aggregate-only lifecycle launchpad
 meeting.html      Main meeting capture, Meeting-Day, closeout, follow-up, and infrastructure workspace
 preparation.html  Read-only upcoming-meeting preparation brief and run-sheet preview
 decisions.html    Read-only structured Decision Register and source review
@@ -34,7 +36,8 @@ All entry points remain ordinary static HTML. Core meeting operation requires no
 ## Direct meeting lifecycle
 
 ```text
-Preparation Brief
+Workspace Home
+  -> Preparation Brief
   -> explicit source opening
   -> Meeting-Day capture
   -> Meeting Closeout Review
@@ -42,6 +45,8 @@ Preparation Brief
   -> Decision Register
   -> Meeting Outcomes Review
 ```
+
+The Workspace Home reads no meeting records until an explicit aggregate snapshot refresh. Its derived report retains counts only and does not include meeting identity, attendee identity, meeting prose, task prose, Assigned To values, signatures, credentials, keys, provider secrets, queue payloads, or hidden governance metadata.
 
 Every derived workspace is read-only by default. Record loading, download, print, backup, restore, synchronization rehearsal, transfer, acceptance, rollback, release, and destructive operations remain explicit operator actions.
 
@@ -51,4 +56,5 @@ Every derived workspace is read-only by default. Record loading, download, print
 - The service worker caches static assets only and never reads business records.
 - No production Firebase, Supabase, Drive, CRM, or Methodz API provider is active.
 - Browser-local workflow evidence does not prove identity, authority, delivery, legal approval, or regulatory compliance.
+- The PWA keeps its established identity while launching from the repository root.
 - This task-focused repository must not be deployed over `hub.methodz.ca`.
