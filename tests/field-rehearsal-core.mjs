@@ -31,20 +31,37 @@ const ready = core.buildEvidence({
 }, { now: "2026-08-07T22:40:00.000Z" });
 
 assert.equal(ready.summary.readiness, "ready");
+assert.equal(ready.summary.metadataComplete, true);
 assert.equal(ready.summary.pass, 8);
 assert.equal(ready.environment.viewportClass, "phone");
 assert.deepEqual(ready.blockingIssues, [61, 62]);
 assert.equal(ready.generatedAt, "2026-08-07T22:40:00.000Z");
 
-const failed = core.buildEvidence({ results: { ...allPass, offlineReload: "fail" } });
+const baseMetadata = {
+  commitSha: "24b349917c88b7",
+  environment: {
+    platformFamily: "desktop",
+    operatingSystemVersion: "26.1",
+    browserFamily: "chrome",
+    browserVersion: "140.0",
+    viewportClass: "desktop",
+    serviceWorkerMode: "https"
+  }
+};
+
+const failed = core.buildEvidence({ ...baseMetadata, results: { ...allPass, offlineReload: "fail" } });
 assert.equal(failed.summary.readiness, "fail");
 
-const blocked = core.buildEvidence({ results: { ...allPass, offlineReload: "blocked" } });
+const blocked = core.buildEvidence({ ...baseMetadata, results: { ...allPass, offlineReload: "blocked" } });
 assert.equal(blocked.summary.readiness, "blocked");
 
-const incomplete = core.buildEvidence({ results: { ...allPass, offlineReload: "not-applicable" } });
+const incomplete = core.buildEvidence({ ...baseMetadata, results: { ...allPass, offlineReload: "not-applicable" } });
 assert.equal(incomplete.summary.readiness, "incomplete");
 assert.equal(incomplete.summary.notApplicable, 1);
+
+const missingMetadata = core.buildEvidence({ results: allPass });
+assert.equal(missingMetadata.summary.readiness, "incomplete");
+assert.equal(missingMetadata.summary.metadataComplete, false);
 
 const bounded = core.buildEvidence({
   results: {},
