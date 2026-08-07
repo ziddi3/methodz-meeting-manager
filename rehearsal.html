@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Metadata-only physical-device field rehearsal evidence workspace for Methodz Meeting Manager." />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Field Rehearsal Evidence · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="field-rehearsal.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Methodz Meeting Manager</h1>
+    <p>Field Rehearsal Evidence · physical-device readiness without meeting-data capture</p>
+  </header>
+
+  <main class="field-rehearsal-shell" id="mainContent" tabindex="-1">
+    <section class="card" aria-labelledby="rehearsalTitle">
+      <p class="eyebrow">1.x hardening</p>
+      <h2 id="rehearsalTitle">Record structured field evidence from real hardware</h2>
+      <p class="helper-text">
+        This workspace implements the existing field-rehearsal protocol as a metadata-only operator surface. It does not read meeting records,
+        localStorage business values, transfer packages, credentials, private keys, provider secrets, or queue payloads.
+      </p>
+      <div class="field-rehearsal-toolbar">
+        <a class="field-rehearsal-link" href="index.html">Back to Workspace Home</a>
+        <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-WORKSPACE.md">Open field rehearsal guide</a>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="environmentTitle">
+      <h2 id="environmentTitle">Environment</h2>
+      <p class="helper-text">Environment inspection runs only after you select the button. Browser family and versions remain operator-entered rather than inferred from a fingerprinting string.</p>
+      <div class="field-rehearsal-toolbar">
+        <button type="button" id="inspectEnvironment">Inspect Current Environment</button>
+      </div>
+      <p id="environmentStatus" class="field-rehearsal-status" role="status" aria-live="polite">Environment not inspected.</p>
+      <div class="field-rehearsal-grid">
+        <div class="field-rehearsal-field">
+          <label for="platformFamily">Platform family</label>
+          <select id="platformFamily">
+            <option value="">Select platform</option>
+            <option value="android">Android phone</option>
+            <option value="ios">iPhone / iOS</option>
+            <option value="tablet">Tablet</option>
+            <option value="desktop">Desktop</option>
+            <option value="two-device">Two-device transfer pair</option>
+          </select>
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="operatingSystemVersion">Operating system version</label>
+          <input id="operatingSystemVersion" autocomplete="off" inputmode="text" maxlength="32" placeholder="e.g. 19.0" />
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="browserFamily">Browser family</label>
+          <select id="browserFamily">
+            <option value="">Select browser</option>
+            <option value="chrome">Chrome</option>
+            <option value="safari">Safari</option>
+            <option value="firefox">Firefox</option>
+            <option value="edge">Edge</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="browserVersion">Browser version</label>
+          <input id="browserVersion" autocomplete="off" inputmode="text" maxlength="32" placeholder="e.g. 140.0" />
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="viewportClass">Viewport class</label>
+          <select id="viewportClass">
+            <option value="phone">Phone</option>
+            <option value="tablet">Tablet</option>
+            <option value="desktop" selected>Desktop</option>
+          </select>
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="serviceWorkerMode">Application mode</label>
+          <select id="serviceWorkerMode">
+            <option value="https">HTTPS</option>
+            <option value="localhost">Localhost</option>
+            <option value="direct-file">Direct file</option>
+          </select>
+        </div>
+        <div class="field-rehearsal-field">
+          <label for="commitSha">App-shell commit SHA</label>
+          <input id="commitSha" autocomplete="off" inputmode="text" maxlength="40" placeholder="7 to 40 hexadecimal characters" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="resultsTitle">
+      <h2 id="resultsTitle">Required checks</h2>
+      <p class="helper-text">A device row is field-ready only when all eight required checks are recorded as pass. Fail, blocked, not-applicable, and not-run remain visible instead of being treated as success.</p>
+      <div class="field-rehearsal-result-grid">
+        <div class="field-rehearsal-field"><label for="result-panelRegistry">Panel Registry</label><select id="result-panelRegistry"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-coreMeetingWorkflow">Core meeting workflow</label><select id="result-coreMeetingWorkflow"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-meetingDayMode">Meeting-Day Mode</label><select id="result-meetingDayMode"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-offlineReload">Offline reload</label><select id="result-offlineReload"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-printOrPdf">Print / PDF</label><select id="result-printOrPdf"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-transferImport">Transfer import</label><select id="result-transferImport"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-destinationAcceptance">Destination acceptance</label><select id="result-destinationAcceptance"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+        <div class="field-rehearsal-field"><label for="result-preImportRollback">Pre-import rollback</label><select id="result-preImportRollback"><option value="not-run">Not run</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="blocked">Blocked</option><option value="not-applicable">Not applicable</option></select></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="aggregateTitle">
+      <h2 id="aggregateTitle">Aggregate measurements</h2>
+      <p class="helper-text">Enter counts and elapsed milliseconds only. Do not paste meeting titles, names, record identifiers, storage keys, screenshots, traces, or transfer contents into this page.</p>
+      <div class="field-rehearsal-grid">
+        <div class="field-rehearsal-field"><label for="registeredPanels">Registered panels</label><input id="registeredPanels" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="resolvedPanels">Resolved panels</label><input id="resolvedPanels" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="registryErrors">Registry errors</label><input id="registryErrors" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="registryWarnings">Registry warnings</label><input id="registryWarnings" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="coreWorkflowDurationMs">Core workflow duration (ms)</label><input id="coreWorkflowDurationMs" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="transferDurationMs">Transfer duration (ms)</label><input id="transferDurationMs" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="rollbackDurationMs">Rollback duration (ms)</label><input id="rollbackDurationMs" type="number" min="0" step="1" value="0" /></div>
+        <div class="field-rehearsal-field"><label for="blockingIssues">Blocking GitHub issue numbers</label><input id="blockingIssues" autocomplete="off" inputmode="numeric" maxlength="160" placeholder="e.g. 61, 62" /></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="evidenceTitle">
+      <h2 id="evidenceTitle">Evidence readiness</h2>
+      <div class="field-rehearsal-actions">
+        <button type="button" id="reviewEvidence">Review Evidence Readiness</button>
+        <button type="button" id="downloadEvidence">Download Metadata Evidence</button>
+      </div>
+      <p id="evidenceStatus" class="field-rehearsal-status" role="status" aria-live="polite">Evidence not reviewed.</p>
+      <div class="field-rehearsal-metrics" aria-label="Field rehearsal result summary">
+        <div class="field-rehearsal-metric"><strong id="readinessValue">—</strong><span>Readiness</span></div>
+        <div class="field-rehearsal-metric"><strong id="passValue">—</strong><span>Pass</span></div>
+        <div class="field-rehearsal-metric"><strong id="failValue">—</strong><span>Fail</span></div>
+        <div class="field-rehearsal-metric"><strong id="blockedValue">—</strong><span>Blocked</span></div>
+        <div class="field-rehearsal-metric"><strong id="pendingValue">—</strong><span>Not run / N/A</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="boundaryTitle">
+      <h2 id="boundaryTitle">Evidence boundary</h2>
+      <ul class="field-rehearsal-boundary-list">
+        <li>No meeting records or browser-local business values are read.</li>
+        <li>No free-form meeting content is accepted into the generated JSON report.</li>
+        <li>External screenshots, traces, PDFs, and transfer packages stay outside this metadata report.</li>
+        <li>The report does not prove device identity, delivery, authorization, or legal approval.</li>
+        <li>No save, assignment, reminder, archive, provider call, synchronization, transfer, rollback, or cleanup is triggered.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="field-rehearsal-core.js"></script>
+  <script src="field-rehearsal.js"></script>
+</body>
+</html>

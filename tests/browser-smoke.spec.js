@@ -125,10 +125,11 @@ test("publishes a valid app manifest and service worker entry point", async ({ r
   expect(manifestResponse.ok()).toBeTruthy();
   const manifest = await manifestResponse.json();
   expect(manifest.name).toBe("Methodz Meeting Manager");
-  expect(manifest.start_url).toBe("./meeting.html");
+  expect(manifest.id).toBe("./meeting.html");
+  expect(manifest.start_url).toBe("./index.html");
   expect(manifest.shortcuts.some((shortcut) => shortcut.url === "./verify.html")).toBe(true);
 
   const workerResponse = await request.get("/service-worker.js");
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.6.9");
+  expect(await workerResponse.text()).toContain('const CACHE_NAME = "methodz-meeting-manager-v1.6.12"');
 });
