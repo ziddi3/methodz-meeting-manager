@@ -45,6 +45,7 @@ test.describe("Field Rehearsal Evidence", () => {
     expect(evidence.appShellVersion).toBe("1.6.12");
     expect(evidence.recordSchemaVersion).toBe("1.6.0");
     expect(evidence.summary.readiness).toBe("ready");
+    expect(evidence.summary.metadataComplete).toBe(true);
     expect(evidence.blockingIssues).toEqual([55, 61]);
     expect(await page.evaluate(() => window.__methodzStorageReads)).toBe(0);
   });
@@ -53,6 +54,9 @@ test.describe("Field Rehearsal Evidence", () => {
     await page.goto(`${BASE_URL}/rehearsal.html`);
     await page.locator("#platformFamily").selectOption("android");
     await page.locator("#browserFamily").selectOption("chrome");
+    await page.locator("#operatingSystemVersion").fill("16.0");
+    await page.locator("#browserVersion").fill("140.0");
+    await page.locator("#commitSha").fill("24b349917c88b7");
     await setAllResults(page, "pass");
 
     const [download] = await Promise.all([
@@ -63,6 +67,7 @@ test.describe("Field Rehearsal Evidence", () => {
     const path = await download.path();
     const report = JSON.parse(fs.readFileSync(path, "utf8"));
     expect(report.summary.readiness).toBe("ready");
+    expect(report.summary.metadataComplete).toBe(true);
     expect(report.boundaries.containsMeetingContent).toBe(false);
     expect(report.boundaries.containsRecordIds).toBe(false);
     expect(report.boundaries.containsStorageValues).toBe(false);
