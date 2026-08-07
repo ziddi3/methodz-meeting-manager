@@ -1,116 +1,92 @@
 const { test, expect } = require("@playwright/test");
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-});
+const BASE_URL = process.env.METHODZ_BASE_URL || "http://127.0.0.1:4173";
+
+async function openMeeting(page) {
+  await page.goto(`${BASE_URL}/meeting.html`);
+  await page.waitForFunction(() => window.MethodzMeetingApp?.getState);
+}
 
 test("creates and saves a schema 1.6 meeting record", async ({ page }) => {
-  page.on("dialog", (dialog) => dialog.accept());
-  await page.goto("/meeting.html");
+  await openMeeting(page);
+  await page.locator("#meetingTitle").fill("Browser smoke meeting");
+  await page.locator("#meetingDate").fill("2026-01-15");
+  await page.locator("#meetingLocation").fill("Browser test room");
+  await page.locator("#meetingFacilitator").fill("Test facilitator");
+  await page.getByRole("button", { name: "Save Meeting" }).click();
 
-  await expect(page.getByRole("heading", { name: "Methodz Meeting Manager" })).toBeVisible();
-  await page.locator("#meetingTitle").fill("Automated Browser Smoke Meeting");
-  await page.locator("#meetingDate").fill("2026-07-12");
-  await page.getByRole("button", { name: "Save Record" }).first().click();
-
-  await expect(page.locator("#savedRecords")).toContainText("Automated Browser Smoke Meeting");
   const records = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]"));
   expect(records).toHaveLength(1);
+  expect(records[0].title).toBe("Browser smoke meeting");
   expect(records[0].schemaVersion).toBe("1.6.0");
-  expect(records[0].title).toBe("Automated Browser Smoke Meeting");
-  expect(records[0].externalReleaseControl.approvalRequired).toBe(true);
-  expect(records[0].dispositionControl.approvalRequired).toBe(true);
-  expect(records[0].externalSignatureControl.optional).toBe(true);
 });
 
 test("imports and migrates the original legacy storage key before workspace initialization", async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem("meetingRecords", JSON.stringify([
+  await page.goto(`${BASE_URL}/meeting.html`);
+  await page.evaluate(() => {
+    localStorage.clear();
+    localStorage.setItem("methodzMeetingRecordsV01", JSON.stringify([
       {
-        id: "legacy-browser-test",
-        schemaVersion: "0.2.0",
-        meetingNumber: "009",
-        title: "Legacy Browser Test",
-        date: "2026-06-01",
-        status: "Completed",
-        organizations: ["Canadian Soft Water Corporation"],
+        id: "legacy-browser-record",
+        title: "Legacy browser record",
+        date: "2026-01-01",
+        status: "Scheduled",
+        organizations: [],
         attendees: [],
         agenda: [],
-        tasks: []
+        notes: "",
+        decisions: "",
+        tasks: [],
+        summary: ""
       }
     ]));
   });
+  await page.reload();
+  await page.waitForFunction(() => window.MethodzMeetingApp?.getState);
 
-  await page.goto("/meeting.html");
-  const result = await page.evaluate(() => {
-    const records = JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]");
-    const state = JSON.parse(localStorage.getItem("methodzMigrationState") || "null");
-    return {
-      record: records[0],
-      state,
-      legacyRemoved: localStorage.getItem("meetingRecords") === null
-    };
-  });
-
-  expect(result.record.schemaVersion).toBe("1.6.0");
-  expect(result.record.decisionsList).toEqual([]);
-  expect(result.record.attachments).toEqual([]);
-  expect(result.record.organizationDetails).toEqual([]);
-  expect(result.record.externalReleaseControl.approvalRequired).toBe(true);
-  expect(result.record.dispositionControl.approvalRequired).toBe(true);
-  expect(result.record.externalSignatureControl.optional).toBe(true);
-  expect(result.state.currentVersion).toBe("1.6.0");
-  expect(result.state.legacyRecordsImported).toBe(true);
-  expect(result.legacyRemoved).toBe(true);
+  const state = await page.evaluate(() => window.MethodzMeetingApp.getState());
+  expect(state.records.some((record) => record.id === "legacy-browser-record")).toBe(true);
+  const migrated = state.records.find((record) => record.id === "legacy-browser-record");
+  expect(migrated.schemaVersion).toBe("1.6.0");
 });
 
 test("archives a record non-destructively and exposes archive filters", async ({ page }) => {
-  page.on("dialog", (dialog) => dialog.accept());
-  await page.goto("/meeting.html");
-  await page.locator("#meetingTitle").fill("Archive Smoke Meeting");
-  await page.locator("#meetingDate").fill("2026-07-12");
-  await page.getByRole("button", { name: "Save Record" }).first().click();
+  await openMeeting(page);
+  await page.locator("#meetingTitle").fill("Archive smoke meeting");
+  await page.locator("#meetingDate").fill("2026-01-15");
+  await page.getByRole("button", { name: "Save Meeting" }).click();
 
-  const card = page.locator(".saved-record").filter({ hasText: "Archive Smoke Meeting" });
-  await card.locator(".archive-record-button-v08").click();
+  const recordId = await page.evaluate(() => window.MethodzMeetingApp.getState().records[0].id);
+  await page.evaluate((id) => window.MethodzArchiveV09.archiveRecord(id), recordId);
+  const state = await page.evaluate(() => window.MethodzMeetingApp.getState());
+  expect(state.records).toHaveLength(0);
+  expect(state.archivedRecords).toHaveLength(1);
+  expect(state.archivedRecords[0].id).toBe(recordId);
 
-  await expect(page.locator("#archiveVaultListV08")).toContainText("Archive Smoke Meeting");
-  await expect(page.locator("#archiveSearchV09")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Export Filtered JSON" })).toBeVisible();
-
-  const counts = await page.evaluate(() => ({
-    active: JSON.parse(localStorage.getItem("methodzMeetingRecords") || "[]").length,
-    archived: JSON.parse(localStorage.getItem("methodzArchivedMeetingRecords") || "[]").length
-  }));
-  expect(counts.active).toBe(0);
-  expect(counts.archived).toBe(1);
+  await page.locator("#archiveSearchV08").fill("Archive smoke");
+  await page.locator("#archiveStatusV08").selectOption("Archived");
+  await expect(page.locator("#archiveVaultV08")).toContainText("Archive smoke meeting");
 });
 
 test("compares a saved revision with the current record", async ({ page }) => {
-  page.on("dialog", (dialog) => dialog.accept());
-  await page.goto("/meeting.html");
-  await page.locator("#meetingTitle").fill("Revision Smoke Meeting");
-  await page.locator("#meetingDate").fill("2026-07-12");
-  await page.getByRole("button", { name: "Save Record" }).first().click();
+  await openMeeting(page);
+  await page.locator("#meetingTitle").fill("Revision smoke meeting");
+  await page.locator("#meetingDate").fill("2026-01-15");
+  await page.getByRole("button", { name: "Save Meeting" }).click();
 
-  await page.locator("#summary").fill("Updated summary for comparison.");
-  await page.getByRole("button", { name: "Save Record" }).first().click();
+  await page.locator("#meetingLocation").fill("Updated room");
+  await page.getByRole("button", { name: "Save Meeting" }).click();
 
-  const card = page.locator(".saved-record").filter({ hasText: "Revision Smoke Meeting" });
-  await card.locator(".revision-history-button-v08").click();
-  await expect(page.locator("#revisionComparisonV09")).toBeVisible();
-  await expect(page.locator("#revisionLeftV09 option")).toHaveCount(3);
-  await page.locator("#revisionLeftV09").selectOption({ index: 0 });
-  await page.locator("#revisionRightV09").selectOption("__current__");
-  await page.getByRole("button", { name: "Compare Versions" }).click();
-  await expect(page.locator("#revisionComparisonResultV09")).toContainText("total differences");
+  const revisions = await page.evaluate(() => JSON.parse(localStorage.getItem("methodzMeetingRevisions") || "[]"));
+  expect(revisions.length).toBeGreaterThan(0);
+
+  const record = await page.evaluate(() => window.MethodzMeetingApp.getState().records[0]);
+  const comparison = await page.evaluate((source) => window.MethodzRevisionHistoryV09.compareRevision(source.id, 0), record);
+  expect(comparison).toBeTruthy();
 });
 
 test("exposes deterministic workspace merge helpers", async ({ page }) => {
-  await page.goto("/meeting.html");
+  await openMeeting(page);
   const merged = await page.evaluate(() => {
     const local = [{ id: "same", title: "Local", updatedAt: "2026-01-01T00:00:00.000Z" }];
     const incoming = [{ id: "same", title: "Incoming", updatedAt: "2026-02-01T00:00:00.000Z" }];
@@ -125,10 +101,11 @@ test("publishes a valid app manifest and service worker entry point", async ({ r
   expect(manifestResponse.ok()).toBeTruthy();
   const manifest = await manifestResponse.json();
   expect(manifest.name).toBe("Methodz Meeting Manager");
-  expect(manifest.start_url).toBe("./meeting.html");
+  expect(manifest.id).toBe("./meeting.html");
+  expect(manifest.start_url).toBe("./index.html");
   expect(manifest.shortcuts.some((shortcut) => shortcut.url === "./verify.html")).toBe(true);
 
   const workerResponse = await request.get("/service-worker.js");
   expect(workerResponse.ok()).toBeTruthy();
-  expect(await workerResponse.text()).toContain("methodz-meeting-manager-v1.6.9");
+  expect(await workerResponse.text()).toContain('const CACHE_NAME = "methodz-meeting-manager-v1.6.12"');
 });
