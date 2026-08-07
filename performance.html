@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Metadata-only performance evidence comparison workspace for Methodz Meeting Manager." />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Performance Evidence Compare · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="performance-evidence.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Methodz Meeting Manager</h1>
+    <p>Performance Evidence Compare · bounded large-workspace timing review</p>
+  </header>
+
+  <main class="performance-evidence-shell" id="mainContent" tabindex="-1">
+    <section class="card" aria-labelledby="performanceTitle">
+      <p class="eyebrow">1.x evidence roadmap</p>
+      <h2 id="performanceTitle">Compare metadata-only Workspace Capacity rehearsals</h2>
+      <p class="helper-text">
+        Import previously downloaded Workspace Capacity rehearsal JSON reports to compare timing evidence without reading meeting records,
+        browser storage, provider state, queue contents, transfer packages, or credentials. Imported reports stay in memory only.
+      </p>
+      <div class="performance-evidence-toolbar">
+        <a class="performance-evidence-link" href="index.html">Back to Workspace Home</a>
+        <a class="performance-evidence-link" href="docs/PERFORMANCE-EVIDENCE-COMPARE.md">Open comparison guide</a>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="importTitle">
+      <h2 id="importTitle">Import evidence</h2>
+      <p class="helper-text">
+        File selection alone does not read anything. Choose up to 20 metadata-only JSON reports, then explicitly load them.
+        Files larger than 512 KiB are rejected before parsing.
+      </p>
+      <div class="performance-evidence-field">
+        <label for="performanceEvidenceFiles">Workspace Capacity rehearsal reports</label>
+        <input id="performanceEvidenceFiles" type="file" accept="application/json,.json" multiple />
+      </div>
+      <div class="performance-evidence-actions">
+        <button type="button" id="loadPerformanceEvidence">Load Selected Evidence</button>
+        <button type="button" id="clearPerformanceEvidence">Clear In-Memory Evidence</button>
+      </div>
+      <p id="performanceImportStatus" class="performance-evidence-status" role="status" aria-live="polite">No evidence loaded.</p>
+      <div class="performance-evidence-metrics" aria-label="Imported evidence summary">
+        <div class="performance-evidence-metric"><strong id="acceptedRunCount">0</strong><span>Accepted runs</span></div>
+        <div class="performance-evidence-metric"><strong id="rejectedRunCount">0</strong><span>Rejected files</span></div>
+        <div class="performance-evidence-metric"><strong id="comparisonLimit">20</strong><span>Maximum runs</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="comparisonTitle">
+      <h2 id="comparisonTitle">Comparison</h2>
+      <p class="helper-text">
+        Runs are ordered by report generation time. The earliest accepted run is the baseline and the latest accepted run is the current comparison point.
+        A duration increase above 10% is flagged as regression; a decrease greater than 5% is improvement; everything between is stable.
+      </p>
+      <div class="performance-evidence-actions">
+        <button type="button" id="comparePerformanceEvidence" disabled>Compare Loaded Evidence</button>
+        <button type="button" id="downloadPerformanceEvidence" disabled>Download Comparison Summary</button>
+      </div>
+      <p id="performanceComparisonStatus" class="performance-evidence-status" role="status" aria-live="polite">Comparison not run.</p>
+      <div class="performance-evidence-metrics" aria-label="Performance comparison metrics">
+        <div class="performance-evidence-metric"><strong id="performanceTrend">—</strong><span>Trend</span></div>
+        <div class="performance-evidence-metric"><strong id="baselineDuration">—</strong><span>Baseline ms</span></div>
+        <div class="performance-evidence-metric"><strong id="latestDuration">—</strong><span>Latest ms</span></div>
+        <div class="performance-evidence-metric"><strong id="medianDuration">—</strong><span>Median ms</span></div>
+        <div class="performance-evidence-metric"><strong id="regressionPercent">—</strong><span>Baseline → latest</span></div>
+        <div class="performance-evidence-metric"><strong id="targetPassCount">—</strong><span>Target passes</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="runsTitle">
+      <h2 id="runsTitle">Accepted run ledger</h2>
+      <div class="performance-evidence-table-wrap">
+        <table class="performance-evidence-table">
+          <thead>
+            <tr>
+              <th scope="col">Run</th>
+              <th scope="col">Generated</th>
+              <th scope="col">Duration</th>
+              <th scope="col">Target</th>
+              <th scope="col">Throughput</th>
+              <th scope="col">Synthetic tasks</th>
+              <th scope="col">Capacity</th>
+            </tr>
+          </thead>
+          <tbody id="performanceRunRows">
+            <tr><td colspan="7">No accepted evidence loaded.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="boundaryTitle">
+      <h2 id="boundaryTitle">Evidence boundary</h2>
+      <ul class="performance-evidence-boundary-list">
+        <li>Only existing `methodz-workspace-capacity-rehearsal` version 1.0.0 metadata reports are accepted.</li>
+        <li>Privacy-boundary flags must match the established metadata-only contract or the report is rejected.</li>
+        <li>Unknown properties are ignored instead of copied into the comparison.</li>
+        <li>Imported reports are kept in memory only and are never written to browser storage.</li>
+        <li>No meeting content, record identifiers, raw storage keys or values, signatures, credentials, private keys, queue payloads, or transfer contents are emitted.</li>
+        <li>No provider call, synchronization, transfer, rollback, cleanup, or meeting mutation is performed.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="performance-evidence-core.js"></script>
+  <script src="performance-evidence.js"></script>
+</body>
+</html>

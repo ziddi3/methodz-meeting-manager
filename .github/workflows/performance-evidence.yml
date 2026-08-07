@@ -1,0 +1,120 @@
+name: Performance Evidence Compare
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "performance.html"
+      - "performance-evidence-core.js"
+      - "performance-evidence.js"
+      - "performance-evidence.css"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE-TESTS.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE-CHANGELOG.md"
+      - "docs/V1.6.21-RELEASE-ROADMAP.md"
+      - "tests/performance-evidence-core.mjs"
+      - "tests/performance-evidence.spec.js"
+      - ".github/workflows/performance-evidence.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "performance.html"
+      - "performance-evidence-core.js"
+      - "performance-evidence.js"
+      - "performance-evidence.css"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE-TESTS.md"
+      - "docs/PERFORMANCE-EVIDENCE-COMPARE-CHANGELOG.md"
+      - "docs/V1.6.21-RELEASE-ROADMAP.md"
+      - "tests/performance-evidence-core.mjs"
+      - "tests/performance-evidence.spec.js"
+      - ".github/workflows/performance-evidence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-performance-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static performance-evidence boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            performance.html
+            performance-evidence-core.js
+            performance-evidence.js
+            performance-evidence.css
+            service-worker.js
+            docs/APPLICATION-MAP.md
+            docs/PERFORMANCE-EVIDENCE-COMPARE.md
+            docs/PERFORMANCE-EVIDENCE-COMPARE-TESTS.md
+            docs/PERFORMANCE-EVIDENCE-COMPARE-CHANGELOG.md
+            docs/V1.6.21-RELEASE-ROADMAP.md
+            tests/performance-evidence-core.mjs
+            tests/performance-evidence.spec.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check performance-evidence-core.js
+          node --check performance-evidence.js
+          node --check tests/performance-evidence-core.mjs
+          node --check tests/performance-evidence.spec.js
+
+          grep -q 'performance.html' index.html
+          grep -q 'performance-evidence.css' performance.html
+          grep -q 'performance-evidence-core.js' performance.html
+          grep -q 'performance-evidence.js' performance.html
+          grep -q 'performance.html' service-worker.js
+          grep -q 'performance-evidence.css' service-worker.js
+          grep -q 'performance-evidence-core.js' service-worker.js
+          grep -q 'performance-evidence.js' service-worker.js
+
+          ! grep -Eq 'hub\.methodz\.ca' performance.html performance-evidence-core.js performance-evidence.js performance-evidence.css
+          ! grep -Eq 'localStorage|sessionStorage|indexedDB' performance-evidence-core.js performance-evidence.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' performance-evidence.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" performance-evidence-core.js performance-evidence.js service-worker.js
+
+      - name: Run portable Performance Evidence Compare tests
+        run: node tests/performance-evidence-core.mjs
+
+  chromium-performance-evidence:
+    runs-on: ubuntu-latest
+    needs: portable-performance-evidence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/performance.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Performance Evidence Compare browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/performance-evidence.spec.js --reporter=line

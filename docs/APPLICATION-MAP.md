@@ -15,6 +15,8 @@ Meeting run-sheet core:         1.0.0
 Meeting closeout core:          1.0.0
 Decision Register core:         1.0.0
 Meeting Outcomes core:          1.0.0
+Field Rehearsal core:           1.0.0
+Performance Evidence core:      1.0.0
 ```
 
 The application shell may gain static workspaces without changing the meeting-record schema.
@@ -27,13 +29,15 @@ meeting.html      Main meeting capture, Meeting-Day, closeout, follow-up, and in
 preparation.html  Read-only upcoming-meeting preparation brief and run-sheet preview
 decisions.html    Read-only structured Decision Register and source review
 outcomes.html     Read-only completed-meeting outcomes review
+rehearsal.html    Metadata-only physical-device field rehearsal evidence
+performance.html  Metadata-only Workspace Capacity performance evidence comparison
 archive.html      Record detail and print surface
 verify.html       Standalone signed-package verifier
 ```
 
 All entry points remain ordinary static HTML. Core meeting operation requires no framework, runtime package, build command, mandatory server, account, or network connection.
 
-The PWA keeps its established `./meeting.html` application identity while `./index.html` becomes the installed launch route. This avoids changing the installed-app identity merely to introduce a safer root navigation surface.
+The PWA keeps its established `./meeting.html` application identity while `./index.html` is the installed launch route. This avoids changing the installed-app identity merely to introduce safer root navigation and evidence workspaces.
 
 ## Direct meeting lifecycle
 
@@ -47,9 +51,13 @@ Workspace Home
   -> Decision Register
   -> Meeting Outcomes Review
   -> Archive / Verify as operator-selected supporting workflows
+
+Evidence side paths
+  -> Field Rehearsal Evidence
+  -> Performance Evidence Compare
 ```
 
-Every derived workspace is read-only by default. Record loading, download, print, backup, restore, synchronization rehearsal, transfer, acceptance, rollback, release, and destructive operations remain explicit operator actions.
+Every derived meeting workspace is read-only by default. Record loading, download, print, backup, restore, synchronization rehearsal, transfer, acceptance, rollback, release, and destructive operations remain explicit operator actions.
 
 ## Workspace Home snapshot boundary
 
@@ -57,10 +65,20 @@ Every derived workspace is read-only by default. Record loading, download, print
 
 The portable report retains no meeting title, attendee name, note, decision, summary, task text, Assigned To value, record identifier, signature, credential, key, provider secret, queue payload, or hidden governance metadata. Record and per-record task processing are bounded, and the browser view warns when a bound is reached instead of presenting a truncated snapshot as complete.
 
+## Evidence workspaces
+
+`rehearsal.html` captures structured physical-device metadata only after explicit operator actions. It does not read meeting records or browser-local business values.
+
+`performance.html` accepts only explicitly selected metadata-only Workspace Capacity rehearsal reports. Accepted evidence is normalized through `performance-evidence-core.js`, bounded to 20 runs, held in memory only, and compared without reading or writing browser storage.
+
+Neither evidence workspace proves device identity, delivery, authorization, legal approval, or production readiness by itself.
+
 ## Data and deployment boundaries
 
-- Browser-local storage remains the default provider.
+- Browser-local storage remains the default meeting-record provider.
 - Workspace Home does not read meeting records on page load.
+- Field Rehearsal does not read meeting records or browser-local business values.
+- Performance Evidence does not read or write browser storage and imports reports only after explicit operator action.
 - The service worker caches static assets only and never reads business records.
 - No production Firebase, Supabase, Drive, CRM, or Methodz API provider is active.
 - Browser-local workflow evidence does not prove identity, authority, delivery, legal approval, or regulatory compliance.
