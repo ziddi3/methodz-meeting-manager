@@ -1,0 +1,123 @@
+.performance-evidence-shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto 4rem;
+}
+
+.performance-evidence-toolbar,
+.performance-evidence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.performance-evidence-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.performance-evidence-field {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.performance-evidence-field input[type="file"] {
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.performance-evidence-actions button {
+  min-height: 44px;
+}
+
+.performance-evidence-status {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem;
+  border-left: 3px solid currentColor;
+  background: rgba(127, 127, 127, 0.08);
+  overflow-wrap: anywhere;
+}
+
+.performance-evidence-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.performance-evidence-metric {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.performance-evidence-metric strong {
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.performance-evidence-metric span {
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+.performance-evidence-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.performance-evidence-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.performance-evidence-table th,
+.performance-evidence-table td {
+  padding: 0.7rem;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.performance-evidence-boundary-list {
+  padding-left: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .performance-evidence-shell {
+    width: min(100% - 1rem, 1180px);
+  }
+
+  .performance-evidence-toolbar,
+  .performance-evidence-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .performance-evidence-link,
+  .performance-evidence-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .performance-evidence-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .performance-evidence-metrics {
+    grid-template-columns: 1fr;
+  }
+}
