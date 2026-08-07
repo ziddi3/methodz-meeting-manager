@@ -138,9 +138,20 @@
   }
 
   function buildEvidence(input = {}, options = {}) {
-    const summary = summarizeResults(input.results || {});
+    const resultSummary = summarizeResults(input.results || {});
     const environment = normalizeEnvironment(input.environment || {});
     const aggregates = normalizeAggregates(input.aggregates || {});
+    const normalizedCommitSha = commitSha(input.commitSha);
+    const metadataComplete = Boolean(
+      normalizedCommitSha &&
+      environment.platformFamily &&
+      environment.operatingSystemVersion &&
+      environment.browserFamily &&
+      environment.browserVersion &&
+      environment.viewportClass &&
+      environment.serviceWorkerMode
+    );
+    const readiness = resultSummary.readiness === "ready" && !metadataComplete ? "incomplete" : resultSummary.readiness;
 
     return Object.freeze({
       reportType: "methodz-field-rehearsal-evidence",
@@ -148,17 +159,18 @@
       appShellVersion: APP_SHELL_VERSION,
       recordSchemaVersion: RECORD_SCHEMA_VERSION,
       generatedAt: generatedAt(options.now),
-      commitSha: commitSha(input.commitSha),
+      commitSha: normalizedCommitSha,
       environment,
-      results: summary.results,
+      results: resultSummary.results,
       summary: Object.freeze({
-        readiness: summary.readiness,
-        requiredChecks: summary.requiredChecks,
-        pass: summary.counts.pass,
-        fail: summary.counts.fail,
-        blocked: summary.counts.blocked,
-        notApplicable: summary.counts.notApplicable,
-        notRun: summary.counts.notRun
+        readiness,
+        metadataComplete,
+        requiredChecks: resultSummary.requiredChecks,
+        pass: resultSummary.counts.pass,
+        fail: resultSummary.counts.fail,
+        blocked: resultSummary.counts.blocked,
+        notApplicable: resultSummary.counts.notApplicable,
+        notRun: resultSummary.counts.notRun
       }),
       aggregates,
       blockingIssues: Object.freeze(issueNumbers(input.blockingIssues)),
