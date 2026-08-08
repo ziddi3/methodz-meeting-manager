@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Metadata-only field rehearsal coverage workspace for Methodz Meeting Manager." />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/methodz-meeting.svg" type="image/svg+xml" />
+  <title>Field Evidence Coverage · Methodz Meeting Manager</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="evidence-coverage.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Methodz Meeting Manager</h1>
+    <p>Field Evidence Coverage · same-commit physical-device matrix</p>
+  </header>
+
+  <main class="evidence-coverage-shell" id="mainContent" tabindex="-1">
+    <section class="card" aria-labelledby="coverageTitle">
+      <p class="eyebrow">1.x evidence roadmap</p>
+      <h2 id="coverageTitle">Turn field rehearsals into a visible coverage gate</h2>
+      <p class="helper-text">
+        Import metadata-only Field Rehearsal reports and evaluate the documented physical-device matrix for one exact commit at a time.
+        Reports from different commits are never silently combined.
+      </p>
+      <div class="evidence-coverage-toolbar">
+        <a class="evidence-coverage-link" href="index.html">Back to Workspace Home</a>
+        <a class="evidence-coverage-link" href="docs/EVIDENCE-COVERAGE-MATRIX.md">Open coverage guide</a>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="coverageImportTitle">
+      <h2 id="coverageImportTitle">Import field evidence</h2>
+      <p class="helper-text">
+        File selection is inert. Choose up to 50 `methodz-field-rehearsal-evidence` version 1.0.0 JSON reports, then explicitly load them.
+        Files larger than 512 KiB are rejected before parsing and accepted evidence remains in memory only.
+      </p>
+      <div class="evidence-coverage-field">
+        <label for="evidenceCoverageFiles">Field Rehearsal evidence reports</label>
+        <input id="evidenceCoverageFiles" type="file" accept="application/json,.json" multiple />
+      </div>
+      <div class="evidence-coverage-actions">
+        <button type="button" id="loadEvidenceCoverage">Load Selected Evidence</button>
+        <button type="button" id="clearEvidenceCoverage">Clear In-Memory Evidence</button>
+      </div>
+      <p id="evidenceCoverageImportStatus" class="evidence-coverage-status" role="status" aria-live="polite">No evidence loaded.</p>
+      <div class="evidence-coverage-metrics" aria-label="Imported evidence summary">
+        <div class="evidence-coverage-metric"><strong id="evidenceAcceptedCount">0</strong><span>Accepted reports</span></div>
+        <div class="evidence-coverage-metric"><strong id="evidenceRejectedCount">0</strong><span>Rejected files</span></div>
+        <div class="evidence-coverage-metric"><strong id="evidenceCommitCount">0</strong><span>Distinct commits</span></div>
+        <div class="evidence-coverage-metric"><strong>50</strong><span>Maximum reports</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="coverageEvaluateTitle">
+      <h2 id="coverageEvaluateTitle">Evaluate one commit</h2>
+      <p class="helper-text">
+        When repeated evidence exists for the same row and commit, the latest report controls that row while the evidence count remains visible.
+        A complete matrix means all six latest row results are ready for the selected commit.
+      </p>
+      <div class="evidence-coverage-field evidence-coverage-commit-field">
+        <label for="evidenceCoverageCommit">Commit</label>
+        <select id="evidenceCoverageCommit">
+          <option value="">No commits loaded</option>
+        </select>
+      </div>
+      <div class="evidence-coverage-actions">
+        <button type="button" id="evaluateEvidenceCoverage" disabled>Evaluate Selected Commit</button>
+        <button type="button" id="downloadEvidenceCoverage" disabled>Download Coverage Summary</button>
+      </div>
+      <p id="evidenceCoverageStatus" class="evidence-coverage-status" role="status" aria-live="polite">Coverage not evaluated.</p>
+      <div class="evidence-coverage-metrics" aria-label="Coverage result summary">
+        <div class="evidence-coverage-metric"><strong id="coverageOverall">—</strong><span>Coverage status</span></div>
+        <div class="evidence-coverage-metric"><strong id="coverageReady">—</strong><span>Ready rows</span></div>
+        <div class="evidence-coverage-metric"><strong id="coverageMissing">—</strong><span>Missing rows</span></div>
+        <div class="evidence-coverage-metric"><strong id="coverageNeedsReview">—</strong><span>Fail / blocked / incomplete</span></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="coverageMatrixTitle">
+      <h2 id="coverageMatrixTitle">Physical-device coverage matrix</h2>
+      <div class="evidence-coverage-table-wrap">
+        <table class="evidence-coverage-table">
+          <thead>
+            <tr>
+              <th scope="col">Required row</th>
+              <th scope="col">Latest state</th>
+              <th scope="col">Evidence</th>
+              <th scope="col">Latest run</th>
+              <th scope="col">Browser</th>
+              <th scope="col">Blocking issues</th>
+            </tr>
+          </thead>
+          <tbody id="evidenceCoverageRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="coverageBoundaryTitle">
+      <h2 id="coverageBoundaryTitle">Coverage is not production approval</h2>
+      <ul class="evidence-coverage-boundary-list">
+        <li>The matrix checks six documented rows: Desktop Chromium, Desktop non-Chromium, Android Chrome, iOS Safari, Tablet, and Two-device.</li>
+        <li>Only evidence with complete environment metadata and the established metadata-only privacy contract is accepted.</li>
+        <li>Different commit SHAs remain separate. A mixed evidence set cannot produce a cross-commit completeness claim.</li>
+        <li>Blocking GitHub issue numbers are carried only as bounded numeric references from accepted evidence.</li>
+        <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
+        <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="evidence-coverage-core.js"></script>
+  <script src="evidence-coverage.js"></script>
+</body>
+</html>
