@@ -1,0 +1,135 @@
+.evidence-coverage-shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto 4rem;
+}
+
+.evidence-coverage-toolbar,
+.evidence-coverage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.evidence-coverage-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.evidence-coverage-field {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.evidence-coverage-field input[type="file"],
+.evidence-coverage-field select {
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.evidence-coverage-commit-field {
+  max-width: 620px;
+}
+
+.evidence-coverage-actions button {
+  min-height: 44px;
+}
+
+.evidence-coverage-status {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem;
+  border-left: 3px solid currentColor;
+  background: rgba(127, 127, 127, 0.08);
+  overflow-wrap: anywhere;
+}
+
+.evidence-coverage-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.evidence-coverage-metric {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 10px;
+}
+
+.evidence-coverage-metric strong {
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.evidence-coverage-metric span {
+  font-size: 0.88rem;
+  opacity: 0.8;
+}
+
+.evidence-coverage-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.evidence-coverage-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.evidence-coverage-table th,
+.evidence-coverage-table td {
+  padding: 0.7rem;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.evidence-coverage-table tr[data-coverage-state="fail"],
+.evidence-coverage-table tr[data-coverage-state="blocked"],
+.evidence-coverage-table tr[data-coverage-state="incomplete"],
+.evidence-coverage-table tr[data-coverage-state="missing"] {
+  font-weight: 600;
+}
+
+.evidence-coverage-boundary-list {
+  padding-left: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .evidence-coverage-shell {
+    width: min(100% - 1rem, 1180px);
+  }
+
+  .evidence-coverage-toolbar,
+  .evidence-coverage-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .evidence-coverage-link,
+  .evidence-coverage-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .evidence-coverage-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 390px) {
+  .evidence-coverage-metrics {
+    grid-template-columns: 1fr;
+  }
+}
