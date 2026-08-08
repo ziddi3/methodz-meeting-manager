@@ -23,7 +23,7 @@
       <p class="eyebrow">Workspace Home</p>
       <h2 id="workspaceHomeTitle">Start with the workflow you need, not the infrastructure behind it</h2>
       <p class="helper-text">
-        This page is a static launch surface for preparation, meeting-day work, review, archive, verification, field rehearsal, and performance evidence.
+        This page is a static launch surface for preparation, meeting-day work, review, archive, verification, field rehearsal, and evidence review.
         It does not read saved meeting records until you explicitly refresh the aggregate snapshot below.
       </p>
     </section>
@@ -100,6 +100,11 @@
           <p>Compare bounded metadata-only Workspace Capacity rehearsal reports and surface concrete timing regressions.</p>
           <a class="workspace-home-link" href="performance.html">Open Performance Evidence</a>
         </article>
+        <article class="workspace-home-launch-card">
+          <h3>Field Evidence Matrix</h3>
+          <p>Evaluate metadata-only physical-device rehearsal coverage for one exact application commit at a time.</p>
+          <a class="workspace-home-link" href="evidence.html">Open Field Evidence Matrix</a>
+        </article>
       </div>
     </section>
 
@@ -111,6 +116,7 @@
         <li>The home snapshot is read-only and runs only after an explicit operator refresh.</li>
         <li>Field Rehearsal evidence does not read meeting records or browser-local business values.</li>
         <li>Performance Evidence reads only explicitly selected metadata reports and keeps accepted evidence in memory.</li>
+        <li>Field Evidence Matrix reads only explicitly selected rehearsal reports, keeps them in memory, and never combines different commits.</li>
         <li>No automatic save, assignment, reminder, notification, archive, transfer, provider call, or synchronization is introduced here.</li>
         <li>This task-focused application remains separate from Method Hub.</li>
       </ul>

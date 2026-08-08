@@ -1,0 +1,120 @@
+name: Field Evidence Coverage Matrix
+
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "evidence.html"
+      - "evidence-coverage-core.js"
+      - "evidence-coverage.js"
+      - "evidence-coverage.css"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX-TESTS.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX-CHANGELOG.md"
+      - "docs/V1.6.22-RELEASE-ROADMAP.md"
+      - "tests/evidence-coverage-core.mjs"
+      - "tests/evidence-coverage.spec.js"
+      - ".github/workflows/evidence-coverage.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "evidence.html"
+      - "evidence-coverage-core.js"
+      - "evidence-coverage.js"
+      - "evidence-coverage.css"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX-TESTS.md"
+      - "docs/EVIDENCE-COVERAGE-MATRIX-CHANGELOG.md"
+      - "docs/V1.6.22-RELEASE-ROADMAP.md"
+      - "tests/evidence-coverage-core.mjs"
+      - "tests/evidence-coverage.spec.js"
+      - ".github/workflows/evidence-coverage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-evidence-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static evidence-coverage boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            evidence.html
+            evidence-coverage-core.js
+            evidence-coverage.js
+            evidence-coverage.css
+            service-worker.js
+            docs/APPLICATION-MAP.md
+            docs/EVIDENCE-COVERAGE-MATRIX.md
+            docs/EVIDENCE-COVERAGE-MATRIX-TESTS.md
+            docs/EVIDENCE-COVERAGE-MATRIX-CHANGELOG.md
+            docs/V1.6.22-RELEASE-ROADMAP.md
+            tests/evidence-coverage-core.mjs
+            tests/evidence-coverage.spec.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check evidence-coverage-core.js
+          node --check evidence-coverage.js
+          node --check tests/evidence-coverage-core.mjs
+          node --check tests/evidence-coverage.spec.js
+
+          grep -q 'evidence.html' index.html
+          grep -q 'evidence-coverage.css' evidence.html
+          grep -q 'evidence-coverage-core.js' evidence.html
+          grep -q 'evidence-coverage.js' evidence.html
+          grep -q 'evidence.html' service-worker.js
+          grep -q 'evidence-coverage.css' service-worker.js
+          grep -q 'evidence-coverage-core.js' service-worker.js
+          grep -q 'evidence-coverage.js' service-worker.js
+
+          ! grep -Eq 'hub\.methodz\.ca' evidence.html evidence-coverage-core.js evidence-coverage.js evidence-coverage.css
+          ! grep -Eq 'localStorage|sessionStorage|indexedDB' evidence-coverage-core.js evidence-coverage.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' evidence-coverage.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" evidence-coverage-core.js evidence-coverage.js service-worker.js
+
+      - name: Run portable Field Evidence Coverage tests
+        run: node tests/evidence-coverage-core.mjs
+
+  chromium-evidence-coverage:
+    runs-on: ubuntu-latest
+    needs: portable-evidence-coverage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/evidence.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Field Evidence Coverage browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/evidence-coverage.spec.js --reporter=line
