@@ -21,6 +21,12 @@
   const evaluationStatus = byId("evidenceCoverageStatus");
   const rowsBody = byId("evidenceCoverageRows");
 
+  function broadcastCoverage(coverage) {
+    window.dispatchEvent(new CustomEvent("methodz:evidence-coverage", {
+      detail: { coverage: coverage || null }
+    }));
+  }
+
   function shortSha(value) {
     return String(value || "").slice(0, 12);
   }
@@ -81,6 +87,7 @@
     resetSummaryMetrics();
     renderEmptyRows();
     evaluationStatus.textContent = message || "Coverage not evaluated.";
+    broadcastCoverage(null);
   }
 
   function renderCommitOptions() {
@@ -163,6 +170,7 @@
     evaluationStatus.textContent = lastCoverage.status === "coverage-complete"
       ? `All ${lastCoverage.rowCount} documented rows have latest ready evidence for commit ${shortSha(selectedCommit)}. This is coverage completeness only, not production readiness.${issueText}`
       : `Coverage for commit ${shortSha(selectedCommit)} is incomplete: ${lastCoverage.counts.ready}/${lastCoverage.rowCount} rows ready.${issueText}`;
+    broadcastCoverage(lastCoverage);
   }
 
   function clearEvidence() {
@@ -180,6 +188,7 @@
     evaluationStatus.textContent = "Coverage not evaluated.";
     resetSummaryMetrics();
     renderEmptyRows();
+    broadcastCoverage(null);
   }
 
   function downloadSummary() {
