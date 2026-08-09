@@ -1,0 +1,120 @@
+name: Field Evidence Remediation Worklist
+
+on:
+  pull_request:
+    paths:
+      - "evidence.html"
+      - "evidence-coverage.js"
+      - "evidence-coverage.css"
+      - "evidence-remediation-core.js"
+      - "evidence-remediation.js"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST-TESTS.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST-CHANGELOG.md"
+      - "docs/V1.6.23-RELEASE-ROADMAP.md"
+      - "tests/evidence-remediation-core.mjs"
+      - "tests/evidence-remediation.spec.js"
+      - ".github/workflows/evidence-remediation.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "evidence.html"
+      - "evidence-coverage.js"
+      - "evidence-coverage.css"
+      - "evidence-remediation-core.js"
+      - "evidence-remediation.js"
+      - "service-worker.js"
+      - "docs/APPLICATION-MAP.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST-TESTS.md"
+      - "docs/EVIDENCE-REMEDIATION-WORKLIST-CHANGELOG.md"
+      - "docs/V1.6.23-RELEASE-ROADMAP.md"
+      - "tests/evidence-remediation-core.mjs"
+      - "tests/evidence-remediation.spec.js"
+      - ".github/workflows/evidence-remediation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-evidence-remediation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate static remediation boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            evidence.html
+            evidence-coverage.js
+            evidence-remediation-core.js
+            evidence-remediation.js
+            service-worker.js
+            docs/APPLICATION-MAP.md
+            docs/EVIDENCE-REMEDIATION-WORKLIST.md
+            docs/EVIDENCE-REMEDIATION-WORKLIST-TESTS.md
+            docs/EVIDENCE-REMEDIATION-WORKLIST-CHANGELOG.md
+            docs/V1.6.23-RELEASE-ROADMAP.md
+            tests/evidence-remediation-core.mjs
+            tests/evidence-remediation.spec.js
+          )
+          for file in "${required[@]}"; do
+            test -f "$file" || { echo "Missing $file"; exit 1; }
+          done
+
+          node --check evidence-remediation-core.js
+          node --check evidence-remediation.js
+          node --check evidence-coverage.js
+          node --check tests/evidence-remediation-core.mjs
+          node --check tests/evidence-remediation.spec.js
+
+          grep -q 'evidence-remediation-core.js' evidence.html
+          grep -q 'evidence-remediation.js' evidence.html
+          grep -q 'buildEvidenceRemediation' evidence.html
+          grep -q 'methodz:evidence-coverage' evidence-coverage.js
+          grep -q 'evidence-remediation-core.js' service-worker.js
+          grep -q 'evidence-remediation.js' service-worker.js
+
+          ! grep -Eq 'hub\.methodz\.ca' evidence-remediation-core.js evidence-remediation.js
+          ! grep -Eq 'localStorage|sessionStorage|indexedDB' evidence-remediation-core.js evidence-remediation.js
+          ! grep -Eq 'fetch\(|XMLHttpRequest|WebSocket|EventSource' evidence-remediation-core.js evidence-remediation.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' evidence-remediation.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" evidence-remediation-core.js evidence-remediation.js service-worker.js
+
+      - name: Run portable Field Evidence Remediation tests
+        run: node tests/evidence-remediation-core.mjs
+
+  chromium-evidence-remediation:
+    runs-on: ubuntu-latest
+    needs: portable-evidence-remediation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install browser test runner
+        run: npm install --no-save --silent @playwright/test@1.53.2
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start static server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/methodz-http.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:4173/evidence.html > /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/methodz-http.log
+          exit 1
+      - name: Run Field Evidence Remediation browser coverage
+        env:
+          METHODZ_BROWSER: chromium
+        run: npx playwright test tests/evidence-remediation.spec.js --reporter=line
