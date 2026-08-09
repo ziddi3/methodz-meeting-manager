@@ -117,6 +117,7 @@ const APP_SHELL = [
   "./field-rehearsal-core.js",
   "./performance-evidence-core.js",
   "./evidence-coverage-core.js",
+  "./evidence-remediation-core.js",
   "./app.js",
   "./archive.js",
   "./archive-v10.js",
@@ -130,6 +131,7 @@ const APP_SHELL = [
   "./field-rehearsal.js",
   "./performance-evidence.js",
   "./evidence-coverage.js",
+  "./evidence-remediation.js",
   "./features-v03.js",
   "./features-v03-startup.js",
   "./features-v04-templates.js",
@@ -249,7 +251,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, field-rehearsal-mutation, performance-evidence-mutation, evidence-coverage-mutation, or review-mutation handler.
-// The service worker never reads meeting, task, decision, outcomes, workspace-home, field-rehearsal, performance-evidence, evidence-coverage, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, field-rehearsal-mutation, performance-evidence-mutation, evidence-coverage-mutation, evidence-remediation-mutation, or review-mutation handler.
+// The service worker never reads meeting, task, decision, outcomes, workspace-home, field-rehearsal, performance-evidence, evidence-coverage, evidence-remediation, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;

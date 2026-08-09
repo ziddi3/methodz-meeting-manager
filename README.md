@@ -6,7 +6,7 @@ Offline-first meeting preparation, capture, analysis, archive, recovery, transfe
 
 ## Current release
 
-**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Follow-up planning core 1.0.0 · Workspace capacity core 1.0.0 · Workspace Home core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
+**App shell 1.6.12 · Record schema 1.6.0 · Meeting review core 1.1.0 · Follow-up planning core 1.0.0 · Workspace capacity core 1.0.0 · Workspace Home core 1.0.0 · Field Rehearsal core 1.0.0 · Performance Evidence core 1.0.0 · Field Evidence Coverage core 1.0.0 · Field Evidence Remediation core 1.0.0 · Panel registry 1.0.0 · Hosted-provider contract 1.0.0**
 
 The application remains plain HTML, CSS, and JavaScript with no required runtime packages and no build command. Open `index.html` for the lifecycle launchpad, open `meeting.html` directly for core meeting workflows, or deploy the repository to any ordinary static host.
 
@@ -18,11 +18,14 @@ The current 1.x hardening layer includes:
 - a read-only **Meeting Preparation Brief** with operator-controlled run-sheet preview and safe source handoff;
 - an operator-controlled **Meeting Closeout Review**;
 - a read-only **Decision Register** and **Meeting Outcomes Review**;
-- no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, or background synchronization.
+- a metadata-only **Field Rehearsal** workspace for physical-device evidence capture;
+- a metadata-only **Performance Evidence** workspace for deterministic timing comparisons;
+- a same-commit **Field Evidence Matrix** with an explicit, bounded **Remediation Worklist** and operator-downloaded issue drafts;
+- no backend, credential, framework, build step, schema migration, automatic cleanup, record mutation, automatic issue creation, or background synchronization.
 
 ## Workspace Home
 
-`index.html` is the static root entry point. It links the established Preparation, Meeting-Day, Decision Register, Meeting Outcomes, Archive, and Verify workflows without requiring a framework or provider.
+`index.html` is the static root entry point. It links the established Preparation, Meeting-Day, Decision Register, Meeting Outcomes, Archive, Verify, Field Rehearsal, Performance Evidence, and Field Evidence workflows without requiring a framework or provider.
 
 The optional aggregate launch snapshot reads browser-local meeting records only after **Refresh Workspace Snapshot**. Its portable core retains counts, bounds, and report metadata only. It does not retain meeting titles, attendee names, notes, decisions, summaries, task text, Assigned To values, record identifiers, signatures, credentials, private keys, provider secrets, queue payloads, or hidden governance metadata.
 
@@ -36,6 +39,9 @@ meeting.html       Main meeting and operator workspace
 preparation.html   Upcoming-meeting preparation brief and run-sheet preview
 decisions.html     Structured Decision Register
 outcomes.html      Completed / archived Meeting Outcomes Review
+rehearsal.html     Metadata-only physical-device Field Rehearsal evidence
+performance.html   Metadata-only Workspace Capacity evidence comparison
+evidence.html      Exact-commit Field Evidence Matrix and explicit remediation worklist
 archive.html       Dedicated record detail and print view
 verify.html        Standalone signed-package verifier
 ```
@@ -113,6 +119,39 @@ The capacity panel also runs a bounded Follow-Up Review rehearsal with synthetic
 
 The panel never cleans, compacts, archives, deletes, or changes data automatically. Its controls are excluded from meeting-draft autosave, so changing rehearsal inputs does not create a draft write. A verified backup remains required before any separate operator-led cleanup decision.
 
+## Field evidence and remediation
+
+The 1.x evidence path is deliberately separate from meeting records:
+
+```text
+Field Rehearsal Evidence
+  -> exact-commit Field Evidence Coverage Matrix
+  -> explicit Remediation Worklist
+  -> operator-reviewed Markdown issue drafts when needed
+
+Workspace Capacity rehearsal reports
+  -> Performance Evidence Compare
+```
+
+`rehearsal.html` captures bounded environment and rehearsal-result metadata. It does not inspect meeting records or browser-local business values.
+
+`evidence.html` explicitly imports up to 50 accepted Field Rehearsal reports and evaluates six documented physical-device rows for one exact commit SHA. Evidence from different commits is never silently combined. Repeated same-row evidence uses the latest accepted report as the current row state while preserving bounded evidence counts and numeric blocking-issue references.
+
+After coverage is evaluated, **Build Remediation Worklist** deterministically excludes `ready` rows and maps unresolved rows as follows:
+
+```text
+fail        -> code-remediation
+blocked     -> environment-remediation
+incomplete  -> evidence-completion
+missing     -> evidence-collection
+```
+
+The remediation worklist is bounded to six rows, remains in memory, and is invalidated when coverage changes. JSON worklist summaries and Markdown issue drafts require explicit downloads. The browser application makes no GitHub API call and never creates an issue automatically. A generated draft is an operator aid, not proof that a software defect exists.
+
+`performance.html` explicitly imports up to 20 metadata-only Workspace Capacity rehearsal reports and compares baseline, latest, fastest, median, slowest, target, and regression signals without reading or writing browser storage.
+
+These evidence surfaces do not prove a software defect, physical device identity, operator identity, authorization, delivery, legal approval, regulatory compliance, or production readiness.
+
 ## Meeting-Day Mode
 
 Meeting-Day Mode keeps the live route in front:
@@ -160,7 +199,7 @@ Transfer, acceptance, diagnostics, rollback, readiness, registry, capacity, and 
 - Active preservation holds block permanent disposition.
 - Typed signatures require consent and remain excluded from external copies.
 - Private signing keys never enter browser storage, provider exports, workspace backups, transfer bundles, reports, or service-worker caches.
-- Review, focus, planning, capacity, preparation, outcomes, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
+- Review, focus, planning, capacity, preparation, outcomes, evidence, remediation, recovery, synchronization, transfer, acceptance, and rollback operations remain explicit and user controlled.
 - Service workers cache static assets only and never process business data.
 - Infrastructure supports the meeting workflow rather than replacing it.
 
@@ -203,6 +242,10 @@ Portable derived-workspace cores
   meeting-closeout-core.js
   decision-register-core.js
   meeting-outcomes-core.js
+  field-rehearsal-core.js
+  performance-evidence-core.js
+  evidence-coverage-core.js
+  evidence-remediation-core.js
 
 Application shell and browser presentation
   index.html + workspace-home.js
@@ -211,6 +254,9 @@ Application shell and browser presentation
   preparation.html + meeting-preparation.js
   decisions.html + decision-register.js
   outcomes.html + meeting-outcomes.js
+  rehearsal.html + field-rehearsal.js
+  performance.html + performance-evidence.js
+  evidence.html + evidence-coverage.js + evidence-remediation.js
 
 Archive, verification, and static shell
   archive*.js
@@ -250,6 +296,10 @@ GitHub Actions covers:
 - preparation, run-sheet, Decision Register, and Meeting Outcomes derived-workspace behavior;
 - explicit planning CSV download, planning-window preference recovery, and phone-width containment;
 - deterministic bounded capacity collection, unavailable-read handling, archive precedence, privacy boundaries, and bounded in-memory performance rehearsal;
+- Field Rehearsal metadata privacy, deterministic readiness, explicit evidence download, and mobile containment;
+- Performance Evidence validation, bounded comparison math, explicit import/export, and storage non-use;
+- exact-commit Field Evidence Coverage validation, mixed-commit isolation, bounded matrix math, privacy rejection, and explicit summary download;
+- Field Evidence Remediation validation, deterministic work ordering, ready-row exclusion, coverage invalidation, explicit downloads, storage/network non-use, and 390px controls;
 - cryptographic signing, recovery, and custody;
 - hosted-provider conformance and network-fault pilots;
 - synchronization rehearsal and queue portability;
@@ -267,6 +317,22 @@ docs/WORKSPACE-HOME.md
 docs/WORKSPACE-HOME-TESTS.md
 docs/WORKSPACE-HOME-CHANGELOG.md
 docs/V1.6.19-RELEASE-ROADMAP.md
+docs/FIELD-REHEARSAL-WORKSPACE.md
+docs/FIELD-REHEARSAL-WORKSPACE-TESTS.md
+docs/FIELD-REHEARSAL-WORKSPACE-CHANGELOG.md
+docs/V1.6.20-RELEASE-ROADMAP.md
+docs/PERFORMANCE-EVIDENCE-COMPARE.md
+docs/PERFORMANCE-EVIDENCE-COMPARE-TESTS.md
+docs/PERFORMANCE-EVIDENCE-COMPARE-CHANGELOG.md
+docs/V1.6.21-RELEASE-ROADMAP.md
+docs/EVIDENCE-COVERAGE-MATRIX.md
+docs/EVIDENCE-COVERAGE-MATRIX-TESTS.md
+docs/EVIDENCE-COVERAGE-MATRIX-CHANGELOG.md
+docs/V1.6.22-RELEASE-ROADMAP.md
+docs/EVIDENCE-REMEDIATION-WORKLIST.md
+docs/EVIDENCE-REMEDIATION-WORKLIST-TESTS.md
+docs/EVIDENCE-REMEDIATION-WORKLIST-CHANGELOG.md
+docs/V1.6.23-RELEASE-ROADMAP.md
 docs/ARCHITECTURE.md
 docs/MANUAL-TEST-CHECKLIST.md
 docs/SECURITY-AND-PRIVACY.md
@@ -293,9 +359,11 @@ docs/KEY-CUSTODY-OPERATIONS.md
 
 ### 1.x hardening
 
-- execute documented Android, iOS, tablet, and two-device field rehearsals from the Workspace Home launch surface;
-- continue real-device and large-workspace performance evidence collection;
-- improve meeting-day review, Daily Focus, planning, preparation, and outcomes ergonomics without silent automation;
+- collect real Field Rehearsal reports for the same application commit across the documented six-row physical-device matrix;
+- use exact-commit coverage gaps and the explicit remediation worklist to drive narrowly scoped fixes or evidence collection instead of speculative feature expansion;
+- after code remediation, capture replacement evidence against the new commit rather than carrying an old pass forward;
+- compare Workspace Capacity timing evidence in the same environments when field friction is performance-related;
+- improve Meeting-Day, Daily Focus, planning, preparation, decisions, and outcomes only where field evidence identifies concrete operator friction;
 - evaluate production-provider candidates against the evidence gate;
 - keep synchronization explicit and user controlled;
 - preserve browser-local storage as the default until a hosted provider is explicitly approved.
