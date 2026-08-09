@@ -3,21 +3,22 @@
 ## Release boundary
 
 ```text
-Application shell:              1.6.12
-Meeting-record schema:          1.6.0
-Meeting review core:            1.1.0
-Follow-up planning core:        1.0.0
-Workspace capacity core:        1.0.0
-Workspace Home core:            1.0.0
-Meeting preparation core:       1.0.0
-Preparation launch contract:    1.2.0
-Meeting run-sheet core:         1.0.0
-Meeting closeout core:          1.0.0
-Decision Register core:         1.0.0
-Meeting Outcomes core:          1.0.0
-Field Rehearsal core:           1.0.0
-Performance Evidence core:      1.0.0
-Field Evidence Coverage core:   1.0.0
+Application shell:                 1.6.12
+Meeting-record schema:             1.6.0
+Meeting review core:               1.1.0
+Follow-up planning core:           1.0.0
+Workspace capacity core:           1.0.0
+Workspace Home core:               1.0.0
+Meeting preparation core:          1.0.0
+Preparation launch contract:       1.2.0
+Meeting run-sheet core:            1.0.0
+Meeting closeout core:             1.0.0
+Decision Register core:            1.0.0
+Meeting Outcomes core:             1.0.0
+Field Rehearsal core:              1.0.0
+Performance Evidence core:         1.0.0
+Field Evidence Coverage core:      1.0.0
+Field Evidence Remediation core:   1.0.0
 ```
 
 The application shell may gain static workspaces without changing the meeting-record schema.
@@ -32,7 +33,7 @@ decisions.html    Read-only structured Decision Register and source review
 outcomes.html     Read-only completed-meeting outcomes review
 rehearsal.html    Metadata-only physical-device field rehearsal evidence
 performance.html  Metadata-only Workspace Capacity performance evidence comparison
-evidence.html     Metadata-only exact-commit physical-device evidence coverage matrix
+evidence.html     Metadata-only exact-commit physical-device evidence coverage and remediation worklist
 archive.html      Record detail and print surface
 verify.html       Standalone signed-package verifier
 ```
@@ -57,6 +58,8 @@ Workspace Home
 Evidence side paths
   -> Field Rehearsal Evidence
   -> Field Evidence Coverage Matrix
+  -> explicit Remediation Worklist
+  -> manually reviewed GitHub issue drafts when needed
   -> Performance Evidence Compare
 ```
 
@@ -74,9 +77,20 @@ The portable report retains no meeting title, attendee name, note, decision, sum
 
 `evidence.html` accepts only explicitly selected metadata-only Field Rehearsal reports. Accepted evidence is normalized through `evidence-coverage-core.js`, bounded to 50 reports, held in memory only, and evaluated for one exact commit SHA at a time. Evidence from different commits is never silently combined.
 
+After one commit has been evaluated, the operator may explicitly build a remediation worklist. `evidence-remediation-core.js` accepts only the established coverage contract, requires the six documented rows, discards unknown input properties, excludes `ready` rows, and maps unresolved states deterministically:
+
+```text
+fail        -> code-remediation
+blocked     -> environment-remediation
+incomplete  -> evidence-completion
+missing     -> evidence-collection
+```
+
+The worklist is bounded to six rows and held in memory only. JSON worklist summaries and Markdown issue drafts require explicit download actions. The static application never calls the GitHub API and never creates an issue automatically. A draft is an operator aid, not proof that a software defect exists.
+
 `performance.html` accepts only explicitly selected metadata-only Workspace Capacity rehearsal reports. Accepted evidence is normalized through `performance-evidence-core.js`, bounded to 20 runs, held in memory only, and compared without reading or writing browser storage.
 
-None of the evidence workspaces proves device identity, delivery, authorization, legal approval, regulatory compliance, or production readiness by itself.
+None of the evidence workspaces proves a software defect, device identity, delivery, authorization, legal approval, regulatory compliance, or production readiness by itself.
 
 ## Data and deployment boundaries
 
@@ -84,6 +98,8 @@ None of the evidence workspaces proves device identity, delivery, authorization,
 - Workspace Home does not read meeting records on page load.
 - Field Rehearsal does not read meeting records or browser-local business values.
 - Field Evidence Coverage does not read or write browser storage and evaluates only explicitly imported metadata reports.
+- Field Evidence Remediation reads only the in-memory evaluated coverage object after an explicit operator action.
+- Field Evidence Remediation does not use browser storage, call GitHub, or create issues automatically.
 - Performance Evidence does not read or write browser storage and imports reports only after explicit operator action.
 - The service worker caches static assets only and never reads business records.
 - No production Firebase, Supabase, Drive, CRM, or Methodz API provider is active.
