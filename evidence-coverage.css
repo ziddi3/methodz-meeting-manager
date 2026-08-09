@@ -98,8 +98,20 @@
 .evidence-coverage-table tr[data-coverage-state="fail"],
 .evidence-coverage-table tr[data-coverage-state="blocked"],
 .evidence-coverage-table tr[data-coverage-state="incomplete"],
-.evidence-coverage-table tr[data-coverage-state="missing"] {
+.evidence-coverage-table tr[data-coverage-state="missing"],
+.evidence-remediation-table tr[data-remediation-state="fail"],
+.evidence-remediation-table tr[data-remediation-state="blocked"],
+.evidence-remediation-table tr[data-remediation-state="incomplete"],
+.evidence-remediation-table tr[data-remediation-state="missing"] {
   font-weight: 600;
+}
+
+.evidence-remediation-table-wrap {
+  margin-top: 1rem;
+}
+
+.evidence-remediation-table {
+  min-width: 920px;
 }
 
 .evidence-coverage-boundary-list {
