@@ -19,6 +19,12 @@
     return String(value || "").slice(0, 12);
   }
 
+  function publishWorklist() {
+    window.dispatchEvent(new CustomEvent("methodz:evidence-remediation", {
+      detail: { coverage: currentCoverage, worklist: currentWorklist }
+    }));
+  }
+
   function resetMetrics() {
     byId("remediationOverall").textContent = "—";
     byId("remediationCode").textContent = "—";
@@ -43,6 +49,7 @@
     resetMetrics();
     renderEmptyRows();
     status.textContent = message || "Remediation worklist not built.";
+    publishWorklist();
   }
 
   function renderWorklist(worklist) {
@@ -88,6 +95,7 @@
       downloadSummaryButton.disabled = true;
       downloadDraftsButton.disabled = true;
       status.textContent = `Coverage could not be converted into a remediation worklist (${result.errors.slice(0, 6).join(", ")}).`;
+      publishWorklist();
       return;
     }
 
@@ -98,6 +106,7 @@
     status.textContent = currentWorklist.items.length
       ? `${currentWorklist.itemCount} remediation row${currentWorklist.itemCount === 1 ? "" : "s"} derived for commit ${shortSha(currentWorklist.commitSha)}. Drafts are operator aids only; no GitHub issue was created.`
       : `Commit ${shortSha(currentWorklist.commitSha)} has no fail, blocked, incomplete, or missing coverage rows. No remediation draft is required.`;
+    publishWorklist();
   }
 
   function downloadText(filename, content, type) {
