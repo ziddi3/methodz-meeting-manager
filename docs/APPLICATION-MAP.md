@@ -19,6 +19,7 @@ Field Rehearsal core:              1.0.0
 Performance Evidence core:         1.0.0
 Field Evidence Coverage core:      1.0.0
 Field Evidence Remediation core:   1.0.0
+Field Evidence Rerun core:         1.0.0
 ```
 
 The application shell may gain static workspaces without changing the meeting-record schema.
@@ -33,7 +34,7 @@ decisions.html    Read-only structured Decision Register and source review
 outcomes.html     Read-only completed-meeting outcomes review
 rehearsal.html    Metadata-only physical-device field rehearsal evidence
 performance.html  Metadata-only Workspace Capacity performance evidence comparison
-evidence.html     Metadata-only exact-commit physical-device evidence coverage and remediation worklist
+evidence.html     Metadata-only exact-commit coverage, remediation, and rehearsal rerun planning
 archive.html      Record detail and print surface
 verify.html       Standalone signed-package verifier
 ```
@@ -59,6 +60,7 @@ Evidence side paths
   -> Field Rehearsal Evidence
   -> Field Evidence Coverage Matrix
   -> explicit Remediation Worklist
+  -> explicit exact-commit Rerun Plan
   -> manually reviewed GitHub issue drafts when needed
   -> Performance Evidence Compare
 ```
@@ -88,6 +90,20 @@ missing     -> evidence-collection
 
 The worklist is bounded to six rows and held in memory only. JSON worklist summaries and Markdown issue drafts require explicit download actions. The static application never calls the GitHub API and never creates an issue automatically. A draft is an operator aid, not proof that a software defect exists.
 
+After the remediation worklist is current, the operator may explicitly build a rerun plan. `evidence-rerun-core.js` validates the exact coverage/worklist commit pair and enforces the next evidence boundary:
+
+```text
+any code-remediation
+  -> new-commit-cycle
+  -> all six rows need replacement evidence on the resulting commit
+
+no code-remediation
+  -> same-commit-cycle
+  -> only blocked, incomplete, or missing rows are rehearsed while code remains unchanged
+```
+
+Ready evidence from an older commit remains historical evidence only. It is never carried forward as proof for changed code. Rerun JSON summaries and Markdown rehearsal checklists are explicit local downloads and trigger no device test or background work.
+
 `performance.html` accepts only explicitly selected metadata-only Workspace Capacity rehearsal reports. Accepted evidence is normalized through `performance-evidence-core.js`, bounded to 20 runs, held in memory only, and compared without reading or writing browser storage.
 
 None of the evidence workspaces proves a software defect, device identity, delivery, authorization, legal approval, regulatory compliance, or production readiness by itself.
@@ -100,6 +116,8 @@ None of the evidence workspaces proves a software defect, device identity, deliv
 - Field Evidence Coverage does not read or write browser storage and evaluates only explicitly imported metadata reports.
 - Field Evidence Remediation reads only the in-memory evaluated coverage object after an explicit operator action.
 - Field Evidence Remediation does not use browser storage, call GitHub, or create issues automatically.
+- Field Evidence Rerun reads only the in-memory coverage/remediation pair after an explicit operator action.
+- Field Evidence Rerun does not use browser storage, call GitHub/providers, run device tests, schedule work, or mutate meetings.
 - Performance Evidence does not read or write browser storage and imports reports only after explicit operator action.
 - The service worker caches static assets only and never reads business records.
 - No production Firebase, Supabase, Drive, CRM, or Methodz API provider is active.
