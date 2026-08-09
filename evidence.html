@@ -26,6 +26,7 @@
         <a class="evidence-coverage-link" href="index.html">Back to Workspace Home</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-COVERAGE-MATRIX.md">Open coverage guide</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-REMEDIATION-WORKLIST.md">Open remediation guide</a>
+        <a class="evidence-coverage-link" href="docs/EVIDENCE-RERUN-PLAN.md">Open rerun guide</a>
       </div>
     </section>
 
@@ -81,14 +82,35 @@
       <div class="evidence-coverage-table-wrap evidence-remediation-table-wrap"><table class="evidence-coverage-table evidence-remediation-table"><thead><tr><th scope="col">Coverage row</th><th scope="col">State</th><th scope="col">Work type</th><th scope="col">Priority</th><th scope="col">Existing issues</th><th scope="col">Next action</th></tr></thead><tbody id="evidenceRemediationRows"></tbody></table></div>
     </section>
 
+    <section class="card" aria-labelledby="rerunTitle">
+      <p class="eyebrow">Exact-commit rehearsal planning</p>
+      <h2 id="rerunTitle">Build the next Field Evidence rerun plan</h2>
+      <p class="helper-text">The plan enforces the commit boundary instead of carrying evidence forward. If code remediation exists, the next cycle targets a new commit and all six rows require replacement evidence. If no code changes are required, only unresolved environment or evidence rows are rehearsed against the same commit.</p>
+      <div class="evidence-coverage-actions">
+        <button type="button" id="buildEvidenceRerunPlan" disabled>Build Rerun Plan</button>
+        <button type="button" id="downloadEvidenceRerunPlan" disabled>Download Rerun Summary</button>
+        <button type="button" id="downloadEvidenceRerunChecklist" disabled>Download Rehearsal Checklist</button>
+      </div>
+      <p id="evidenceRerunStatus" class="evidence-coverage-status" role="status" aria-live="polite">Build the current remediation worklist above before deriving a rerun plan.</p>
+      <div class="evidence-coverage-metrics" aria-label="Rerun plan summary">
+        <div class="evidence-coverage-metric"><strong id="rerunOverall">—</strong><span>Plan status</span></div>
+        <div class="evidence-coverage-metric"><strong id="rerunRows">—</strong><span>Rows to rehearse</span></div>
+        <div class="evidence-coverage-metric"><strong id="rerunNewCommit">—</strong><span>New-commit rows</span></div>
+        <div class="evidence-coverage-metric"><strong id="rerunSameCommit">—</strong><span>Same-commit rows</span></div>
+      </div>
+      <div class="evidence-coverage-table-wrap"><table class="evidence-coverage-table"><thead><tr><th scope="col">Coverage row</th><th scope="col">Source state</th><th scope="col">Rerun action</th><th scope="col">Commit policy</th><th scope="col">Blocking issues</th><th scope="col">Reason</th></tr></thead><tbody id="evidenceRerunRows"></tbody></table></div>
+    </section>
+
     <section class="card" aria-labelledby="coverageBoundaryTitle">
-      <h2 id="coverageBoundaryTitle">Coverage and remediation are not production approval</h2>
+      <h2 id="coverageBoundaryTitle">Coverage, remediation, and rerun planning are not production approval</h2>
       <ul class="evidence-coverage-boundary-list">
         <li>The matrix checks six documented rows: Desktop Chromium, Desktop non-Chromium, Android Chrome, iOS Safari, Tablet, and Two-device.</li>
         <li>Only evidence with complete environment metadata and the established metadata-only privacy contract is accepted.</li>
         <li>Different commit SHAs remain separate. A mixed evidence set cannot produce a cross-commit completeness claim.</li>
         <li>Blocking GitHub issue numbers are carried only as bounded numeric references from accepted evidence.</li>
         <li>Remediation drafts are operator aids. They do not prove that a software defect exists and they are never submitted automatically.</li>
+        <li>A code change creates a new evidence boundary. Ready rows from the old commit must be revalidated before the new commit can claim complete physical-device coverage.</li>
+        <li>Environment-only and evidence-only reruns stay on the same commit only while code remains unchanged.</li>
         <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
         <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
       </ul>
@@ -97,7 +119,9 @@
 
   <script src="evidence-coverage-core.js"></script>
   <script src="evidence-remediation-core.js"></script>
+  <script src="evidence-rerun-core.js"></script>
   <script src="evidence-coverage.js"></script>
   <script src="evidence-remediation.js"></script>
+  <script src="evidence-rerun.js"></script>
 </body>
 </html>
