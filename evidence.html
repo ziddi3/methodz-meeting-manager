@@ -21,30 +21,19 @@
     <section class="card" aria-labelledby="coverageTitle">
       <p class="eyebrow">1.x evidence roadmap</p>
       <h2 id="coverageTitle">Turn field rehearsals into a visible coverage gate</h2>
-      <p class="helper-text">
-        Import metadata-only Field Rehearsal reports and evaluate the documented physical-device matrix for one exact commit at a time.
-        Reports from different commits are never silently combined.
-      </p>
+      <p class="helper-text">Import metadata-only Field Rehearsal reports and evaluate the documented physical-device matrix for one exact commit at a time. Reports from different commits are never silently combined.</p>
       <div class="evidence-coverage-toolbar">
         <a class="evidence-coverage-link" href="index.html">Back to Workspace Home</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-COVERAGE-MATRIX.md">Open coverage guide</a>
+        <a class="evidence-coverage-link" href="docs/EVIDENCE-REMEDIATION-WORKLIST.md">Open remediation guide</a>
       </div>
     </section>
 
     <section class="card" aria-labelledby="coverageImportTitle">
       <h2 id="coverageImportTitle">Import field evidence</h2>
-      <p class="helper-text">
-        File selection is inert. Choose up to 50 `methodz-field-rehearsal-evidence` version 1.0.0 JSON reports, then explicitly load them.
-        Files larger than 512 KiB are rejected before parsing and accepted evidence remains in memory only.
-      </p>
-      <div class="evidence-coverage-field">
-        <label for="evidenceCoverageFiles">Field Rehearsal evidence reports</label>
-        <input id="evidenceCoverageFiles" type="file" accept="application/json,.json" multiple />
-      </div>
-      <div class="evidence-coverage-actions">
-        <button type="button" id="loadEvidenceCoverage">Load Selected Evidence</button>
-        <button type="button" id="clearEvidenceCoverage">Clear In-Memory Evidence</button>
-      </div>
+      <p class="helper-text">File selection is inert. Choose up to 50 `methodz-field-rehearsal-evidence` version 1.0.0 JSON reports, then explicitly load them. Files larger than 512 KiB are rejected before parsing and accepted evidence remains in memory only.</p>
+      <div class="evidence-coverage-field"><label for="evidenceCoverageFiles">Field Rehearsal evidence reports</label><input id="evidenceCoverageFiles" type="file" accept="application/json,.json" multiple /></div>
+      <div class="evidence-coverage-actions"><button type="button" id="loadEvidenceCoverage">Load Selected Evidence</button><button type="button" id="clearEvidenceCoverage">Clear In-Memory Evidence</button></div>
       <p id="evidenceCoverageImportStatus" class="evidence-coverage-status" role="status" aria-live="polite">No evidence loaded.</p>
       <div class="evidence-coverage-metrics" aria-label="Imported evidence summary">
         <div class="evidence-coverage-metric"><strong id="evidenceAcceptedCount">0</strong><span>Accepted reports</span></div>
@@ -56,20 +45,9 @@
 
     <section class="card" aria-labelledby="coverageEvaluateTitle">
       <h2 id="coverageEvaluateTitle">Evaluate one commit</h2>
-      <p class="helper-text">
-        When repeated evidence exists for the same row and commit, the latest report controls that row while the evidence count remains visible.
-        A complete matrix means all six latest row results are ready for the selected commit.
-      </p>
-      <div class="evidence-coverage-field evidence-coverage-commit-field">
-        <label for="evidenceCoverageCommit">Commit</label>
-        <select id="evidenceCoverageCommit">
-          <option value="">No commits loaded</option>
-        </select>
-      </div>
-      <div class="evidence-coverage-actions">
-        <button type="button" id="evaluateEvidenceCoverage" disabled>Evaluate Selected Commit</button>
-        <button type="button" id="downloadEvidenceCoverage" disabled>Download Coverage Summary</button>
-      </div>
+      <p class="helper-text">When repeated evidence exists for the same row and commit, the latest report controls that row while the evidence count remains visible. A complete matrix means all six latest row results are ready for the selected commit.</p>
+      <div class="evidence-coverage-field evidence-coverage-commit-field"><label for="evidenceCoverageCommit">Commit</label><select id="evidenceCoverageCommit"><option value="">No commits loaded</option></select></div>
+      <div class="evidence-coverage-actions"><button type="button" id="evaluateEvidenceCoverage" disabled>Evaluate Selected Commit</button><button type="button" id="downloadEvidenceCoverage" disabled>Download Coverage Summary</button></div>
       <p id="evidenceCoverageStatus" class="evidence-coverage-status" role="status" aria-live="polite">Coverage not evaluated.</p>
       <div class="evidence-coverage-metrics" aria-label="Coverage result summary">
         <div class="evidence-coverage-metric"><strong id="coverageOverall">—</strong><span>Coverage status</span></div>
@@ -81,30 +59,36 @@
 
     <section class="card" aria-labelledby="coverageMatrixTitle">
       <h2 id="coverageMatrixTitle">Physical-device coverage matrix</h2>
-      <div class="evidence-coverage-table-wrap">
-        <table class="evidence-coverage-table">
-          <thead>
-            <tr>
-              <th scope="col">Required row</th>
-              <th scope="col">Latest state</th>
-              <th scope="col">Evidence</th>
-              <th scope="col">Latest run</th>
-              <th scope="col">Browser</th>
-              <th scope="col">Blocking issues</th>
-            </tr>
-          </thead>
-          <tbody id="evidenceCoverageRows"></tbody>
-        </table>
+      <div class="evidence-coverage-table-wrap"><table class="evidence-coverage-table"><thead><tr><th scope="col">Required row</th><th scope="col">Latest state</th><th scope="col">Evidence</th><th scope="col">Latest run</th><th scope="col">Browser</th><th scope="col">Blocking issues</th></tr></thead><tbody id="evidenceCoverageRows"></tbody></table></div>
+    </section>
+
+    <section class="card" aria-labelledby="remediationTitle">
+      <p class="eyebrow">Evidence-driven remediation</p>
+      <h2 id="remediationTitle">Build a bounded worklist from unresolved coverage rows</h2>
+      <p class="helper-text">After evaluating one exact commit, explicitly derive next actions from fail, blocked, incomplete, and missing rows. Ready rows are excluded. The application does not contact GitHub or create issues automatically.</p>
+      <div class="evidence-coverage-actions">
+        <button type="button" id="buildEvidenceRemediation" disabled>Build Remediation Worklist</button>
+        <button type="button" id="downloadEvidenceRemediation" disabled>Download Worklist Summary</button>
+        <button type="button" id="downloadEvidenceIssueDrafts" disabled>Download Issue Drafts</button>
       </div>
+      <p id="evidenceRemediationStatus" class="evidence-coverage-status" role="status" aria-live="polite">Evaluate one exact commit above before building a remediation worklist.</p>
+      <div class="evidence-coverage-metrics" aria-label="Remediation summary">
+        <div class="evidence-coverage-metric"><strong id="remediationOverall">—</strong><span>Worklist status</span></div>
+        <div class="evidence-coverage-metric"><strong id="remediationCode">—</strong><span>Code remediation</span></div>
+        <div class="evidence-coverage-metric"><strong id="remediationEnvironment">—</strong><span>Environment remediation</span></div>
+        <div class="evidence-coverage-metric"><strong id="remediationEvidence">—</strong><span>Evidence work</span></div>
+      </div>
+      <div class="evidence-coverage-table-wrap evidence-remediation-table-wrap"><table class="evidence-coverage-table evidence-remediation-table"><thead><tr><th scope="col">Coverage row</th><th scope="col">State</th><th scope="col">Work type</th><th scope="col">Priority</th><th scope="col">Existing issues</th><th scope="col">Next action</th></tr></thead><tbody id="evidenceRemediationRows"></tbody></table></div>
     </section>
 
     <section class="card" aria-labelledby="coverageBoundaryTitle">
-      <h2 id="coverageBoundaryTitle">Coverage is not production approval</h2>
+      <h2 id="coverageBoundaryTitle">Coverage and remediation are not production approval</h2>
       <ul class="evidence-coverage-boundary-list">
         <li>The matrix checks six documented rows: Desktop Chromium, Desktop non-Chromium, Android Chrome, iOS Safari, Tablet, and Two-device.</li>
         <li>Only evidence with complete environment metadata and the established metadata-only privacy contract is accepted.</li>
         <li>Different commit SHAs remain separate. A mixed evidence set cannot produce a cross-commit completeness claim.</li>
         <li>Blocking GitHub issue numbers are carried only as bounded numeric references from accepted evidence.</li>
+        <li>Remediation drafts are operator aids. They do not prove that a software defect exists and they are never submitted automatically.</li>
         <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
         <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
       </ul>
@@ -112,6 +96,8 @@
   </main>
 
   <script src="evidence-coverage-core.js"></script>
+  <script src="evidence-remediation-core.js"></script>
   <script src="evidence-coverage.js"></script>
+  <script src="evidence-remediation.js"></script>
 </body>
 </html>
