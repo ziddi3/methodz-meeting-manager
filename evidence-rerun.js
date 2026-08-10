@@ -3,6 +3,7 @@
   "use strict";
 
   const core = window.MethodzEvidenceRerunCore;
+  const launchCore = window.MethodzFieldRehearsalLaunchCore;
   if (!core) return;
 
   let currentCoverage = null;
@@ -13,6 +14,7 @@
   const buildButton = byId("buildEvidenceRerunPlan");
   const downloadSummaryButton = byId("downloadEvidenceRerunPlan");
   const downloadChecklistButton = byId("downloadEvidenceRerunChecklist");
+  const targetCommitInput = byId("evidenceRerunTargetCommit");
   const status = byId("evidenceRerunStatus");
   const rowsBody = byId("evidenceRerunRows");
 
@@ -31,23 +33,70 @@
     rowsBody.textContent = "";
     const row = document.createElement("tr");
     const cell = document.createElement("td");
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.textContent = message;
     row.appendChild(cell);
     rowsBody.appendChild(row);
+  }
+
+  function configureTargetCommit(plan) {
+    if (!targetCommitInput) return;
+    targetCommitInput.value = "";
+    targetCommitInput.readOnly = false;
+    targetCommitInput.disabled = true;
+    if (!plan || !plan.rows.length) return;
+    targetCommitInput.disabled = false;
+    if (plan.mode === "same-commit-cycle") {
+      targetCommitInput.value = plan.sourceCommitSha;
+      targetCommitInput.readOnly = true;
+    }
+  }
+
+  function updateLaunchButtons() {
+    rowsBody.querySelectorAll("button[data-rehearsal-row]").forEach((button) => {
+      if (!launchCore || !currentPlan) {
+        button.disabled = true;
+        return;
+      }
+      const result = launchCore.buildFromPlan(currentPlan, button.dataset.rehearsalRow, targetCommitInput?.value || "");
+      button.disabled = !result.ok;
+    });
   }
 
   function invalidate(message) {
     currentPlan = null;
     downloadSummaryButton.disabled = true;
     downloadChecklistButton.disabled = true;
+    configureTargetCommit(null);
     resetMetrics();
     renderEmptyRows();
     status.textContent = message || "Rerun plan not built.";
   }
 
+  function openRehearsal(rowKey) {
+    if (!launchCore || !currentPlan) {
+      status.textContent = "Field Rehearsal launch handoff is unavailable in this app shell.";
+      return;
+    }
+    const result = launchCore.buildFromPlan(currentPlan, rowKey, targetCommitInput?.value || "");
+    if (!result.ok || !result.launch) {
+      const needsNewCommit = result.errors.includes("launch:new-commit-must-differ") || result.errors.includes("launch:target-commit");
+      status.textContent = needsNewCommit
+        ? "Enter the actual resulting commit SHA from the code remediation before opening a new-commit rehearsal row."
+        : `The rehearsal handoff could not be created (${result.errors.slice(0, 4).join(", ")}).`;
+      return;
+    }
+    const fragment = launchCore.encodeFragment(result.launch);
+    if (!fragment) {
+      status.textContent = "The rehearsal handoff failed validation before navigation.";
+      return;
+    }
+    window.location.assign(`rehearsal.html${fragment}`);
+  }
+
   function renderPlan(plan) {
     rowsBody.textContent = "";
+    configureTargetCommit(plan);
     if (!plan.rows.length) {
       renderEmptyRows("No rerun rows are required by the current exact-commit coverage.");
     } else {
@@ -61,6 +110,14 @@
           cell.textContent = value;
           row.appendChild(cell);
         });
+        const actionCell = document.createElement("td");
+        const action = document.createElement("button");
+        action.type = "button";
+        action.textContent = "Open Rehearsal";
+        action.dataset.rehearsalRow = item.rowKey;
+        action.addEventListener("click", () => openRehearsal(item.rowKey));
+        actionCell.appendChild(action);
+        row.appendChild(actionCell);
         rowsBody.appendChild(row);
       });
     }
@@ -69,6 +126,7 @@
     byId("rerunRows").textContent = String(plan.rowCount);
     byId("rerunNewCommit").textContent = String(plan.counts.newCommitRequired);
     byId("rerunSameCommit").textContent = String(plan.counts.sameCommitRequired + plan.counts.sameCommitConditional);
+    updateLaunchButtons();
   }
 
   function buildPlan() {
@@ -81,6 +139,7 @@
       currentPlan = null;
       downloadSummaryButton.disabled = true;
       downloadChecklistButton.disabled = true;
+      configureTargetCommit(null);
       status.textContent = `Coverage and remediation could not be converted into a rerun plan (${result.errors.slice(0, 6).join(", ")}).`;
       return;
     }
@@ -90,9 +149,9 @@
     downloadSummaryButton.disabled = false;
     downloadChecklistButton.disabled = false;
     if (currentPlan.mode === "new-commit-cycle") {
-      status.textContent = `Code remediation exists on ${shortSha(currentPlan.sourceCommitSha)}. The plan requires a new commit, then replacement evidence for all six coverage rows.`;
+      status.textContent = `Code remediation exists on ${shortSha(currentPlan.sourceCommitSha)}. Enter the actual resulting commit SHA, then open each row against that new evidence boundary.`;
     } else if (currentPlan.mode === "same-commit-cycle") {
-      status.textContent = `${currentPlan.rowCount} unresolved row${currentPlan.rowCount === 1 ? "" : "s"} can be rehearsed against ${shortSha(currentPlan.sourceCommitSha)} while code remains unchanged.`;
+      status.textContent = `${currentPlan.rowCount} unresolved row${currentPlan.rowCount === 1 ? "" : "s"} can be rehearsed against ${shortSha(currentPlan.sourceCommitSha)} while code remains unchanged. The target commit is pinned to the source commit.`;
     } else {
       status.textContent = `Commit ${shortSha(currentPlan.sourceCommitSha)} has no rerun work in the current remediation worklist.`;
     }
@@ -144,10 +203,12 @@
   buildButton.addEventListener("click", buildPlan);
   downloadSummaryButton.addEventListener("click", downloadSummary);
   downloadChecklistButton.addEventListener("click", downloadChecklist);
+  targetCommitInput?.addEventListener("input", updateLaunchButtons);
 
   buildButton.disabled = true;
   downloadSummaryButton.disabled = true;
   downloadChecklistButton.disabled = true;
+  configureTargetCommit(null);
   resetMetrics();
   renderEmptyRows();
 })();
