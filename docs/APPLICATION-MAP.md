@@ -16,6 +16,7 @@ Meeting closeout core:             1.0.0
 Decision Register core:            1.0.0
 Meeting Outcomes core:             1.0.0
 Field Rehearsal core:              1.0.0
+Field Rehearsal launch core:       1.0.0
 Performance Evidence core:         1.0.0
 Field Evidence Coverage core:      1.0.0
 Field Evidence Remediation core:   1.0.0
@@ -34,7 +35,7 @@ decisions.html    Read-only structured Decision Register and source review
 outcomes.html     Read-only completed-meeting outcomes review
 rehearsal.html    Metadata-only physical-device field rehearsal evidence
 performance.html  Metadata-only Workspace Capacity performance evidence comparison
-evidence.html     Metadata-only exact-commit coverage, remediation, and rehearsal rerun planning
+evidence.html     Metadata-only exact-commit coverage, remediation, rerun planning, and rehearsal handoff
 archive.html      Record detail and print surface
 verify.html       Standalone signed-package verifier
 ```
@@ -61,6 +62,7 @@ Evidence side paths
   -> Field Evidence Coverage Matrix
   -> explicit Remediation Worklist
   -> explicit exact-commit Rerun Plan
+  -> explicit Field Rehearsal launch handoff
   -> manually reviewed GitHub issue drafts when needed
   -> Performance Evidence Compare
 ```
@@ -104,6 +106,8 @@ no code-remediation
 
 Ready evidence from an older commit remains historical evidence only. It is never carried forward as proof for changed code. Rerun JSON summaries and Markdown rehearsal checklists are explicit local downloads and trigger no device test or background work.
 
+`field-rehearsal-launch-core.js` converts one explicit rerun-plan row into bounded metadata for `rehearsal.html`. Same-commit rows are pinned to the source SHA. New-commit rows remain unavailable until the operator enters a valid resulting SHA that differs from the source SHA. The recognized launch fragment carries only row key, source commit, target commit, contract version, and commit policy, then is validated and removed before the rehearsal continues. Operating-system and browser versions remain operator-entered, and actual environment inspection remains explicit.
+
 `performance.html` accepts only explicitly selected metadata-only Workspace Capacity rehearsal reports. Accepted evidence is normalized through `performance-evidence-core.js`, bounded to 20 runs, held in memory only, and compared without reading or writing browser storage.
 
 None of the evidence workspaces proves a software defect, device identity, delivery, authorization, legal approval, regulatory compliance, or production readiness by itself.
@@ -113,6 +117,8 @@ None of the evidence workspaces proves a software defect, device identity, deliv
 - Browser-local storage remains the default meeting-record provider.
 - Workspace Home does not read meeting records on page load.
 - Field Rehearsal does not read meeting records or browser-local business values.
+- Field Rehearsal launch carries metadata only and does not read or write browser storage.
+- Field Rehearsal launch makes no provider, GitHub API, synchronization, transfer, or background-automation call.
 - Field Evidence Coverage does not read or write browser storage and evaluates only explicitly imported metadata reports.
 - Field Evidence Remediation reads only the in-memory evaluated coverage object after an explicit operator action.
 - Field Evidence Remediation does not use browser storage, call GitHub, or create issues automatically.

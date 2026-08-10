@@ -27,6 +27,7 @@
         <a class="evidence-coverage-link" href="docs/EVIDENCE-COVERAGE-MATRIX.md">Open coverage guide</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-REMEDIATION-WORKLIST.md">Open remediation guide</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-RERUN-PLAN.md">Open rerun guide</a>
+        <a class="evidence-coverage-link" href="docs/FIELD-REHEARSAL-HANDOFF.md">Open rehearsal handoff guide</a>
       </div>
     </section>
 
@@ -91,6 +92,11 @@
         <button type="button" id="downloadEvidenceRerunPlan" disabled>Download Rerun Summary</button>
         <button type="button" id="downloadEvidenceRerunChecklist" disabled>Download Rehearsal Checklist</button>
       </div>
+      <div class="evidence-coverage-field evidence-coverage-commit-field">
+        <label for="evidenceRerunTargetCommit">Target commit for rehearsal launch</label>
+        <input id="evidenceRerunTargetCommit" autocomplete="off" inputmode="text" maxlength="40" placeholder="Build a rerun plan first" disabled />
+        <p class="helper-text">Same-commit plans pin this field to the source SHA. New-commit plans require the actual resulting code-remediation commit SHA, and it must differ from the source commit before any row can open.</p>
+      </div>
       <p id="evidenceRerunStatus" class="evidence-coverage-status" role="status" aria-live="polite">Build the current remediation worklist above before deriving a rerun plan.</p>
       <div class="evidence-coverage-metrics" aria-label="Rerun plan summary">
         <div class="evidence-coverage-metric"><strong id="rerunOverall">—</strong><span>Plan status</span></div>
@@ -98,7 +104,7 @@
         <div class="evidence-coverage-metric"><strong id="rerunNewCommit">—</strong><span>New-commit rows</span></div>
         <div class="evidence-coverage-metric"><strong id="rerunSameCommit">—</strong><span>Same-commit rows</span></div>
       </div>
-      <div class="evidence-coverage-table-wrap"><table class="evidence-coverage-table"><thead><tr><th scope="col">Coverage row</th><th scope="col">Source state</th><th scope="col">Rerun action</th><th scope="col">Commit policy</th><th scope="col">Blocking issues</th><th scope="col">Reason</th></tr></thead><tbody id="evidenceRerunRows"></tbody></table></div>
+      <div class="evidence-coverage-table-wrap"><table class="evidence-coverage-table"><thead><tr><th scope="col">Coverage row</th><th scope="col">Source state</th><th scope="col">Rerun action</th><th scope="col">Commit policy</th><th scope="col">Blocking issues</th><th scope="col">Reason</th><th scope="col">Rehearsal</th></tr></thead><tbody id="evidenceRerunRows"></tbody></table></div>
     </section>
 
     <section class="card" aria-labelledby="coverageBoundaryTitle">
@@ -111,6 +117,7 @@
         <li>Remediation drafts are operator aids. They do not prove that a software defect exists and they are never submitted automatically.</li>
         <li>A code change creates a new evidence boundary. Ready rows from the old commit must be revalidated before the new commit can claim complete physical-device coverage.</li>
         <li>Environment-only and evidence-only reruns stay on the same commit only while code remains unchanged.</li>
+        <li>Rehearsal handoff fragments carry only row and commit-policy metadata. They never carry meeting data, credentials, provider state, or arbitrary notes.</li>
         <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
         <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
       </ul>
@@ -120,6 +127,7 @@
   <script src="evidence-coverage-core.js"></script>
   <script src="evidence-remediation-core.js"></script>
   <script src="evidence-rerun-core.js"></script>
+  <script src="field-rehearsal-launch-core.js"></script>
   <script src="evidence-coverage.js"></script>
   <script src="evidence-remediation.js"></script>
   <script src="evidence-rerun.js"></script>

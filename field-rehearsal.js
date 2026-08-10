@@ -3,14 +3,64 @@
   "use strict";
 
   const core = global.MethodzFieldRehearsalCore;
+  const launchCore = global.MethodzFieldRehearsalLaunchCore;
   if (!core) return;
 
   let inspectedEnvironment = null;
   let currentEvidence = null;
+  let currentLaunch = null;
 
   const byId = (id) => document.getElementById(id);
   const value = (id) => byId(id)?.value ?? "";
   const numberValue = (id) => Number(value(id) || 0);
+  const shortSha = (input) => String(input || "").slice(0, 12);
+
+  function clearRecognizedFragment() {
+    try {
+      global.history?.replaceState(null, "", `${global.location.pathname || ""}${global.location.search || ""}`);
+    } catch (_error) {
+      // The handoff remains non-authoritative if a host blocks history replacement.
+    }
+  }
+
+  function showLaunchStatus(message, isError = false) {
+    const card = byId("rehearsalLaunchCard");
+    const status = byId("rehearsalLaunchStatus");
+    if (card) card.hidden = false;
+    if (status) {
+      status.textContent = message;
+      status.dataset.state = isError ? "error" : "ready";
+    }
+  }
+
+  function applyLaunchHandoff() {
+    if (!launchCore) return;
+    const parsed = launchCore.parseFragment(global.location?.hash || "");
+    if (!parsed.recognized) return;
+    clearRecognizedFragment();
+    if (!parsed.ok || !parsed.launch) {
+      showLaunchStatus(`Recognized Field Rehearsal handoff rejected (${parsed.errors.slice(0, 5).join(", ")}). Enter the rehearsal metadata manually.`, true);
+      return;
+    }
+
+    currentLaunch = parsed.launch;
+    const expected = currentLaunch.expectedEnvironment;
+    if (byId("commitSha")) byId("commitSha").value = currentLaunch.targetCommitSha;
+    if (expected.platformFamily && byId("platformFamily")) byId("platformFamily").value = expected.platformFamily;
+    if (expected.browserFamily && byId("browserFamily")) byId("browserFamily").value = expected.browserFamily;
+    if (expected.viewportClass && byId("viewportClass")) byId("viewportClass").value = expected.viewportClass;
+
+    if (byId("launchTargetRow")) byId("launchTargetRow").textContent = currentLaunch.rowLabel;
+    if (byId("launchTargetCommit")) byId("launchTargetCommit").textContent = currentLaunch.targetCommitSha;
+    if (byId("launchSourceCommit")) byId("launchSourceCommit").textContent = currentLaunch.sourceCommitSha;
+    if (byId("launchCommitPolicy")) byId("launchCommitPolicy").textContent = currentLaunch.commitPolicy;
+    if (byId("launchBrowserRequirement")) byId("launchBrowserRequirement").textContent = expected.browserRequirement;
+
+    const commitMessage = currentLaunch.commitPolicy === "new-commit-required"
+      ? `New evidence boundary ${shortSha(currentLaunch.targetCommitSha)} selected; source evidence remains attached to ${shortSha(currentLaunch.sourceCommitSha)}.`
+      : `Same-commit evidence boundary ${shortSha(currentLaunch.targetCommitSha)} selected.`;
+    showLaunchStatus(`${currentLaunch.rowLabel} loaded from the rerun plan. ${commitMessage} Inspect the actual device environment before recording results.`);
+  }
 
   function inspectEnvironment() {
     const protocol = global.location?.protocol || "";
@@ -114,6 +164,7 @@
   }
 
   function initialize() {
+    applyLaunchHandoff();
     byId("inspectEnvironment")?.addEventListener("click", inspectEnvironment);
     byId("reviewEvidence")?.addEventListener("click", reviewEvidence);
     byId("downloadEvidence")?.addEventListener("click", downloadEvidence);
@@ -121,6 +172,7 @@
 
   global.MethodzFieldRehearsalV1620 = Object.freeze({
     getCurrentEvidence: () => currentEvidence,
+    getCurrentLaunch: () => currentLaunch,
     inspectEnvironment,
     reviewEvidence
   });
