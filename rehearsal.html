@@ -28,7 +28,22 @@
       <div class="field-rehearsal-toolbar">
         <a class="field-rehearsal-link" href="index.html">Back to Workspace Home</a>
         <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-WORKSPACE.md">Open field rehearsal guide</a>
+        <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-HANDOFF.md">Open rerun handoff guide</a>
       </div>
+    </section>
+
+    <section class="card" id="rehearsalLaunchCard" aria-labelledby="rehearsalLaunchTitle" hidden>
+      <p class="eyebrow">Rerun handoff</p>
+      <h2 id="rehearsalLaunchTitle">Field Rehearsal target loaded</h2>
+      <p id="rehearsalLaunchStatus" class="field-rehearsal-status" role="status" aria-live="polite">No launch metadata loaded.</p>
+      <div class="field-rehearsal-grid" aria-label="Rehearsal launch metadata">
+        <div class="field-rehearsal-field"><strong>Coverage row</strong><span id="launchTargetRow">—</span></div>
+        <div class="field-rehearsal-field"><strong>Target commit</strong><span id="launchTargetCommit">—</span></div>
+        <div class="field-rehearsal-field"><strong>Source commit</strong><span id="launchSourceCommit">—</span></div>
+        <div class="field-rehearsal-field"><strong>Commit policy</strong><span id="launchCommitPolicy">—</span></div>
+        <div class="field-rehearsal-field"><strong>Browser requirement</strong><span id="launchBrowserRequirement">—</span></div>
+      </div>
+      <p class="helper-text">Launch metadata is advisory and metadata-only. Inspect the actual device environment before recording results. OS and browser versions remain operator-entered.</p>
     </section>
 
     <section class="card" aria-labelledby="environmentTitle">
@@ -144,6 +159,7 @@
         <li>No meeting records or browser-local business values are read.</li>
         <li>No free-form meeting content is accepted into the generated JSON report.</li>
         <li>External screenshots, traces, PDFs, and transfer packages stay outside this metadata report.</li>
+        <li>Rerun launch metadata carries only the coverage row, source commit, target commit, and commit policy.</li>
         <li>The report does not prove device identity, delivery, authorization, or legal approval.</li>
         <li>No save, assignment, reminder, archive, provider call, synchronization, transfer, rollback, or cleanup is triggered.</li>
       </ul>
@@ -151,6 +167,7 @@
   </main>
 
   <script src="field-rehearsal-core.js"></script>
+  <script src="field-rehearsal-launch-core.js"></script>
   <script src="field-rehearsal.js"></script>
 </body>
 </html>
