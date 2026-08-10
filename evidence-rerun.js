@@ -149,7 +149,7 @@
     downloadSummaryButton.disabled = false;
     downloadChecklistButton.disabled = false;
     if (currentPlan.mode === "new-commit-cycle") {
-      status.textContent = `Code remediation exists on ${shortSha(currentPlan.sourceCommitSha)}. Enter the actual resulting commit SHA, then open each row against that new evidence boundary.`;
+      status.textContent = `Code remediation exists on ${shortSha(currentPlan.sourceCommitSha)}. The plan requires replacement evidence for all six coverage rows. Enter the actual resulting commit SHA, then open each row against that new evidence boundary.`;
     } else if (currentPlan.mode === "same-commit-cycle") {
       status.textContent = `${currentPlan.rowCount} unresolved row${currentPlan.rowCount === 1 ? "" : "s"} can be rehearsed against ${shortSha(currentPlan.sourceCommitSha)} while code remains unchanged. The target commit is pinned to the source commit.`;
     } else {
