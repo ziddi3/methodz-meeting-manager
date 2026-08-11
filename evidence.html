@@ -28,7 +28,20 @@
         <a class="evidence-coverage-link" href="docs/EVIDENCE-REMEDIATION-WORKLIST.md">Open remediation guide</a>
         <a class="evidence-coverage-link" href="docs/EVIDENCE-RERUN-PLAN.md">Open rerun guide</a>
         <a class="evidence-coverage-link" href="docs/FIELD-REHEARSAL-HANDOFF.md">Open rehearsal handoff guide</a>
+        <a class="evidence-coverage-link" href="docs/FIELD-REHEARSAL-RETURN-HANDOFF.md">Open return handoff guide</a>
       </div>
+    </section>
+
+    <section class="card" id="evidenceReturnCard" aria-labelledby="evidenceReturnTitle" hidden>
+      <p class="eyebrow">Returned rehearsal context</p>
+      <h2 id="evidenceReturnTitle">Import the downloaded Field Rehearsal report explicitly</h2>
+      <p id="evidenceReturnStatus" class="evidence-coverage-status" role="status" aria-live="polite">No return metadata loaded.</p>
+      <div class="evidence-coverage-metrics" aria-label="Returned rehearsal metadata">
+        <div class="evidence-coverage-metric"><strong id="returnCoverageRow">—</strong><span>Expected row</span></div>
+        <div class="evidence-coverage-metric"><strong id="returnCoverageCommit">—</strong><span>Exact commit</span></div>
+        <div class="evidence-coverage-metric"><strong id="returnCoverageReadiness">—</strong><span>Downloaded readiness</span></div>
+      </div>
+      <p class="helper-text">The handoff does not transfer the report file, file path, or report contents. Use the file picker below to select the JSON you just downloaded, then choose <strong>Load Selected Evidence</strong>.</p>
     </section>
 
     <section class="card" aria-labelledby="coverageImportTitle">
@@ -117,7 +130,8 @@
         <li>Remediation drafts are operator aids. They do not prove that a software defect exists and they are never submitted automatically.</li>
         <li>A code change creates a new evidence boundary. Ready rows from the old commit must be revalidated before the new commit can claim complete physical-device coverage.</li>
         <li>Environment-only and evidence-only reruns stay on the same commit only while code remains unchanged.</li>
-        <li>Rehearsal handoff fragments carry only row and commit-policy metadata. They never carry meeting data, credentials, provider state, or arbitrary notes.</li>
+        <li>Rehearsal launch fragments carry only row and commit-policy metadata. They never carry meeting data, credentials, provider state, or arbitrary notes.</li>
+        <li>Return-to-coverage fragments carry only row key, exact commit, readiness, and contract version. The downloaded report must still be selected and loaded explicitly.</li>
         <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
         <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
       </ul>
@@ -128,8 +142,10 @@
   <script src="evidence-remediation-core.js"></script>
   <script src="evidence-rerun-core.js"></script>
   <script src="field-rehearsal-launch-core.js"></script>
+  <script src="field-rehearsal-return-core.js"></script>
   <script src="evidence-coverage.js"></script>
   <script src="evidence-remediation.js"></script>
   <script src="evidence-rerun.js"></script>
+  <script src="field-rehearsal-return.js"></script>
 </body>
 </html>

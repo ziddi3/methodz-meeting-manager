@@ -158,6 +158,9 @@
     anchor.href = url;
     anchor.download = `methodz-field-rehearsal-${stamp}.json`;
     anchor.click();
+    global.dispatchEvent(new CustomEvent("methodz:field-rehearsal-downloaded", {
+      detail: { evidence, launch: currentLaunch }
+    }));
     setTimeout(() => URL.revokeObjectURL(url), 0);
     const status = byId("evidenceStatus");
     if (status) status.textContent = `Metadata-only evidence downloaded. Readiness: ${evidence.summary.readiness}. Protect external screenshots, traces, PDFs, and transfer packages separately.`;

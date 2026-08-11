@@ -29,6 +29,7 @@
         <a class="field-rehearsal-link" href="index.html">Back to Workspace Home</a>
         <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-WORKSPACE.md">Open field rehearsal guide</a>
         <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-HANDOFF.md">Open rerun handoff guide</a>
+        <a class="field-rehearsal-link" href="docs/FIELD-REHEARSAL-RETURN-HANDOFF.md">Open return handoff guide</a>
       </div>
     </section>
 
@@ -142,8 +143,10 @@
       <div class="field-rehearsal-actions">
         <button type="button" id="reviewEvidence">Review Evidence Readiness</button>
         <button type="button" id="downloadEvidence">Download Metadata Evidence</button>
+        <button type="button" id="returnToCoverage" disabled>Open Coverage Matrix to Import This Report</button>
       </div>
       <p id="evidenceStatus" class="field-rehearsal-status" role="status" aria-live="polite">Evidence not reviewed.</p>
+      <p id="rehearsalReturnStatus" class="field-rehearsal-status" role="status" aria-live="polite">Download a metadata-only evidence report before returning to the Coverage Matrix.</p>
       <div class="field-rehearsal-metrics" aria-label="Field rehearsal result summary">
         <div class="field-rehearsal-metric"><strong id="readinessValue">—</strong><span>Readiness</span></div>
         <div class="field-rehearsal-metric"><strong id="passValue">—</strong><span>Pass</span></div>
@@ -160,14 +163,17 @@
         <li>No free-form meeting content is accepted into the generated JSON report.</li>
         <li>External screenshots, traces, PDFs, and transfer packages stay outside this metadata report.</li>
         <li>Rerun launch metadata carries only the coverage row, source commit, target commit, and commit policy.</li>
+        <li>Return-to-coverage metadata carries only the coverage row, exact commit, readiness, and contract version after an explicit report download.</li>
         <li>The report does not prove device identity, delivery, authorization, or legal approval.</li>
-        <li>No save, assignment, reminder, archive, provider call, synchronization, transfer, rollback, or cleanup is triggered.</li>
+        <li>No save, assignment, reminder, archive, provider call, synchronization, transfer, rollback, cleanup, or automatic evidence import is triggered.</li>
       </ul>
     </section>
   </main>
 
   <script src="field-rehearsal-core.js"></script>
   <script src="field-rehearsal-launch-core.js"></script>
+  <script src="field-rehearsal-return-core.js"></script>
   <script src="field-rehearsal.js"></script>
+  <script src="field-rehearsal-return.js"></script>
 </body>
 </html>
