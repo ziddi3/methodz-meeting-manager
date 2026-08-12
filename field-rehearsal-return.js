@@ -34,19 +34,22 @@
   function acceptDownloadedEvidence(event) {
     const evidence = event?.detail?.evidence || null;
     const launch = event?.detail?.launch || null;
-    const result = core.buildFromEvidence(evidence, launch);
+    const evidenceSha256 = event?.detail?.evidenceSha256 || "";
+    const receiptError = event?.detail?.receiptError || "";
+    const result = core.buildFromEvidence(evidence, launch, evidenceSha256);
     if (!result.ok || !result.returnTarget) {
       currentReturnTarget = null;
       const button = byId("returnToCoverage");
       if (button) button.disabled = true;
-      setRehearsalReturnStatus(`Downloaded evidence cannot be returned through the exact-commit handoff (${result.errors.slice(0, 6).join(", ")}). Keep the downloaded report and correct the rehearsal metadata before using the return action.`, true);
+      const extra = receiptError ? ` Receipt generation failed (${receiptError}).` : "";
+      setRehearsalReturnStatus(`Downloaded evidence cannot be returned through the exact-file handoff (${result.errors.slice(0, 6).join(", ")}).${extra} Keep the downloaded report and correct the rehearsal metadata before using the return action.`, true);
       return;
     }
 
     currentReturnTarget = result.returnTarget;
     const button = byId("returnToCoverage");
     if (button) button.disabled = false;
-    setRehearsalReturnStatus(`Downloaded ${currentReturnTarget.rowLabel} evidence is ready to return as context for commit ${shortSha(currentReturnTarget.commitSha)}. The report file itself will not be transferred.`);
+    setRehearsalReturnStatus(`Downloaded ${currentReturnTarget.rowLabel} evidence is ready to return as context for commit ${shortSha(currentReturnTarget.commitSha)} with SHA-256 receipt ${currentReturnTarget.evidenceSha256.slice(0, 12)}…. The report file itself will not be transferred.`);
   }
 
   function openCoverage() {
@@ -84,7 +87,21 @@
     if (byId("returnCoverageRow")) byId("returnCoverageRow").textContent = currentReturnTarget.rowLabel;
     if (byId("returnCoverageCommit")) byId("returnCoverageCommit").textContent = currentReturnTarget.commitSha;
     if (byId("returnCoverageReadiness")) byId("returnCoverageReadiness").textContent = currentReturnTarget.readiness;
-    showCoverageReturn(`${currentReturnTarget.rowLabel} rehearsal context returned for commit ${shortSha(currentReturnTarget.commitSha)}. Select the downloaded JSON report below and choose Load Selected Evidence. No report bytes crossed this handoff.`);
+    if (byId("returnCoverageReceipt")) byId("returnCoverageReceipt").textContent = `${currentReturnTarget.evidenceSha256.slice(0, 16)}…`;
+    showCoverageReturn(`${currentReturnTarget.rowLabel} rehearsal context returned for commit ${shortSha(currentReturnTarget.commitSha)}. Select the downloaded JSON report below and choose Load Selected Evidence. Its bytes must match the returned SHA-256 receipt before the return context is verified.`);
+  }
+
+  function consumeVerificationEvent(event) {
+    if (!currentReturnTarget || !byId("evidenceReturnCard")) return;
+    const detail = event?.detail || {};
+    if (detail.ok === true) {
+      showCoverageReturn(`SHA-256 receipt verified for ${currentReturnTarget.rowLabel} on commit ${shortSha(currentReturnTarget.commitSha)}. The selected local file matches the report downloaded by Field Rehearsal. Coverage evaluation remains an explicit next action.`);
+      return;
+    }
+    if (detail.ok === false) {
+      const errors = Array.isArray(detail.errors) ? detail.errors.slice(0, 6).join(", ") : "receipt-verification-failed";
+      showCoverageReturn(`Returned evidence receipt was not verified (${errors}). No return-driven evidence was accepted. Select the exact JSON that was downloaded from Field Rehearsal, or clear the return context by reopening the Coverage Matrix normally.`, true);
+    }
   }
 
   function initialize() {
@@ -94,10 +111,11 @@
       returnButton.addEventListener("click", openCoverage);
       global.addEventListener("methodz:field-rehearsal-downloaded", acceptDownloadedEvidence);
     }
+    global.addEventListener("methodz:evidence-receipt-verification", consumeVerificationEvent);
     consumeCoverageReturn();
   }
 
-  global.MethodzFieldRehearsalReturnV1626 = Object.freeze({
+  global.MethodzFieldRehearsalReturnV1627 = Object.freeze({
     getCurrentReturnTarget: () => currentReturnTarget,
     consumeCoverageReturn
   });
