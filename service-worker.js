@@ -116,6 +116,7 @@ const APP_SHELL = [
   "./meeting-outcomes-core.js",
   "./field-rehearsal-core.js",
   "./field-rehearsal-launch-core.js",
+  "./field-evidence-integrity-core.js",
   "./field-rehearsal-return-core.js",
   "./performance-evidence-core.js",
   "./evidence-coverage-core.js",
@@ -256,7 +257,7 @@ self.addEventListener("message", (event) => {
   })());
 });
 
-// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, field-rehearsal-mutation, field-rehearsal-launch-mutation, field-rehearsal-return-mutation, performance-evidence-mutation, evidence-coverage-mutation, evidence-remediation-mutation, evidence-rerun-mutation, or review-mutation handler.
-// The service worker never reads meeting, task, decision, outcomes, workspace-home, field-rehearsal, field-rehearsal-launch, field-rehearsal-return, performance-evidence, evidence-coverage, evidence-remediation, evidence-rerun, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
+// Historical workflow contract: no background-sync, transfer-import, queue-processing, capacity-cleanup, planning-delivery, preparation-launch, run-sheet-delivery, closeout-mutation, decision-register-mutation, outcomes-mutation, workspace-home-mutation, field-rehearsal-mutation, field-rehearsal-launch-mutation, field-rehearsal-return-mutation, field-evidence-integrity-mutation, performance-evidence-mutation, evidence-coverage-mutation, evidence-remediation-mutation, evidence-rerun-mutation, or review-mutation handler.
+// The service worker never reads meeting, task, decision, outcomes, workspace-home, field-rehearsal, field-rehearsal-launch, field-rehearsal-return, field-evidence-integrity, performance-evidence, evidence-coverage, evidence-remediation, evidence-rerun, review, planning, preparation, run-sheet, closeout, registry, capacity, transfer, acceptance, rollback, or browser-local business values.
 void PREVIOUS_CACHE_NAME;
 void HISTORICAL_CACHE_NAMES;

@@ -17,14 +17,15 @@ Decision Register core:            1.0.0
 Meeting Outcomes core:             1.0.0
 Field Rehearsal core:              1.0.0
 Field Rehearsal launch core:       1.0.0
-Field Rehearsal return core:       1.0.0
+Field Evidence Integrity core:     1.0.0
+Field Rehearsal return core:       1.1.0
 Performance Evidence core:         1.0.0
 Field Evidence Coverage core:      1.0.0
 Field Evidence Remediation core:   1.0.0
 Field Evidence Rerun core:         1.0.0
 ```
 
-The application shell may gain static workspaces without changing the meeting-record schema.
+The application shell may gain static workspaces and portable computation helpers without changing the meeting-record schema.
 
 ## Static entry points
 
@@ -36,7 +37,7 @@ decisions.html    Read-only structured Decision Register and source review
 outcomes.html     Read-only completed-meeting outcomes review
 rehearsal.html    Metadata-only physical-device field rehearsal evidence and explicit return-to-coverage action
 performance.html  Metadata-only Workspace Capacity performance evidence comparison
-evidence.html     Metadata-only exact-commit coverage, remediation, rerun planning, rehearsal launch, and return guidance
+evidence.html     Metadata-only exact-commit coverage, remediation, rerun planning, rehearsal launch, and receipt-verified return guidance
 archive.html      Record detail and print surface
 verify.html       Standalone signed-package verifier
 ```
@@ -64,10 +65,11 @@ Evidence side path
   -> explicit exact-commit Rerun Plan
   -> explicit Field Rehearsal launch handoff
   -> real-hardware Field Rehearsal
-  -> explicit metadata evidence download
+  -> explicit metadata evidence download + SHA-256 receipt
   -> explicit return-to-coverage handoff
   -> operator file selection and Load Selected Evidence
-  -> exact-commit Coverage Matrix refresh
+  -> exact-byte receipt verification + row/commit/readiness cross-check
+  -> explicit exact-commit Coverage Matrix refresh
 
 Performance side path
   -> Workspace Capacity rehearsal reports
@@ -115,7 +117,13 @@ Ready evidence from an older commit remains historical evidence only. It is neve
 
 `field-rehearsal-launch-core.js` converts one explicit rerun-plan row into bounded metadata for `rehearsal.html`. Same-commit rows are pinned to the source SHA. New-commit rows remain unavailable until the operator enters a valid resulting SHA that differs from the source SHA. The recognized launch fragment carries only row key, source commit, target commit, contract version, and commit policy, then is validated and removed before the rehearsal continues. Operating-system and browser versions remain operator-entered, and actual environment inspection remains explicit.
 
-`field-rehearsal-return-core.js` closes the loop after an explicit evidence download. It derives one of the same six coverage rows from metadata-complete rehearsal evidence and, when launch metadata exists, rejects row or target-commit drift. The return action carries only contract version, row key, exact commit SHA, and readiness to `evidence.html`. The recognized fragment is removed on arrival. The downloaded report itself, its file path, and its contents are never transferred; file selection and **Load Selected Evidence** remain explicit operator actions.
+`field-evidence-integrity-core.js` is a portable SHA-256 computation helper used only after the explicit Field Rehearsal download action and after the explicit Coverage Matrix load action. It binds the exact metadata-report text bytes through a 64-character digest without reading browser storage, meeting records, a provider, the network, a local file path, or external evidence.
+
+`field-rehearsal-return-core.js` closes the loop after an explicit evidence download. It derives one of the same six coverage rows from metadata-complete rehearsal evidence and, when launch metadata exists, rejects row or target-commit drift. Return contract `1.1.0` carries only contract version, row key, exact commit SHA, readiness, and the SHA-256 receipt to `evidence.html`. The recognized fragment is removed on arrival. The downloaded report itself, its file path, and its contents are never transferred; file selection and **Load Selected Evidence** remain explicit operator actions.
+
+When return context is active, `evidence-coverage.js` hashes the explicitly selected candidate files and requires a receipt match before return-driven evidence can be accepted. The matching report must also retain the returned row, exact commit, and readiness after the existing coverage normalizer. Receipt mismatch or metadata drift fails visibly with zero return-driven reports accepted. When `evidence.html` is opened normally without return context, the established manual evidence-import workflow remains unchanged.
+
+The SHA-256 receipt proves only byte equality between the explicitly downloaded metadata payload and an explicitly selected local candidate. It does not authenticate an operator, attest a physical device, validate screenshots or traces, or prove authorization, delivery, legal approval, regulatory compliance, or production readiness.
 
 `performance.html` accepts only explicitly selected metadata-only Workspace Capacity rehearsal reports. Accepted evidence is normalized through `performance-evidence-core.js`, bounded to 20 runs, held in memory only, and compared without reading or writing browser storage.
 
@@ -128,9 +136,11 @@ None of the evidence workspaces proves a software defect, device identity, deliv
 - Field Rehearsal does not read meeting records or browser-local business values.
 - Field Rehearsal launch carries metadata only and does not read or write browser storage.
 - Field Rehearsal launch makes no provider, GitHub API, synchronization, transfer, or background-automation call.
-- Field Rehearsal return carries metadata only after an explicit evidence download and does not read or write browser storage.
+- Field Evidence Integrity hashes only explicitly supplied metadata-report text and has no storage, provider, network, or meeting-record authority.
+- Field Rehearsal return carries metadata plus a SHA-256 receipt only after an explicit evidence download and does not read or write browser storage.
 - Field Rehearsal return transfers no report bytes or file path and does not import evidence automatically.
 - Field Evidence Coverage does not read or write browser storage and evaluates only explicitly imported metadata reports.
+- Receipt verification occurs only after explicit file selection and **Load Selected Evidence**; coverage evaluation remains separate and explicit.
 - Field Evidence Remediation reads only the in-memory evaluated coverage object after an explicit operator action.
 - Field Evidence Remediation does not use browser storage, call GitHub, or create issues automatically.
 - Field Evidence Rerun reads only the in-memory coverage/remediation pair after an explicit operator action.
@@ -138,5 +148,5 @@ None of the evidence workspaces proves a software defect, device identity, deliv
 - Performance Evidence does not read or write browser storage and imports reports only after explicit operator action.
 - The service worker caches static assets only and never reads business records.
 - No production Firebase, Supabase, Drive, CRM, or Methodz API provider is active.
-- Browser-local workflow evidence does not prove identity, authority, delivery, legal approval, or regulatory compliance.
+- Browser-local workflow evidence and integrity receipts do not prove identity, authority, delivery, legal approval, or regulatory compliance.
 - This task-focused repository must not be deployed over `hub.methodz.ca`.

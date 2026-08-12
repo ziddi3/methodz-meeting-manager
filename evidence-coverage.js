@@ -3,6 +3,8 @@
   "use strict";
 
   const core = window.MethodzEvidenceCoverageCore;
+  const integrityCore = window.MethodzFieldEvidenceIntegrityCore;
+  const returnCore = window.MethodzFieldRehearsalReturnCore;
   if (!core) return;
 
   const MAX_FILE_BYTES = 512 * 1024;
@@ -25,6 +27,16 @@
     window.dispatchEvent(new CustomEvent("methodz:evidence-coverage", {
       detail: { coverage: coverage || null }
     }));
+  }
+
+  function broadcastReceiptVerification(ok, errors = []) {
+    window.dispatchEvent(new CustomEvent("methodz:evidence-receipt-verification", {
+      detail: { ok: Boolean(ok), errors: Array.isArray(errors) ? errors.slice(0, 12) : [] }
+    }));
+  }
+
+  function currentReturnTarget() {
+    return window.MethodzFieldRehearsalReturnV1627?.getCurrentReturnTarget?.() || null;
   }
 
   function shortSha(value) {
@@ -121,6 +133,15 @@
     loadedReports.length = 0;
     rejectedFiles = 0;
     const rejectionCodes = new Set();
+    const stagedReports = [];
+    const returnTarget = currentReturnTarget();
+    let receiptMatched = !returnTarget;
+    let receiptMetadataMatched = !returnTarget;
+    const receiptErrors = new Set();
+
+    if (returnTarget && (!integrityCore || !returnCore)) {
+      receiptErrors.add("receipt:integrity-core-unavailable");
+    }
 
     for (const file of files) {
       if (file.size > MAX_FILE_BYTES) {
@@ -129,20 +150,56 @@
         continue;
       }
       try {
-        const parsed = JSON.parse(await file.text());
+        const sourceText = await file.text();
+        let digest = "";
+        if (returnTarget && integrityCore) {
+          try {
+            digest = await integrityCore.sha256Text(sourceText);
+          } catch (error) {
+            receiptErrors.add(String(error?.message || "receipt:digest-failed").slice(0, 96));
+          }
+        }
+
+        const parsed = JSON.parse(sourceText);
         const result = core.validateAndNormalizeReport(parsed);
         if (!result.ok) {
           rejectedFiles += 1;
           result.errors.slice(0, 6).forEach((error) => rejectionCodes.add(error));
+          if (returnTarget && integrityCore?.receiptMatches(returnTarget.evidenceSha256, digest)) {
+            receiptMatched = true;
+            result.errors.slice(0, 6).forEach((error) => receiptErrors.add(`receipt:${error}`));
+          }
           continue;
         }
-        loadedReports.push(result.report);
-      } catch (error) {
+
+        stagedReports.push(result.report);
+        if (returnTarget && integrityCore?.receiptMatches(returnTarget.evidenceSha256, digest)) {
+          receiptMatched = true;
+          const metadata = returnCore?.matchesReportMetadata(returnTarget, result.report);
+          if (metadata?.ok) receiptMetadataMatched = true;
+          else (metadata?.errors || ["receipt:metadata-check-failed"]).slice(0, 6).forEach((error) => receiptErrors.add(error));
+        }
+      } catch (_error) {
         rejectedFiles += 1;
         rejectionCodes.add("file-invalid-json");
       }
     }
 
+    if (returnTarget && (!receiptMatched || !receiptMetadataMatched)) {
+      loadedReports.length = 0;
+      if (!receiptMatched) receiptErrors.add("receipt:file-mismatch");
+      if (receiptMatched && !receiptMetadataMatched) receiptErrors.add("receipt:metadata-drift");
+      byId("evidenceAcceptedCount").textContent = "0";
+      byId("evidenceRejectedCount").textContent = String(Math.max(rejectedFiles, files.length));
+      renderCommitOptions();
+      invalidateCoverage("Returned evidence was not verified. No return-driven evidence was accepted.");
+      const codes = Array.from(receiptErrors).slice(0, 6);
+      importStatus.textContent = `No reports accepted through the returned receipt (${codes.join(", ") || "receipt-verification-failed"}). Select the exact JSON downloaded from Field Rehearsal, or reopen this workspace without return context for ordinary manual import.`;
+      broadcastReceiptVerification(false, codes);
+      return;
+    }
+
+    loadedReports.push(...stagedReports);
     byId("evidenceAcceptedCount").textContent = String(loadedReports.length);
     byId("evidenceRejectedCount").textContent = String(rejectedFiles);
     renderCommitOptions();
@@ -150,9 +207,11 @@
 
     const commits = core.listCommits(loadedReports);
     const mixedCommitNotice = commits.length > 1 ? " Multiple commits detected; they will not be combined." : "";
+    const receiptNotice = returnTarget ? ` Returned SHA-256 receipt verified for ${returnTarget.rowLabel} on commit ${shortSha(returnTarget.commitSha)}.` : "";
     importStatus.textContent = loadedReports.length
-      ? `${loadedReports.length} report${loadedReports.length === 1 ? "" : "s"} accepted in memory.${rejectedFiles ? ` ${rejectedFiles} rejected (${Array.from(rejectionCodes).slice(0, 6).join(", ")}).` : ""}${mixedCommitNotice}`
+      ? `${loadedReports.length} report${loadedReports.length === 1 ? "" : "s"} accepted in memory.${rejectedFiles ? ` ${rejectedFiles} rejected (${Array.from(rejectionCodes).slice(0, 6).join(", ")}).` : ""}${mixedCommitNotice}${receiptNotice}`
       : `No reports accepted.${rejectedFiles ? ` Rejected ${rejectedFiles} (${Array.from(rejectionCodes).slice(0, 6).join(", ")}).` : ""}`;
+    if (returnTarget) broadcastReceiptVerification(true, []);
   }
 
   function evaluateCoverage() {

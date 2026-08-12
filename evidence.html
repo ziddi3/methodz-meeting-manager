@@ -40,8 +40,9 @@
         <div class="evidence-coverage-metric"><strong id="returnCoverageRow">—</strong><span>Expected row</span></div>
         <div class="evidence-coverage-metric"><strong id="returnCoverageCommit">—</strong><span>Exact commit</span></div>
         <div class="evidence-coverage-metric"><strong id="returnCoverageReadiness">—</strong><span>Downloaded readiness</span></div>
+        <div class="evidence-coverage-metric"><strong id="returnCoverageReceipt">—</strong><span>SHA-256 receipt</span></div>
       </div>
-      <p class="helper-text">The handoff does not transfer the report file, file path, or report contents. Use the file picker below to select the JSON you just downloaded, then choose <strong>Load Selected Evidence</strong>.</p>
+      <p class="helper-text">The handoff does not transfer the report file, file path, or report contents. Use the file picker below to select the JSON you just downloaded, then choose <strong>Load Selected Evidence</strong>. When return context is present, the selected local file bytes must match the SHA-256 receipt before any return-driven evidence is accepted.</p>
     </section>
 
     <section class="card" aria-labelledby="coverageImportTitle">
@@ -131,7 +132,8 @@
         <li>A code change creates a new evidence boundary. Ready rows from the old commit must be revalidated before the new commit can claim complete physical-device coverage.</li>
         <li>Environment-only and evidence-only reruns stay on the same commit only while code remains unchanged.</li>
         <li>Rehearsal launch fragments carry only row and commit-policy metadata. They never carry meeting data, credentials, provider state, or arbitrary notes.</li>
-        <li>Return-to-coverage fragments carry only row key, exact commit, readiness, and contract version. The downloaded report must still be selected and loaded explicitly.</li>
+        <li>Return-to-coverage fragments carry only row key, exact commit, readiness, contract version, and a SHA-256 receipt. The downloaded report must still be selected explicitly, and its local bytes must match the receipt before return-driven import.</li>
+        <li>A receipt verifies byte equality with the explicitly downloaded metadata report. It does not prove who created the report, which physical device produced it, or that external evidence is authentic.</li>
         <li>No meeting records, browser-local business values, provider state, queues, transfer packages, credentials, or private keys are read or written.</li>
         <li>Coverage completeness does not prove production readiness, device identity, authorization, delivery, legal approval, or regulatory compliance.</li>
       </ul>
@@ -142,6 +144,7 @@
   <script src="evidence-remediation-core.js"></script>
   <script src="evidence-rerun-core.js"></script>
   <script src="field-rehearsal-launch-core.js"></script>
+  <script src="field-evidence-integrity-core.js"></script>
   <script src="field-rehearsal-return-core.js"></script>
   <script src="evidence-coverage.js"></script>
   <script src="evidence-remediation.js"></script>
