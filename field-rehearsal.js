@@ -4,6 +4,7 @@
 
   const core = global.MethodzFieldRehearsalCore;
   const launchCore = global.MethodzFieldRehearsalLaunchCore;
+  const integrityCore = global.MethodzFieldEvidenceIntegrityCore;
   if (!core) return;
 
   let inspectedEnvironment = null;
@@ -148,9 +149,18 @@
     return currentEvidence;
   }
 
-  function downloadEvidence() {
+  async function downloadEvidence() {
     const evidence = reviewEvidence();
     const payload = `${JSON.stringify(evidence, null, 2)}\n`;
+    let evidenceSha256 = "";
+    let receiptError = "";
+    try {
+      if (!integrityCore) throw new Error("integrity:core-unavailable");
+      evidenceSha256 = await integrityCore.sha256Text(payload);
+    } catch (error) {
+      receiptError = String(error?.message || "integrity:unavailable").slice(0, 96);
+    }
+
     const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -159,11 +169,15 @@
     anchor.download = `methodz-field-rehearsal-${stamp}.json`;
     anchor.click();
     global.dispatchEvent(new CustomEvent("methodz:field-rehearsal-downloaded", {
-      detail: { evidence, launch: currentLaunch }
+      detail: { evidence, launch: currentLaunch, evidenceSha256, receiptError }
     }));
     setTimeout(() => URL.revokeObjectURL(url), 0);
     const status = byId("evidenceStatus");
-    if (status) status.textContent = `Metadata-only evidence downloaded. Readiness: ${evidence.summary.readiness}. Protect external screenshots, traces, PDFs, and transfer packages separately.`;
+    if (status) {
+      status.textContent = evidenceSha256
+        ? `Metadata-only evidence downloaded. Readiness: ${evidence.summary.readiness}. SHA-256 receipt ${evidenceSha256.slice(0, 12)}… generated for exact-file verification. Protect external screenshots, traces, PDFs, and transfer packages separately.`
+        : `Metadata-only evidence downloaded. Readiness: ${evidence.summary.readiness}. Integrity receipt unavailable (${receiptError || "unknown"}); return-to-coverage verification will remain disabled. Protect external screenshots, traces, PDFs, and transfer packages separately.`;
+    }
   }
 
   function initialize() {
