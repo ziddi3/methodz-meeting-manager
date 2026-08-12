@@ -163,7 +163,8 @@
         <li>No free-form meeting content is accepted into the generated JSON report.</li>
         <li>External screenshots, traces, PDFs, and transfer packages stay outside this metadata report.</li>
         <li>Rerun launch metadata carries only the coverage row, source commit, target commit, and commit policy.</li>
-        <li>Return-to-coverage metadata carries only the coverage row, exact commit, readiness, and contract version after an explicit report download.</li>
+        <li>Return-to-coverage metadata carries only the coverage row, exact commit, readiness, contract version, and a SHA-256 receipt for the explicitly downloaded JSON bytes.</li>
+        <li>The SHA-256 receipt binds local file bytes to return context; it does not authenticate a person, device, or external evidence source.</li>
         <li>The report does not prove device identity, delivery, authorization, or legal approval.</li>
         <li>No save, assignment, reminder, archive, provider call, synchronization, transfer, rollback, cleanup, or automatic evidence import is triggered.</li>
       </ul>
@@ -172,6 +173,7 @@
 
   <script src="field-rehearsal-core.js"></script>
   <script src="field-rehearsal-launch-core.js"></script>
+  <script src="field-evidence-integrity-core.js"></script>
   <script src="field-rehearsal-return-core.js"></script>
   <script src="field-rehearsal.js"></script>
   <script src="field-rehearsal-return.js"></script>
