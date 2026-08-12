@@ -5,15 +5,18 @@ on:
     paths:
       - "rehearsal.html"
       - "field-rehearsal.js"
+      - "field-evidence-integrity-core.js"
       - "field-rehearsal-return-core.js"
       - "field-rehearsal-return.js"
       - "evidence.html"
+      - "evidence-coverage.js"
       - "service-worker.js"
       - "docs/APPLICATION-MAP.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF-TESTS.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF-CHANGELOG.md"
-      - "docs/V1.6.26-RELEASE-ROADMAP.md"
+      - "docs/V1.6.27-RELEASE-ROADMAP.md"
+      - "tests/field-evidence-integrity-core.mjs"
       - "tests/field-rehearsal-return-core.mjs"
       - "tests/field-rehearsal-return.spec.js"
       - ".github/workflows/field-rehearsal-return.yml"
@@ -23,15 +26,18 @@ on:
     paths:
       - "rehearsal.html"
       - "field-rehearsal.js"
+      - "field-evidence-integrity-core.js"
       - "field-rehearsal-return-core.js"
       - "field-rehearsal-return.js"
       - "evidence.html"
+      - "evidence-coverage.js"
       - "service-worker.js"
       - "docs/APPLICATION-MAP.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF-TESTS.md"
       - "docs/FIELD-REHEARSAL-RETURN-HANDOFF-CHANGELOG.md"
-      - "docs/V1.6.26-RELEASE-ROADMAP.md"
+      - "docs/V1.6.27-RELEASE-ROADMAP.md"
+      - "tests/field-evidence-integrity-core.mjs"
       - "tests/field-rehearsal-return-core.mjs"
       - "tests/field-rehearsal-return.spec.js"
       - ".github/workflows/field-rehearsal-return.yml"
@@ -55,15 +61,18 @@ jobs:
           required=(
             rehearsal.html
             field-rehearsal.js
+            field-evidence-integrity-core.js
             field-rehearsal-return-core.js
             field-rehearsal-return.js
             evidence.html
+            evidence-coverage.js
             service-worker.js
             docs/APPLICATION-MAP.md
             docs/FIELD-REHEARSAL-RETURN-HANDOFF.md
             docs/FIELD-REHEARSAL-RETURN-HANDOFF-TESTS.md
             docs/FIELD-REHEARSAL-RETURN-HANDOFF-CHANGELOG.md
-            docs/V1.6.26-RELEASE-ROADMAP.md
+            docs/V1.6.27-RELEASE-ROADMAP.md
+            tests/field-evidence-integrity-core.mjs
             tests/field-rehearsal-return-core.mjs
             tests/field-rehearsal-return.spec.js
           )
@@ -71,28 +80,37 @@ jobs:
             test -f "$file" || { echo "Missing $file"; exit 1; }
           done
 
+          node --check field-evidence-integrity-core.js
           node --check field-rehearsal-return-core.js
           node --check field-rehearsal-return.js
           node --check field-rehearsal.js
+          node --check evidence-coverage.js
+          node --check tests/field-evidence-integrity-core.mjs
           node --check tests/field-rehearsal-return-core.mjs
           node --check tests/field-rehearsal-return.spec.js
 
+          grep -q 'field-evidence-integrity-core.js' rehearsal.html
           grep -q 'field-rehearsal-return-core.js' rehearsal.html
           grep -q 'field-rehearsal-return.js' rehearsal.html
+          grep -q 'field-evidence-integrity-core.js' evidence.html
           grep -q 'field-rehearsal-return-core.js' evidence.html
           grep -q 'field-rehearsal-return.js' evidence.html
+          grep -q 'field-evidence-integrity-core.js' service-worker.js
           grep -q 'field-rehearsal-return-core.js' service-worker.js
           grep -q 'field-rehearsal-return.js' service-worker.js
           grep -q 'returnToCoverage' rehearsal.html
-          grep -q 'evidenceReturnCard' evidence.html
+          grep -q 'returnCoverageReceipt' evidence.html
           grep -q 'methodz:field-rehearsal-downloaded' field-rehearsal.js
+          grep -q 'methodz:evidence-receipt-verification' evidence-coverage.js
 
-          ! grep -Eq 'localStorage|sessionStorage|indexedDB' field-rehearsal-return-core.js field-rehearsal-return.js
-          ! grep -Eq 'fetch\(|XMLHttpRequest|WebSocket|EventSource' field-rehearsal-return-core.js field-rehearsal-return.js
-          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' field-rehearsal-return.js
-          ! grep -Eq 'hub\.methodz\.ca' field-rehearsal-return-core.js field-rehearsal-return.js
-          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" field-rehearsal-return-core.js field-rehearsal-return.js service-worker.js
+          ! grep -Eq 'localStorage|sessionStorage|indexedDB' field-evidence-integrity-core.js field-rehearsal-return-core.js field-rehearsal-return.js
+          ! grep -Eq 'fetch\(|XMLHttpRequest|WebSocket|EventSource' field-evidence-integrity-core.js field-rehearsal-return-core.js field-rehearsal-return.js
+          ! grep -Eq 'saveMeeting\(|setRecords\(|replaceRecords\(|upsertRecord\(|deleteRecord\(|archiveRecord\(|provider\.write|synchroni[sz]e\(' field-rehearsal-return.js evidence-coverage.js
+          ! grep -Eq 'hub\.methodz\.ca' field-evidence-integrity-core.js field-rehearsal-return-core.js field-rehearsal-return.js evidence-coverage.js
+          ! grep -Eq "addEventListener\\([\"']sync[\"']|periodicSync" field-evidence-integrity-core.js field-rehearsal-return-core.js field-rehearsal-return.js service-worker.js
 
+      - name: Run portable Field Evidence integrity tests
+        run: node tests/field-evidence-integrity-core.mjs
       - name: Run portable Field Rehearsal return tests
         run: node tests/field-rehearsal-return-core.mjs
 
