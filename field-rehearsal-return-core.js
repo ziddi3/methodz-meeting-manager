@@ -147,9 +147,6 @@
 
   function matchesReportMetadata(returnTarget, normalizedReport) {
     const normalized = normalizeReturn(returnTarget);
-    if (!normalized.ok || !normalized.report) {
-      // `report` is intentionally not part of normalizeReturn; this branch is retained only for defensive clarity.
-    }
     if (!normalized.ok || !normalized.returnTarget) return Object.freeze({ ok: false, errors: normalized.errors });
     const target = normalized.returnTarget;
     const errors = [];
